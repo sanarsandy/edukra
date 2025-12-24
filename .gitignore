@@ -1,0 +1,27 @@
+# Documentation (internal)
+docs/
+scripts/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Backups
+backups/
+
+# Build outputs
+dist/

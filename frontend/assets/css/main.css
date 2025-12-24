@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased text-neutral-700 bg-neutral-50;
+    @apply dark:text-neutral-200 dark:bg-neutral-900;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display font-bold text-neutral-900;
+    @apply dark:text-white;
+  }
+}
+
+@layer components {
+
+  /* EDUKRA Primary Buttons - Deep Ocean Slate */
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200;
+    @apply dark:bg-primary-500 dark:hover:bg-primary-400 dark:focus:ring-offset-neutral-900;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-primary-700 bg-primary-50 rounded-xl hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200;
+    @apply dark:bg-primary-900/50 dark:text-primary-300 dark:hover:bg-primary-900/70 dark:focus:ring-offset-neutral-900;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-neutral-700 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-all duration-200;
+    @apply dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:hover:border-neutral-600 dark:focus:ring-offset-neutral-900;
+  }
+
+  /* EDUKRA Accent Buttons - Muted Coral (CTA) */
+  .btn-accent {
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-accent-400 rounded-xl hover:bg-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200;
+    @apply dark:bg-accent-500 dark:hover:bg-accent-400 dark:focus:ring-offset-neutral-900;
+  }
+
+  /* Admin Buttons - Deep Ocean Slate (same as primary for consistency) */
+  .btn-admin {
+    @apply inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-admin-600 rounded-xl hover:bg-admin-700 focus:outline-none focus:ring-2 focus:ring-admin-500 focus:ring-offset-2 transition-all duration-200;
+    @apply dark:bg-admin-500 dark:hover:bg-admin-400 dark:focus:ring-offset-neutral-900;
+  }
+
+  /* EDUKRA Cards - Soft shadows, breathable */
+  .card {
+    @apply bg-white rounded-xl shadow-edukra border border-neutral-100 p-6 transition-all duration-200;
+    @apply dark:bg-neutral-800 dark:border-neutral-700 dark:shadow-none;
+  }
+
+  .card-hover {
+    @apply bg-white rounded-xl shadow-edukra border border-neutral-100 p-6 transition-all duration-200 hover:shadow-edukra-hover hover:border-neutral-200;
+    @apply dark:bg-neutral-800 dark:border-neutral-700 dark:hover:border-neutral-600 dark:shadow-none;
+  }
+
+  /* Section */
+  .section-padding {
+    @apply py-16 md:py-24;
+  }
+
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+
+  .badge-primary {
+    @apply badge bg-primary-50 text-primary-700;
+    @apply dark:bg-primary-900/50 dark:text-primary-300;
+  }
+
+  .badge-accent {
+    @apply badge bg-accent-50 text-accent-600;
+    @apply dark:bg-accent-900/50 dark:text-accent-300;
+  }
+
+  .badge-success {
+    @apply badge bg-success-50 text-success-600;
+    @apply dark:bg-success-900/50 dark:text-success-300;
+  }
+
+  .badge-warm {
+    @apply badge bg-warm-50 text-warm-700;
+    @apply dark:bg-warm-900/50 dark:text-warm-300;
+  }
+
+  .badge-admin {
+    @apply badge bg-admin-50 text-admin-700;
+    @apply dark:bg-admin-900/50 dark:text-admin-300;
+  }
+
+  /* Dark Mode Utilities */
+  .dark-card {
+    @apply bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl;
+  }
+
+  .dark-input {
+    @apply bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-600 text-neutral-900 dark:text-neutral-100 placeholder-neutral-500 dark:placeholder-neutral-400;
+  }
+
+  .dark-text {
+    @apply text-neutral-700 dark:text-neutral-300;
+  }
+
+  .dark-text-muted {
+    @apply text-neutral-500 dark:text-neutral-400;
+  }
+
+  /* EDUKRA Loading Spinner (Cakra) */
+  .spinner-cakra {
+    @apply w-8 h-8 border-3 border-primary-200 border-t-primary-600 rounded-full animate-spin;
+  }
+}

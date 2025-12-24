@@ -1,0 +1,270 @@
+package main
+
+import (
+	"net/http"
+	"os"
+	"strings"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/handlers"
+	customMiddleware "github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/middleware"
+
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+)
+
+func main() {
+	// Initialize Database
+	db.Init()
+
+	e := EchoServer()
+	
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	
+	e.Logger.Fatal(e.Start(":" + port))
+}
+
+func EchoServer() *echo.Echo {
+	e := echo.New()
+
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+	
+	// CORS Configuration
+	corsOrigins := []string{"http://localhost:3000"}
+	if corsEnv := os.Getenv("CORS_ALLOWED_ORIGINS"); corsEnv != "" {
+		corsOrigins = append(corsOrigins, strings.Split(corsEnv, ",")...)
+	}
+	
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins:     corsOrigins,
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions},
+		AllowHeaders:     []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
+		AllowCredentials: true,
+	}))
+
+	e.GET("/", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"message": "Welcome to API",
+			"status":  "healthy",
+		})
+	})
+
+	e.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
+			"status": "up",
+		})
+	})
+
+	// Auth Routes (Public)
+	auth := e.Group("/api/auth")
+	auth.POST("/register", handlers.Register)
+	auth.POST("/login", handlers.Login)
+	auth.POST("/admin/login", handlers.AdminLogin)
+	auth.POST("/instructor/login", handlers.InstructorLogin)
+	auth.GET("/google", handlers.GetGoogleAuthURL)
+	auth.GET("/google/callback", handlers.GoogleAuthCallback)
+
+	// Public Course Routes (no auth required for browsing)
+	e.GET("/api/courses", handlers.ListCourses)
+	e.GET("/api/courses/:id", handlers.GetCourse)
+	e.GET("/api/categories", handlers.ListCategories)
+
+	// Protected Routes
+	api := e.Group("/api")
+	api.Use(customMiddleware.JWTMiddleware())
+	
+	// User Profile & Auth
+	api.GET("/me", handlers.GetMe)
+	api.PUT("/me", handlers.UpdateCurrentUser)
+	api.PUT("/me/password", handlers.ChangePassword)
+	api.POST("/auth/refresh", handlers.RefreshToken)
+	api.POST("/auth/logout", handlers.Logout)
+	
+	// User Dashboard
+	api.GET("/dashboard", handlers.GetUserDashboard)
+	
+	// Enrollments
+	api.GET("/enrollments", handlers.ListMyEnrollments)
+	api.POST("/enrollments", handlers.EnrollInCourse)
+	api.GET("/enrollments/:id", handlers.GetEnrollment)
+	api.PUT("/enrollments/:id/progress", handlers.UpdateEnrollmentProgress)
+	api.GET("/courses/:courseId/enrollment", handlers.CheckEnrollment)
+	
+	// Lessons (protected for enrolled users)
+	api.GET("/lessons/:id", handlers.GetLesson)
+	api.GET("/courses/:courseId/lessons", handlers.ListLessons)
+
+	// Lesson Progress
+	api.GET("/lessons/:lessonId/progress", handlers.GetLessonProgress)
+	api.POST("/lessons/:lessonId/progress", handlers.UpdateLessonProgressHandler)
+	api.POST("/lessons/:lessonId/watchtime", handlers.UpdateWatchTime)
+	api.GET("/courses/:courseId/progress", handlers.GetCourseProgressHandler)
+	api.POST("/courses/:courseId/progress/bulk", handlers.BulkUpdateProgress)
+
+	// Activities & Stats
+	api.GET("/activities", handlers.GetRecentActivities)
+	api.GET("/activities/weekly", handlers.GetWeeklyActivities)
+	api.GET("/stats", handlers.GetLearningStats)
+
+	// Certificates
+	api.GET("/certificates", handlers.ListMyCertificates)
+	api.GET("/certificates/:id", handlers.GetCertificate)
+	api.GET("/certificates/:id/download", handlers.DownloadCertificatePDF)
+
+	// Course Ratings
+	api.GET("/courses/:courseId/ratings", handlers.GetCourseRatings)
+	api.GET("/courses/:courseId/ratings/stats", handlers.GetCourseRatingStats)
+	api.GET("/courses/:courseId/my-rating", handlers.GetMyRating)
+	api.POST("/courses/:courseId/ratings", handlers.CreateCourseRating)
+	api.PUT("/courses/:courseId/ratings", handlers.UpdateCourseRating)
+	api.DELETE("/courses/:courseId/ratings", handlers.DeleteCourseRating)
+	
+	// Admin Routes (requires admin role)
+	admin := e.Group("/api/admin")
+	admin.Use(customMiddleware.JWTMiddleware())
+	admin.Use(customMiddleware.RequireAdmin())
+	
+	// Admin Dashboard
+	admin.GET("/dashboard", handlers.GetAdminDashboard)
+	admin.GET("/dashboard/charts", handlers.GetDashboardChartData)
+	
+	// Admin User Management
+	admin.GET("/users", handlers.ListUsers)
+	admin.POST("/users", handlers.CreateUser)
+	admin.GET("/users/:id", handlers.GetUser)
+	admin.PUT("/users/:id", handlers.UpdateUser)
+	admin.DELETE("/users/:id", handlers.DeleteUser)
+	
+	// Admin Course Management
+	admin.GET("/courses", handlers.AdminListCourses)
+	admin.POST("/courses", handlers.CreateCourse)
+	admin.PUT("/courses/:id", handlers.UpdateCourse)
+	admin.DELETE("/courses/:id", handlers.DeleteCourse)
+	admin.PUT("/courses/:id/publish", handlers.PublishCourse)
+	
+	// Admin Lesson Management
+	admin.POST("/courses/:courseId/lessons", handlers.CreateLesson)
+	admin.GET("/courses/:courseId/lessons/tree", handlers.GetLessonTree)
+	admin.PUT("/lessons/:id", handlers.UpdateLesson)
+	admin.PUT("/lessons/:id/move", handlers.MoveLesson)
+	admin.DELETE("/lessons/:id", handlers.DeleteLesson)
+	admin.PUT("/courses/:courseId/lessons/reorder", handlers.ReorderLessons)
+
+	
+	// Admin Transactions
+	admin.GET("/transactions", handlers.ListTransactions)
+	admin.GET("/transactions/:id", handlers.GetTransaction)
+	admin.PUT("/transactions/:id/status", handlers.UpdateTransactionStatus)
+
+	// Admin Categories
+	admin.GET("/categories", handlers.ListCategories)
+	admin.GET("/categories/:id", handlers.GetCategory)
+	admin.POST("/categories", handlers.CreateCategory)
+	admin.PUT("/categories/:id", handlers.UpdateCategory)
+	admin.DELETE("/categories/:id", handlers.DeleteCategory)
+
+	// Admin Instructors
+	admin.GET("/instructors", handlers.ListInstructors)
+	admin.GET("/instructors/:id", handlers.GetInstructor)
+	admin.POST("/instructors", handlers.CreateInstructor)
+	admin.PUT("/instructors/:id", handlers.UpdateInstructor)
+	admin.DELETE("/instructors/:id", handlers.DeleteInstructor)
+
+	// Admin Settings
+	admin.GET("/settings", handlers.GetSettings)
+	admin.PUT("/settings", handlers.UpdateSettings)
+
+	// Admin File Upload
+	admin.POST("/upload", handlers.UploadFile)
+
+	// Admin Rating Management
+	admin.GET("/ratings", handlers.AdminGetAllRatings)
+	admin.GET("/ratings/stats", handlers.AdminGetRatingStats)
+	admin.GET("/courses/:courseId/ratings", handlers.AdminGetCourseRatings)
+	admin.DELETE("/ratings/:id", handlers.AdminDeleteRating)
+
+	// Admin Quiz Management
+	admin.POST("/lessons/:lessonId/quiz", handlers.CreateQuiz)
+	admin.GET("/lessons/:lessonId/quiz", handlers.GetQuiz)
+	admin.GET("/quizzes/:id", handlers.GetQuiz)
+	admin.PUT("/quizzes/:id", handlers.UpdateQuiz)
+	admin.DELETE("/quizzes/:id", handlers.DeleteQuiz)
+	admin.POST("/quizzes/:quizId/questions", handlers.CreateQuestion)
+	admin.PUT("/questions/:id", handlers.UpdateQuestion)
+	admin.DELETE("/questions/:id", handlers.DeleteQuestion)
+	admin.PUT("/quizzes/:quizId/questions/reorder", handlers.ReorderQuestions)
+
+	// Admin Course Review Management (for instructor workflow)
+	admin.GET("/reviews", handlers.AdminListPendingReviews)
+	admin.GET("/reviews/stats", handlers.AdminReviewStats)
+	admin.GET("/reviews/:id", handlers.AdminReviewCourseDetail)
+	admin.POST("/reviews/:id/approve", handlers.AdminApproveCourse)
+	admin.POST("/reviews/:id/reject", handlers.AdminRejectCourse)
+	admin.POST("/reviews/:id/publish", handlers.AdminPublishCourse)
+	admin.POST("/reviews/:id/unpublish", handlers.AdminUnpublishCourse)
+
+	// ========================================
+	// INSTRUCTOR ROUTES
+	// ========================================
+	instructor := e.Group("/api/instructor")
+	instructor.Use(customMiddleware.JWTMiddleware())
+	instructor.Use(customMiddleware.RequireInstructor())
+
+	// Instructor Dashboard
+	instructor.GET("/dashboard", handlers.InstructorDashboard)
+
+	// Instructor Course Management
+	instructor.GET("/courses", handlers.InstructorListCourses)
+	instructor.POST("/courses", handlers.InstructorCreateCourse)
+	instructor.GET("/courses/:id", handlers.InstructorGetCourse)
+	instructor.PUT("/courses/:id", handlers.InstructorUpdateCourse)
+	instructor.DELETE("/courses/:id", handlers.InstructorDeleteCourse)
+	instructor.POST("/courses/:id/submit", handlers.InstructorSubmitCourse)
+
+	// Instructor Lesson Management
+	instructor.GET("/courses/:courseId/lessons", handlers.InstructorGetLessonTree)
+	instructor.GET("/courses/:courseId/lessons/tree", handlers.InstructorGetLessonTree) // alias for tree endpoint
+	instructor.POST("/courses/:courseId/lessons", handlers.InstructorCreateLesson)
+	instructor.PUT("/lessons/:id", handlers.InstructorUpdateLesson)
+	instructor.DELETE("/lessons/:id", handlers.InstructorDeleteLesson)
+
+	// Instructor Quiz Management
+	instructor.POST("/lessons/:lessonId/quiz", handlers.InstructorCreateQuiz)
+	instructor.GET("/lessons/:lessonId/quiz", handlers.InstructorGetQuiz)
+	instructor.PUT("/quizzes/:id", handlers.InstructorUpdateQuiz)
+	instructor.DELETE("/quizzes/:id", handlers.InstructorDeleteQuiz)
+	instructor.POST("/quizzes/:quizId/questions", handlers.InstructorAddQuestion)
+	instructor.PUT("/questions/:id", handlers.InstructorUpdateQuestion)
+	instructor.DELETE("/questions/:id", handlers.InstructorDeleteQuestion)
+
+	// Instructor Analytics
+	instructor.GET("/courses/:id/students", handlers.InstructorCourseStudents)
+	instructor.GET("/courses/:id/ratings", handlers.InstructorCourseRatings)
+
+	// Instructor Notifications
+	instructor.GET("/notifications", handlers.InstructorNotifications)
+	instructor.PUT("/notifications/:id/read", handlers.MarkNotificationRead)
+
+	// Instructor Categories (read-only)
+	instructor.GET("/categories", handlers.ListCategories)
+
+	// Instructor File Upload
+	instructor.POST("/upload", handlers.UploadFile)
+
+	// Student Quiz Routes (protected)
+	api.GET("/lessons/:lessonId/quiz", handlers.GetQuizForStudent)
+	api.POST("/quizzes/:quizId/start", handlers.StartQuizAttempt)
+	api.POST("/attempts/:attemptId/submit", handlers.SubmitQuizAttempt)
+	api.GET("/attempts/:attemptId/result", handlers.GetQuizAttemptResult)
+	api.GET("/quizzes/:quizId/status", handlers.GetQuizStatus)
+	api.GET("/quizzes/:quizId/attempts", handlers.GetUserQuizAttempts)
+
+	// Static file serving for uploads
+	e.Static("/uploads", "./uploads")
+
+	return e
+}
+
