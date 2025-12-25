@@ -225,7 +225,7 @@ func findOrCreateGoogleUser(googleUser *GoogleUserInfo) (*models.User, error) {
 	}
 	
 	insertQuery := `INSERT INTO users (email, full_name, google_id, auth_provider, role) 
-	                VALUES ($1, $2, $3, 'google', 'parent') 
+	                VALUES ($1, $2, $3, 'google', 'student') 
 	                RETURNING id, email, full_name, role, auth_provider, created_at`
 	err = db.DB.QueryRow(insertQuery, googleUser.Email, fullName, googleUser.ID).Scan(
 		&user.ID, &user.Email, &user.FullName, &user.Role, &authProvider, &user.CreatedAt)
