@@ -180,8 +180,8 @@
           </div>
         </div>
         <div class="flex items-center gap-3">
-          <!-- Dark Mode Toggle -->
-          <DarkModeToggle />
+          <!-- Dark Mode Toggle (disabled) -->
+          <!-- <DarkModeToggle /> -->
           <!-- Notification Dropdown -->
           <NotificationDropdown />
           <!-- User Profile Dropdown -->
