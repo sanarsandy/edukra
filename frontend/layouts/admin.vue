@@ -330,6 +330,7 @@ const token = useCookie('token')
 const userCookie = useCookie('user')
 const api = useApi()
 
+
 const mobileMenuOpen = ref(false)
 const sidebarCollapsed = ref(false)
 const userDropdownOpen = ref(false)

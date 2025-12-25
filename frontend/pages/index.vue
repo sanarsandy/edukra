@@ -54,19 +54,19 @@
 
             <!-- Constellation Network Canvas (Top Right) REMOVED -->
 
-            <div class="inline-flex items-center px-4 py-2 bg-success-50 rounded-full mb-6">
-              <span class="w-2 h-2 bg-success-400 rounded-full mr-2"></span>
+            <div class="inline-flex items-center px-4 py-2 bg-success-50 rounded-full mb-6 animate-fade-in">
+              <span class="w-2 h-2 bg-success-400 rounded-full mr-2 animate-pulse"></span>
               <span class="text-sm font-medium text-success-600">The Engine of Learning</span>
             </div>
             
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6 text-neutral-900">
-              <span class="text-accent-400">Menggerakkan Potensi,</span>
-              <span class="text-success-400">Membangun Generasi</span>
+            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold leading-snug mb-6 animate-fade-in">
+              <div class="text-secondary-600 whitespace-nowrap">Belajar Tanpa Batas,</div>
+              <div class="text-accent-600 whitespace-nowrap">Berkembang Tanpa Henti</div>
             </h1>
             
-            <p class="text-lg md:text-xl text-neutral-600 mb-8 max-w-xl">
-              EDUKRA adalah pusat energi pendidikan Anda. Akses ribuan kursus berkualitas dan 
-              tingkatkan skill bersama instruktur terbaik.
+            <p class="text-lg md:text-xl text-neutral-600 mb-8 max-w-xl leading-relaxed">
+              EDUKRA adalah pusat energi pendidikan Anda. Akses <span class="font-semibold text-neutral-900">ribuan kursus berkualitas</span> dan 
+              tingkatkan skill bersama <span class="font-semibold text-neutral-900">instruktur terbaik</span> di Indonesia.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 mb-12">
@@ -106,10 +106,10 @@
           <!-- Hero Card -->
           <div class="relative animate-slide-up">
             <div class="card-hover p-8 relative overflow-hidden min-h-[300px] flex flex-col justify-center">
-              <div v-if="pending" class="flex justify-center items-center h-48">
+              <div v-if="pendingHero" class="flex justify-center items-center h-48">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
               </div>
-              <div v-else-if="error" class="text-center text-red-500">
+              <div v-else-if="errorHero" class="text-center text-red-500">
                 <p>Gagal memuat data kursus.</p>
               </div>
               <Transition v-else name="fade" mode="out-in">
@@ -173,6 +173,183 @@
                 <span class="text-sm font-medium text-neutral-700">+2.5K bergabung</span>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Popular Courses Section -->
+    <section id="courses" class="section-padding bg-white">
+      <div class="container-custom">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="badge-primary mb-4">Kursus Populer</span>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Mulai Dari Kursus Terlaris
+          </h2>
+          <p class="text-lg text-neutral-600">
+            Pilih dari ratusan kursus berkualitas tinggi yang dirancang oleh instruktur berpengalaman.
+          </p>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loadingCourses" class="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div class="bg-white rounded-xl h-96 animate-pulse bg-neutral-100"></div>
+          <div class="bg-white rounded-xl h-96 animate-pulse bg-neutral-100"></div>
+          <div class="bg-white rounded-xl h-96 animate-pulse bg-neutral-100"></div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div v-else-if="popularCourses && popularCourses.length > 0" class="grid md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+          <div 
+            v-for="course in popularCourses.slice(0, 6)" 
+            :key="course.id" 
+            class="bg-white rounded-xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-all duration-300 group cursor-pointer"
+            @click="$router.push(`/dashboard/courses/${course.id}`)"
+          >
+            <div class="h-48 relative overflow-hidden bg-gradient-to-br from-primary-50 to-accent-50">
+              <img 
+                v-if="course.thumbnail_url" 
+                :src="course.thumbnail_url" 
+                :alt="course.title"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div v-else class="w-full h-full flex items-center justify-center">
+                <svg class="w-20 h-20 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+              </div>
+              
+              <div class="absolute top-3 left-3" v-if="course.category">
+                <span class="px-3 py-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium rounded-lg">
+                  {{ course.category.name }}
+                </span>
+              </div>
+              <div v-if="course.is_featured" class="absolute top-3 right-3">
+                <span class="px-3 py-1 bg-warm-500 text-white text-xs font-medium rounded-lg shadow-lg">
+                  ⭐ Featured
+                </span>
+              </div>
+            </div>
+            
+            <div class="p-5">
+              <h3 class="font-semibold text-lg text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
+                {{ course.title }}
+              </h3>
+              <p class="text-sm text-neutral-500 mb-4">
+                {{ course.instructor?.full_name || 'Instructor' }}
+              </p>
+              
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center space-x-2">
+                  <div class="flex items-center">
+                    <svg v-for="i in 5" :key="i" class="w-4 h-4" 
+                      :class="i <= 4 ? 'text-warm-400 fill-current' : 'text-neutral-200 fill-current'" 
+                      viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                    </svg>
+                  </div>
+                  <span class="text-sm text-neutral-700 font-medium">4.8</span>
+                  <span class="text-sm text-neutral-500">(128)</span>
+                </div>
+                <span class="text-sm text-neutral-500">{{ course.lessons?.length || 0 }} Modul</span>
+              </div>
+              
+              <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
+                <div>
+                  <span class="text-xl font-bold text-neutral-900">
+                    {{ course.price === 0 ? 'Gratis' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR', minimumFractionDigits: 0 }).format(course.price) }}
+                  </span>
+                </div>
+                <button class="px-4 py-2 text-sm font-semibold text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
+                  Lihat Detail
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="text-center py-16">
+          <svg class="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+          <p class="text-neutral-500">Kursus akan segera tersedia</p>
+        </div>
+
+        <!-- View All Button -->
+        <div v-if="popularCourses && popularCourses.length > 0" class="text-center mt-8">
+          <NuxtLink to="/dashboard/explore" class="inline-flex items-center px-6 py-3 text-sm font-semibold text-primary-600 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors">
+            Lihat Semua Kursus
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section-padding bg-gradient-to-b from-neutral-50 to-white">
+      <div class="container-custom">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+          <span class="badge-success mb-4">Cara Kerja</span>
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">
+            Mulai Belajar dalam 3 Langkah Mudah
+          </h2>
+          <p class="text-lg text-neutral-600">
+            Proses sederhana untuk memulai perjalanan belajar Anda
+          </p>
+        </div>
+        
+        <div class="grid md:grid-cols-3 gap-8 lg:gap-12">
+          <!-- Step 1 -->
+          <div class="text-center relative">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-primary-100 rounded-2xl mb-6 relative z-10">
+              <div class="absolute -top-2 -right-2 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                1
+              </div>
+              <svg class="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3 text-neutral-900">Daftar Akun</h3>
+            <p class="text-neutral-600">
+              Buat akun gratis dalam hitungan detik. Tidak perlu kartu kredit untuk memulai.
+            </p>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="text-center relative">
+            <div class="absolute top-10 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary-200 via-primary-300 to-transparent hidden md:block"></div>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-accent-100 rounded-2xl mb-6 relative z-10">
+              <div class="absolute -top-2 -right-2 w-8 h-8 bg-accent-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                2
+              </div>
+              <svg class="w-10 h-10 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3 text-neutral-900">Pilih Kursus</h3>
+            <p class="text-neutral-600">
+              Jelajahi katalog kursus kami dan pilih yang sesuai dengan minat dan tujuan Anda.
+            </p>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="text-center relative">
+            <div class="absolute top-10 right-1/2 w-full h-0.5 bg-gradient-to-l from-success-200 via-success-300 to-transparent hidden md:block"></div>
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-success-100 rounded-2xl mb-6 relative z-10">
+              <div class="absolute -top-2 -right-2 w-8 h-8 bg-success-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                3
+              </div>
+              <svg class="w-10 h-10 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3 text-neutral-900">Mulai Belajar</h3>
+            <p class="text-neutral-600">
+              Mulai belajar dengan materi berkualitas tinggi dan dapatkan sertifikat setelah selesai.
+            </p>
           </div>
         </div>
       </div>
@@ -266,57 +443,77 @@
         </div>
         
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Testimonials -->
-          <div class="card-hover">
-            <div class="flex items-center space-x-1 mb-4">
-              <template v-for="i in 5" :key="i">
-                <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                </svg>
-              </template>
-            </div>
-            <p class="text-neutral-600 mb-6">"Platform ini benar-benar mengubah cara saya belajar. Materi yang terstruktur dan kualitas video yang sangat baik!"</p>
-            <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center text-white font-semibold">BP</div>
-              <div>
-                <p class="font-semibold text-neutral-900">B. Pandega</p>
-                <p class="text-sm text-neutral-500">Software Developer</p>
+          <!-- Testimonial 1 -->
+          <div class="card-hover group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-primary-100 rounded-full -mr-16 -mt-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
+            <div class="relative">
+              <div class="flex items-center space-x-1 mb-4">
+                <template v-for="i in 5" :key="i">
+                  <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                </template>
+              </div>
+              <p class="text-neutral-700 mb-6 leading-relaxed">
+                "Platform ini benar-benar mengubah cara saya belajar. Materi yang terstruktur dan kualitas video yang sangat baik membuat proses belajar menjadi lebih menyenangkan!"
+              </p>
+              <div class="flex items-center space-x-4 pt-4 border-t border-neutral-100">
+                <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">BP</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-900">B. Pandega</p>
+                  <p class="text-sm text-neutral-500">Software Developer</p>
+                  <p class="text-xs text-neutral-400 mt-1">3 kursus selesai</p>
+                </div>
               </div>
             </div>
           </div>
           
-          <div class="card-hover">
-            <div class="flex items-center space-x-1 mb-4">
-              <template v-for="i in 5" :key="i">
-                <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                </svg>
-              </template>
-            </div>
-            <p class="text-neutral-600 mb-6">"Sertifikatnya diakui perusahaan tempat saya bekerja. Investasi terbaik untuk karir saya!"</p>
-            <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-accent-500 rounded-full flex items-center justify-center text-white font-semibold">IH</div>
-              <div>
-                <p class="font-semibold text-neutral-900">Indra Hura</p>
-                <p class="text-sm text-neutral-500">System Analyst</p>
+          <!-- Testimonial 2 -->
+          <div class="card-hover group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-accent-100 rounded-full -mr-16 -mt-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
+            <div class="relative">
+              <div class="flex items-center space-x-1 mb-4">
+                <template v-for="i in 5" :key="i">
+                  <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                </template>
+              </div>
+              <p class="text-neutral-700 mb-6 leading-relaxed">
+                "Sertifikatnya diakui perusahaan tempat saya bekerja. Investasi terbaik untuk karir saya! Dalam 6 bulan saya berhasil naik jabatan."
+              </p>
+              <div class="flex items-center space-x-4 pt-4 border-t border-neutral-100">
+                <div class="w-14 h-14 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">IH</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-900">Indra Hura</p>
+                  <p class="text-sm text-neutral-500">System Analyst</p>
+                  <p class="text-xs text-neutral-400 mt-1">5 kursus selesai</p>
+                </div>
               </div>
             </div>
           </div>
           
-          <div class="card-hover">
-            <div class="flex items-center space-x-1 mb-4">
-              <template v-for="i in 5" :key="i">
-                <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                </svg>
-              </template>
-            </div>
-            <p class="text-neutral-600 mb-6">"Dari nol sampai bisa landing job sebagai developer. Semua berkat kursus di platform ini."</p>
-            <div class="flex items-center space-x-4">
-              <div class="w-12 h-12 bg-warm-500 rounded-full flex items-center justify-center text-white font-semibold">SW</div>
-              <div>
-                <p class="font-semibold text-neutral-900">Sugeng Widodo</p>
-                <p class="text-sm text-neutral-500">Full Stack Developer</p>
+          <!-- Testimonial 3 -->
+          <div class="card-hover group relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-success-100 rounded-full -mr-16 -mt-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
+            <div class="relative">
+              <div class="flex items-center space-x-1 mb-4">
+                <template v-for="i in 5" :key="i">
+                  <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                  </svg>
+                </template>
+              </div>
+              <p class="text-neutral-700 mb-6 leading-relaxed">
+                "Dari nol sampai bisa landing job sebagai developer. Semua berkat kursus di platform ini. Sekarang saya bekerja di startup teknologi terkemuka!"
+              </p>
+              <div class="flex items-center space-x-4 pt-4 border-t border-neutral-100">
+                <div class="w-14 h-14 bg-gradient-to-br from-success-500 to-success-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">SW</div>
+                <div class="flex-1">
+                  <p class="font-semibold text-neutral-900">Sugeng Widodo</p>
+                  <p class="text-sm text-neutral-500">Full Stack Developer</p>
+                  <p class="text-xs text-neutral-400 mt-1">8 kursus selesai</p>
+                </div>
               </div>
             </div>
           </div>
@@ -325,21 +522,52 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="section-padding bg-primary-600">
-      <div class="container-custom text-center">
-        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
-          Siap Untuk Memulai Perjalanan Belajar Anda?
+    <section class="section-padding bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 relative overflow-hidden">
+      <!-- Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <div class="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+        <div class="absolute bottom-20 right-20 w-96 h-96 bg-white rounded-full blur-3xl"></div>
+      </div>
+      
+      <div class="container-custom text-center relative z-10">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+          Siap Memulai Perjalanan Belajar Anda?
         </h2>
-        <p class="text-lg text-primary-200 mb-8 max-w-2xl mx-auto">
-          Bergabung dengan ribuan siswa yang sudah mengembangkan skill mereka bersama kami.
+        <p class="text-lg md:text-xl text-primary-100 mb-10 max-w-2xl mx-auto leading-relaxed">
+          Bergabung dengan <span class="font-semibold text-white">10,000+ siswa</span> yang sudah mengembangkan skill mereka dan mencapai tujuan karir bersama kami.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <NuxtLink to="/register" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-primary-600 bg-white rounded-xl hover:bg-neutral-50 transition-colors">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <NuxtLink to="/register" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-primary-600 bg-white rounded-xl hover:bg-neutral-50 hover:scale-105 transition-all shadow-xl">
             Daftar Sekarang - Gratis
+            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
           </NuxtLink>
-          <NuxtLink to="/register" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white border-2 border-white/30 rounded-xl hover:bg-white/10 transition-colors">
+          <NuxtLink to="/dashboard/explore" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white border-2 border-white/40 rounded-xl hover:bg-white/10 hover:border-white/60 transition-all backdrop-blur-sm">
             Lihat Semua Kursus
           </NuxtLink>
+        </div>
+        
+        <!-- Trust Indicators -->
+        <div class="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8 border-t border-white/20">
+          <div class="flex items-center space-x-2 text-white/80">
+            <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm">Tidak Perlu Kartu Kredit</span>
+          </div>
+          <div class="flex items-center space-x-2 text-white/80">
+            <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm">Akses Selamanya</span>
+          </div>
+          <div class="flex items-center space-x-2 text-white/80">
+            <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span class="text-sm">Sertifikat Diakui</span>
+          </div>
         </div>
       </div>
     </section>
@@ -421,11 +649,11 @@ useHead({
   ]
 })
 
-// Featured Courses Carousel
+const config = useRuntimeConfig()
+
+// Featured Courses Carousel (for hero section)
 const currentCourseIndex = ref(0)
 let carouselInterval: any = null
-
-const config = useRuntimeConfig()
 
 // Icon Styles for cycling
 const iconStyles = [
@@ -451,25 +679,28 @@ const iconStyles = [
   }
 ]
 
-// Fetch Courses from API (Client-side only to avoid SSR issues)
-const { data: coursesData, pending, error } = useFetch('/api/courses', {
+// Fetch Featured Courses for Hero Section (Client-side only to avoid SSR issues)
+const { data: coursesData, pending: pendingHero, error: errorHero } = useFetch('/api/courses', {
   baseURL: config.public.apiBase,
   query: { limit: 5 },
   server: false,
   lazy: true
 })
 
-// Log for debugging
-watchEffect(() => {
-  if (error.value) {
-    console.error('API Error:', error.value)
-  }
-  if (coursesData.value) {
-    console.log('API Data:', coursesData.value)
-  }
+// Fetch Popular Courses for Courses Section
+const { data: popularCoursesData, pending: loadingCourses, error: errorCourses } = useFetch('/api/courses', {
+  baseURL: config.public.apiBase,
+  query: { limit: 6 },
+  server: false,
+  lazy: true
 })
 
-// Map API data to UI format
+// Popular courses for the courses section
+const popularCourses = computed(() => {
+  return popularCoursesData.value?.courses || []
+})
+
+// Map API data to UI format for hero featured courses
 const featuredCourses = computed(() => {
   const courses = coursesData.value?.courses || []
   
@@ -493,7 +724,6 @@ const featuredCourses = computed(() => {
     }
   })
 })
-
 
 onMounted(() => {
   carouselInterval = setInterval(() => {
