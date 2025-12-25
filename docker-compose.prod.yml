@@ -13,7 +13,7 @@ services:
     networks:
       - edukra-network
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:5435:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-edukra_user} -d ${DB_NAME:-edukra_db}"]
       interval: 10s
@@ -23,11 +23,11 @@ services:
   api:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: edukra-api-prod
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8085:8080"
+      - "127.0.0.1:8088:8080"
     environment:
       DB_HOST: ${DB_HOST:-db}
       DB_USER: ${DB_USER:-edukra_user}
@@ -53,11 +53,11 @@ services:
   app:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: edukra-app-prod
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:3003:3000"
     environment:
       NODE_ENV: production
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8080}
