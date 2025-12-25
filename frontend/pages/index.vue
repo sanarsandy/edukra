@@ -65,8 +65,8 @@
             </h1>
             
             <p class="text-lg md:text-xl text-neutral-600 mb-8 max-w-xl leading-relaxed">
-              EDUKRA adalah pusat energi pendidikan Anda. Akses <span class="font-semibold text-neutral-900">ribuan kursus berkualitas</span> dan 
-              tingkatkan skill bersama <span class="font-semibold text-neutral-900">instruktur terbaik</span> di Indonesia.
+              EDUKRA platform pembelajaran Anda. Akses <span class="font-semibold text-neutral-900">ribuan kursus berkualitas</span> dan 
+              tingkatkan skill bersama <span class="font-semibold text-neutral-900">pengajar terbaik</span> di Indonesia.
             </p>
             
             <div class="flex flex-col sm:flex-row gap-4 mb-12">
@@ -320,7 +320,7 @@
 
           <!-- Step 2 -->
           <div class="text-center relative">
-            <div class="absolute top-10 left-1/2 w-full h-0.5 bg-gradient-to-r from-primary-200 via-primary-300 to-transparent hidden md:block"></div>
+            <div class="absolute top-10 left-1/2 w-full h-0.5 bg-gradient-to-r from-success-200 via-success-300 to-transparent hidden md:block"></div>
             <div class="inline-flex items-center justify-center w-20 h-20 bg-accent-100 rounded-2xl mb-6 relative z-10">
               <div class="absolute -top-2 -right-2 w-8 h-8 bg-accent-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                 2
