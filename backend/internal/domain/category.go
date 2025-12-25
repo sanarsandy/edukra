@@ -10,6 +10,7 @@ type Category struct {
 	Slug        string    `json:"slug" db:"slug"`
 	Description string    `json:"description" db:"description"`
 	Icon        string    `json:"icon" db:"icon"`
+	Color       string    `json:"color" db:"color"`
 	CourseCount int       `json:"course_count" db:"course_count"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`

@@ -76,6 +76,7 @@ func CreateCategory(c echo.Context) error {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		Icon        string `json:"icon"`
+		Color       string `json:"color"`
 	}
 	
 	if err := c.Bind(&req); err != nil {
@@ -90,6 +91,7 @@ func CreateCategory(c echo.Context) error {
 		Name:        req.Name,
 		Description: req.Description,
 		Icon:        req.Icon,
+		Color:       req.Color,
 	}
 	
 	err := categoryRepo.Create(category)
@@ -118,6 +120,7 @@ func UpdateCategory(c echo.Context) error {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 		Icon        string `json:"icon"`
+		Color       string `json:"color"`
 	}
 	
 	if err := c.Bind(&req); err != nil {
@@ -132,6 +135,9 @@ func UpdateCategory(c echo.Context) error {
 	}
 	if req.Icon != "" {
 		category.Icon = req.Icon
+	}
+	if req.Color != "" {
+		category.Color = req.Color
 	}
 	
 	err = categoryRepo.Update(category)

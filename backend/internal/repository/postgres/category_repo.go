@@ -26,7 +26,7 @@ func (r *CategoryRepository) List(tenantID string, limit, offset int) ([]*domain
 	
 	if tenantID == "" || tenantID == "default" {
 		query = `
-			SELECT id, tenant_id, name, slug, description, icon, course_count, created_at, updated_at
+			SELECT id, tenant_id, name, slug, description, icon, color, course_count, created_at, updated_at
 			FROM categories 
 			WHERE tenant_id IS NULL
 			ORDER BY name ASC
@@ -35,7 +35,7 @@ func (r *CategoryRepository) List(tenantID string, limit, offset int) ([]*domain
 		args = []interface{}{limit, offset}
 	} else {
 		query = `
-			SELECT id, tenant_id, name, slug, description, icon, course_count, created_at, updated_at
+			SELECT id, tenant_id, name, slug, description, icon, color, course_count, created_at, updated_at
 			FROM categories 
 			WHERE tenant_id = $1 OR tenant_id IS NULL
 			ORDER BY name ASC
@@ -53,10 +53,10 @@ func (r *CategoryRepository) List(tenantID string, limit, offset int) ([]*domain
 	var categories []*domain.Category
 	for rows.Next() {
 		var cat domain.Category
-		var tid, desc, icon sql.NullString
+		var tid, desc, icon, color sql.NullString
 		
 		err := rows.Scan(
-			&cat.ID, &tid, &cat.Name, &cat.Slug, &desc, &icon,
+			&cat.ID, &tid, &cat.Name, &cat.Slug, &desc, &icon, &color,
 			&cat.CourseCount, &cat.CreatedAt, &cat.UpdatedAt,
 		)
 		if err != nil {
@@ -72,6 +72,9 @@ func (r *CategoryRepository) List(tenantID string, limit, offset int) ([]*domain
 		if icon.Valid {
 			cat.Icon = icon.String
 		}
+		if color.Valid {
+			cat.Color = color.String
+		}
 		
 		categories = append(categories, &cat)
 	}
@@ -82,15 +85,15 @@ func (r *CategoryRepository) List(tenantID string, limit, offset int) ([]*domain
 // GetByID retrieves a category by ID
 func (r *CategoryRepository) GetByID(id string) (*domain.Category, error) {
 	query := `
-		SELECT id, tenant_id, name, slug, description, icon, course_count, created_at, updated_at
+		SELECT id, tenant_id, name, slug, description, icon, color, course_count, created_at, updated_at
 		FROM categories WHERE id = $1
 	`
 	
 	var cat domain.Category
-	var tid, desc, icon sql.NullString
+	var tid, desc, icon, color sql.NullString
 	
 	err := r.db.QueryRow(query, id).Scan(
-		&cat.ID, &tid, &cat.Name, &cat.Slug, &desc, &icon,
+		&cat.ID, &tid, &cat.Name, &cat.Slug, &desc, &icon, &color,
 		&cat.CourseCount, &cat.CreatedAt, &cat.UpdatedAt,
 	)
 	
@@ -110,6 +113,9 @@ func (r *CategoryRepository) GetByID(id string) (*domain.Category, error) {
 	if icon.Valid {
 		cat.Icon = icon.String
 	}
+	if color.Valid {
+		cat.Color = color.String
+	}
 	
 	return &cat, nil
 }
@@ -117,8 +123,8 @@ func (r *CategoryRepository) GetByID(id string) (*domain.Category, error) {
 // Create inserts a new category
 func (r *CategoryRepository) Create(cat *domain.Category) error {
 	query := `
-		INSERT INTO categories (tenant_id, name, slug, description, icon, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO categories (tenant_id, name, slug, description, icon, color, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 	`
 	
@@ -132,7 +138,7 @@ func (r *CategoryRepository) Create(cat *domain.Category) error {
 	}
 	
 	return r.db.QueryRow(query,
-		cat.TenantID, cat.Name, cat.Slug, cat.Description, cat.Icon,
+		cat.TenantID, cat.Name, cat.Slug, cat.Description, cat.Icon, cat.Color,
 		cat.CreatedAt, cat.UpdatedAt,
 	).Scan(&cat.ID)
 }
@@ -141,8 +147,8 @@ func (r *CategoryRepository) Create(cat *domain.Category) error {
 func (r *CategoryRepository) Update(cat *domain.Category) error {
 	query := `
 		UPDATE categories 
-		SET name = $1, slug = $2, description = $3, icon = $4, updated_at = $5
-		WHERE id = $6
+		SET name = $1, slug = $2, description = $3, icon = $4, color = $5, updated_at = $6
+		WHERE id = $7
 	`
 	
 	cat.UpdatedAt = time.Now()
@@ -151,7 +157,7 @@ func (r *CategoryRepository) Update(cat *domain.Category) error {
 		cat.Slug = strings.ToLower(strings.ReplaceAll(cat.Name, " ", "-"))
 	}
 	
-	_, err := r.db.Exec(query, cat.Name, cat.Slug, cat.Description, cat.Icon, cat.UpdatedAt, cat.ID)
+	_, err := r.db.Exec(query, cat.Name, cat.Slug, cat.Description, cat.Icon, cat.Color, cat.UpdatedAt, cat.ID)
 	return err
 }
 

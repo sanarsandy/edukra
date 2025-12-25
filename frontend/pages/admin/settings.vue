@@ -93,12 +93,32 @@
           <div class="mb-6">
             <label class="block text-sm font-medium text-neutral-700 mb-3">Logo</label>
             <div class="flex items-center gap-4">
-              <div class="w-20 h-20 bg-neutral-100 rounded-xl flex items-center justify-center">
-                <span class="text-2xl font-bold text-neutral-400">L</span>
+              <div class="w-20 h-20 bg-neutral-100 rounded-xl flex items-center justify-center overflow-hidden">
+                <img 
+                  v-if="form.logo_url" 
+                  :src="getLogoUrl(form.logo_url)" 
+                  alt="Logo" 
+                  class="w-full h-full object-contain"
+                />
+                <span v-else class="text-2xl font-bold text-neutral-400">L</span>
               </div>
               <div>
-                <button class="text-sm text-admin-600 font-medium hover:text-admin-700">Ubah Logo</button>
-                <p class="text-xs text-neutral-500 mt-1">PNG, SVG. Maksimal 1MB</p>
+                <input 
+                  ref="logoInput"
+                  type="file" 
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  class="hidden"
+                  @change="uploadLogo"
+                />
+                <button 
+                  type="button"
+                  @click="($refs.logoInput as HTMLInputElement)?.click()"
+                  :disabled="uploadingLogo"
+                  class="text-sm text-admin-600 font-medium hover:text-admin-700 disabled:opacity-50"
+                >
+                  {{ uploadingLogo ? 'Mengupload...' : 'Ubah Logo' }}
+                </button>
+                <p class="text-xs text-neutral-500 mt-1">PNG, JPG, WebP. Maksimal 10MB</p>
               </div>
             </div>
           </div>
@@ -447,9 +467,61 @@ const form = ref({
   site_description: '',
   contact_email: '',
   theme: 'default',
+  logo_url: '',
   require2FA: false,
   sessionTimeout: 30
 })
+
+// Logo upload state
+const uploadingLogo = ref(false)
+const logoInput = ref<HTMLInputElement | null>(null)
+
+// Get full logo URL
+const getLogoUrl = (url: string) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  const config = useRuntimeConfig()
+  return `${config.public.apiBase}${url}`
+}
+
+// Upload logo function
+const uploadLogo = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  
+  uploadingLogo.value = true
+  
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    
+    const response = await $fetch<{ url: string }>(`${config.public.apiBase}/api/admin/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token.value}`
+      }
+    })
+    
+    if (response?.url) {
+      form.value.logo_url = response.url
+      // Save logo_url to settings immediately
+      await updateSettings({ logo_url: response.url })
+      showToast('Logo berhasil diupload')
+    }
+  } catch (err: any) {
+    console.error('Upload error:', err)
+    showToast('Gagal mengupload logo', 'error')
+  } finally {
+    uploadingLogo.value = false
+    // Reset input
+    if (input) input.value = ''
+  }
+}
 
 const primaryColors = [
   { value: 'blue', class: 'bg-primary-600' },
@@ -572,6 +644,7 @@ onMounted(async () => {
     form.value.site_description = settings.value.site_description || ''
     form.value.contact_email = settings.value.contact_email || ''
     form.value.theme = settings.value.theme || 'default'
+    form.value.logo_url = settings.value.logo_url || ''
   }
   
   // Load payment config from localStorage

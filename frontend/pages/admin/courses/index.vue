@@ -90,7 +90,7 @@
                     v-if="course.thumbnail_url" 
                     class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0"
                   >
-                    <img :src="course.thumbnail_url" :alt="course.title" class="w-full h-full object-cover" />
+                    <img :src="getThumbnailUrl(course.thumbnail_url)" :alt="course.title" class="w-full h-full object-cover" />
                   </div>
                   <div v-else :class="['w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', getCourseColor(course.id)]">
                     <svg class="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -250,7 +250,7 @@
                 >
                   <template v-if="thumbnailPreview || form.thumbnail_url">
                     <img 
-                      :src="thumbnailPreview || form.thumbnail_url" 
+                      :src="thumbnailPreview || getThumbnailUrl(form.thumbnail_url)" 
                       alt="Thumbnail Preview" 
                       class="w-full h-full object-cover"
                     />
@@ -623,6 +623,14 @@ const getCourseColor = (id: string) => {
   return colors[hash % colors.length]
 }
 
+// Get full thumbnail URL
+const getThumbnailUrl = (url: string | null | undefined) => {
+  if (!url) return ''
+  if (url.startsWith('http')) return url
+  const config = useRuntimeConfig()
+  return `${config.public.apiBase}${url}`
+}
+
 const openAddModal = () => {
   isEditing.value = false
   form.value = { 
@@ -691,6 +699,36 @@ const handleToggleStatus = async (course: any) => {
 const saveCourse = async () => {
   saving.value = true
   try {
+    let thumbnailUrl = form.value.thumbnail_url || null
+    
+    // Upload thumbnail file if selected
+    if (thumbnailFile.value) {
+      const formData = new FormData()
+      formData.append('file', thumbnailFile.value)
+      
+      const config = useRuntimeConfig()
+      const token = useCookie('token')
+      
+      try {
+        const uploadResponse = await $fetch<{ url: string }>(`${config.public.apiBase}/api/admin/upload`, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'Authorization': `Bearer ${token.value}`
+          }
+        })
+        
+        if (uploadResponse?.url) {
+          thumbnailUrl = uploadResponse.url
+        }
+      } catch (uploadErr) {
+        console.error('Thumbnail upload error:', uploadErr)
+        showToast('Gagal mengupload thumbnail', 'error')
+        saving.value = false
+        return
+      }
+    }
+    
     // Convert form status to is_published boolean for API
     const courseData = {
       title: form.value.title,
@@ -701,7 +739,7 @@ const saveCourse = async () => {
       category_id: form.value.category_id,
       lessons_count: form.value.lessons,
       duration: form.value.duration,
-      thumbnail_url: form.value.thumbnail_url || null,
+      thumbnail_url: thumbnailUrl,
     }
 
     if (isEditing.value && selectedCourse.value) {
