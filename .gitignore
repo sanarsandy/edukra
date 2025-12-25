@@ -28,3 +28,9 @@ dist/
 
 # Dependencies
 node_modules/
+
+# Uploads (user uploaded files)
+backend/uploads/
+
+# Nuxt generated files
+frontend/.nuxt/
