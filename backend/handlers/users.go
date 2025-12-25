@@ -238,7 +238,8 @@ func ListUsers(c echo.Context) error {
 	
 	users, err := userRepo.ListByTenant(tenantID, limit, offset)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch users"})
+		c.Logger().Errorf("ListUsers error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch users: " + err.Error()})
 	}
 	
 	// Apply filters and enrich with enrollment count

@@ -68,7 +68,8 @@ func ListInstructors(c echo.Context) error {
 	// Get all users and filter by role
 	users, err := instructorRepo.ListByTenant(tenantID, 100, 0)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch instructors"})
+		c.Logger().Errorf("ListInstructors error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch instructors: " + err.Error()})
 	}
 	
 	// Filter instructors

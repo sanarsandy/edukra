@@ -28,12 +28,12 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 	`
 	
 	var user domain.User
-	var tenantID, avatarURL, bio, phone, googleID sql.NullString
+	var tenantID, avatarURL, bio, phone, googleID, passwordHash sql.NullString
 	
 	var metadata []byte
 	
 	err := r.db.QueryRow(query, id).Scan(
-		&user.ID, &tenantID, &user.Email, &user.PasswordHash, &user.Role,
+		&user.ID, &tenantID, &user.Email, &passwordHash, &user.Role,
 		&user.FullName, &avatarURL, &bio, &phone, &googleID, &user.AuthProvider,
 		&user.IsActive, &metadata, &user.CreatedAt, &user.UpdatedAt,
 	)
@@ -47,6 +47,9 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 	
 	if tenantID.Valid {
 		user.TenantID = &tenantID.String
+	}
+	if passwordHash.Valid {
+		user.PasswordHash = passwordHash.String
 	}
 	if avatarURL.Valid {
 		user.AvatarURL = &avatarURL.String
@@ -246,12 +249,12 @@ func (r *UserRepository) ListByTenant(tenantID string, limit, offset int) ([]*do
 	var users []*domain.User
 	for rows.Next() {
 		var user domain.User
-		var tid, avatarURL, googleID sql.NullString
+		var tid, avatarURL, googleID, passwordHash sql.NullString
 		
 		var metadata []byte
 		
 		err := rows.Scan(
-			&user.ID, &tid, &user.Email, &user.PasswordHash, &user.Role,
+			&user.ID, &tid, &user.Email, &passwordHash, &user.Role,
 			&user.FullName, &avatarURL, &googleID, &user.AuthProvider,
 			&user.IsActive, &metadata, &user.CreatedAt, &user.UpdatedAt,
 		)
@@ -261,6 +264,9 @@ func (r *UserRepository) ListByTenant(tenantID string, limit, offset int) ([]*do
 		
 		if tid.Valid {
 			user.TenantID = &tid.String
+		}
+		if passwordHash.Valid {
+			user.PasswordHash = passwordHash.String
 		}
 		if avatarURL.Valid {
 			user.AvatarURL = &avatarURL.String
