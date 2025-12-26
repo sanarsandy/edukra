@@ -626,9 +626,16 @@ const getCourseColor = (id: string) => {
 // Get full thumbnail URL
 const getThumbnailUrl = (url: string | null | undefined) => {
   if (!url) return ''
-  if (url.startsWith('http')) return url
+  // Full URL - return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Legacy /uploads path - prepend apiBase
+  if (url.startsWith('/uploads')) {
+    const config = useRuntimeConfig()
+    return `${config.public.apiBase}${url}`
+  }
+  // MinIO object key - use public images endpoint
   const config = useRuntimeConfig()
-  return `${config.public.apiBase}${url}`
+  return `${config.public.apiBase}/api/images/${url}`
 }
 
 const openAddModal = () => {

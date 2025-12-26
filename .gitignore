@@ -34,3 +34,6 @@ backend/uploads/
 
 # Nuxt generated files
 frontend/.nuxt/
+
+# MinIO local setup (use production MinIO server)
+minio/

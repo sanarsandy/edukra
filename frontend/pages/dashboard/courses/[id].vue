@@ -12,7 +12,7 @@
       <!-- Course Header -->
       <div class="bg-white rounded-xl border border-neutral-200 overflow-hidden mb-8">
         <div class="h-48 md:h-56 relative bg-primary-600">
-          <img v-if="course.thumbnail_url" :src="course.thumbnail_url" class="w-full h-full object-cover" />
+          <img v-if="course.thumbnail_url" :src="getThumbnailUrl(course.thumbnail_url)" class="w-full h-full object-cover" />
           <div v-else class="absolute inset-0 flex items-center justify-center">
             <svg class="w-24 h-24 text-white/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
@@ -138,7 +138,7 @@
               <video 
                 v-else
                 ref="videoPlayer"
-                :src="getFileUrl(selectedLesson.videoUrl)"
+                :src="secureVideoUrl || getFileUrl(selectedLesson.videoUrl)"
                 controls
                 class="w-full h-full"
                 @ended="onVideoEnded"
@@ -553,6 +553,14 @@ const config = useRuntimeConfig()
 const courseId = computed(() => route.params.id as string)
 const apiBase = config.public.apiBase || 'http://localhost:8080'
 
+// Get proper thumbnail URL - handle MinIO objects
+const getThumbnailUrl = (url: string | null | undefined): string => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) return `${apiBase}${url}`
+  return `${apiBase}/api/images/${url}`
+}
+
 const { course, fetchCourse, loading: loadingCourse } = useCourses()
 const { checkEnrollment, enrollInCourse, updateProgress, loading: loadingEnrollment } = useEnrollments()
 const { 
@@ -570,6 +578,17 @@ const {
   migrateFromLocalStorage,
   updateWatchTime 
 } = useLessonProgress()
+
+// Secure Content for MinIO
+const { 
+  getSecureVideoUrl, 
+  getSecureDocumentUrl,
+  getContentBlobUrl,
+  isMinioObject, 
+  isLegacyUpload,
+  loading: loadingSecureContent,
+  error: secureContentError
+} = useSecureContent()
 
 // Rating functionality
 const { 
@@ -755,19 +774,26 @@ const getVideoProviderColor = (url: string | null | undefined): string => {
 }
 
 // Helper to get full URL for uploaded files
+// Now supports both legacy /uploads paths and MinIO pre-signed URLs
 const getFileUrl = (path: string | null | undefined): string => {
   if (!path) return ''
-  // If it's already a full URL, return as-is
+  // If it's already a full URL (pre-signed or external), return as-is
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path
   }
-  // If it's a relative path (starts with /uploads), prepend API base
+  // If it's a legacy local path (starts with /uploads), still serve from API
+  // This maintains backward compatibility for existing content
   if (path.startsWith('/uploads')) {
     return `${apiBase}${path}`
   }
-  // Otherwise prepend /uploads and API base
-  return `${apiBase}/uploads/${path}`
+  // For MinIO objects (just object key), we need to get secure URL
+  // This will be handled by getSecureVideoUrl/getSecureDocumentUrl
+  // For now, return empty - the secure URL should be fetched separately
+  return ''
 }
+
+// State for secure video URL (fetched from MinIO)
+const secureVideoUrl = ref<string | null>(null)
 
 const isEnrolled = ref(false)
 const enrollmentData = ref<any>(null)
@@ -943,27 +969,44 @@ const handleEnroll = async () => {
 }
 
 // Video Functions
-const playVideo = () => {
+const playVideo = async () => {
   if (!isEnrolled.value) {
     showToast('Silakan daftar kursus terlebih dahulu', 'error')
     return
   }
-  showVideoPlayer.value = true
   
-  // For embed videos (YouTube, Vimeo, GDrive), we can't detect when it ends
-  // So mark as complete after user starts watching for 30 seconds
+  // For embed videos (YouTube, Vimeo, GDrive), proceed directly
   if (selectedLesson.value && isEmbedVideo(selectedLesson.value.videoUrl)) {
+    showVideoPlayer.value = true
     setTimeout(() => {
       if (selectedLesson.value && !completedLessonIds.value.includes(selectedLesson.value.id)) {
         markLessonComplete()
       }
     }, 30000)
-  } else {
-    // For direct video files, play and wait for 'ended' event
-    nextTick(() => {
-      videoPlayer.value?.play()
-    })
+    return
   }
+  
+  // For MinIO objects, fetch content via backend stream
+  if (selectedLesson.value && isMinioObject(selectedLesson.value.videoUrl)) {
+    // Use blob URL approach - this fetches content through backend proxy
+    const url = await getContentBlobUrl(selectedLesson.value.id)
+    if (url) {
+      secureVideoUrl.value = url
+      showVideoPlayer.value = true
+      nextTick(() => {
+        videoPlayer.value?.play()
+      })
+    } else {
+      showToast(secureContentError.value || 'Gagal memuat video', 'error')
+    }
+    return
+  }
+  
+  // For legacy /uploads or direct files, use old behavior
+  showVideoPlayer.value = true
+  nextTick(() => {
+    videoPlayer.value?.play()
+  })
 }
 
 const onVideoEnded = () => {
@@ -973,23 +1016,39 @@ const onVideoEnded = () => {
 }
 
 // Document Functions
-const openDocument = () => {
+const openDocument = async () => {
   if (!isEnrolled.value) {
     showToast('Silakan daftar kursus terlebih dahulu', 'error')
     return
   }
-  // Open document in new tab or download
-  if (selectedLesson.value?.videoUrl) {
-    const docUrl = getFileUrl(selectedLesson.value.videoUrl)
-    window.open(docUrl, '_blank')
-    showToast('Membuka dokumen...')
-    
-    // Auto mark as completed after opening
-    if (!completedLessonIds.value.includes(selectedLesson.value.id)) {
-      setTimeout(() => markLessonComplete(), 2000)
-    }
-  } else {
+  
+  if (!selectedLesson.value?.videoUrl) {
     showToast('URL dokumen tidak tersedia', 'error')
+    return
+  }
+  
+  let docUrl: string
+  
+  // For MinIO objects, fetch content via backend stream proxy
+  if (isMinioObject(selectedLesson.value.videoUrl)) {
+    // Use blob URL approach - streamed through backend to avoid signature issues
+    const url = await getContentBlobUrl(selectedLesson.value.id)
+    if (!url) {
+      showToast(secureContentError.value || 'Gagal memuat dokumen', 'error')
+      return
+    }
+    docUrl = url
+  } else {
+    // Legacy or direct URL
+    docUrl = getFileUrl(selectedLesson.value.videoUrl)
+  }
+  
+  window.open(docUrl, '_blank')
+  showToast('Membuka dokumen...')
+  
+  // Auto mark as completed after opening
+  if (!completedLessonIds.value.includes(selectedLesson.value.id)) {
+    setTimeout(() => markLessonComplete(), 2000)
   }
 }
 

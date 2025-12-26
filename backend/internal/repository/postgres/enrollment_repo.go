@@ -192,6 +192,14 @@ func (r *EnrollmentRepository) Delete(id string) error {
 	return err
 }
 
+// IsEnrolled checks if a user is enrolled in a course
+func (r *EnrollmentRepository) IsEnrolled(userID, courseID string) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM enrollments WHERE user_id = $1 AND course_id = $2)`
+	var exists bool
+	err := r.db.QueryRow(query, userID, courseID).Scan(&exists)
+	return exists, err
+}
+
 // UpdateProgressByUserAndCourse updates progress for a user's enrollment in a course
 func (r *EnrollmentRepository) UpdateProgressByUserAndCourse(userID, courseID string, progressPercentage int) error {
 	if progressPercentage >= 100 {

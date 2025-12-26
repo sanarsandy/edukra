@@ -1,28 +1,36 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
-	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
-	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/handlers"
-	customMiddleware "github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/middleware"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/handlers"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/storage"
+	customMiddleware "github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/middleware"
 )
 
 func main() {
 	// Initialize Database
 	db.Init()
 
+	// Initialize MinIO Storage (optional - will skip if not configured)
+	if err := storage.InitStorage(); err != nil {
+		log.Printf("Warning: Failed to initialize MinIO storage: %v", err)
+		log.Println("File uploads will not work without MinIO configuration")
+	}
+
 	e := EchoServer()
-	
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	
+
 	e.Logger.Fatal(e.Start(":" + port))
 }
 
@@ -103,6 +111,14 @@ func EchoServer() *echo.Echo {
 	api.POST("/lessons/:lessonId/watchtime", handlers.UpdateWatchTime)
 	api.GET("/courses/:courseId/progress", handlers.GetCourseProgressHandler)
 	api.POST("/courses/:courseId/progress/bulk", handlers.BulkUpdateProgress)
+
+	// Secure Content Access (pre-signed URLs)
+	api.GET("/content/:lessonId/url", handlers.GetSecureContentURL)
+	api.GET("/content/:lessonId/document", handlers.GetSecureDocumentURL)
+	// Stream content directly through backend (bypasses pre-signed URL issues)
+	api.GET("/content/:lessonId/stream", handlers.StreamContent)
+	// Public images (thumbnails, etc) - no auth required
+	e.GET("/api/images/:objectKey", handlers.GetPublicImage)
 
 	// Activities & Stats
 	api.GET("/activities", handlers.GetRecentActivities)
@@ -282,8 +298,9 @@ func EchoServer() *echo.Echo {
 	api.GET("/quizzes/:quizId/status", handlers.GetQuizStatus)
 	api.GET("/quizzes/:quizId/attempts", handlers.GetUserQuizAttempts)
 
-	// Static file serving for uploads
-	e.Static("/uploads", "./uploads")
+	// NOTE: Static file serving for /uploads has been removed
+	// All content is now served via pre-signed URLs from MinIO
+	// Use GET /api/content/:lessonId/url to get secure access URLs
 
 	return e
 }

@@ -209,7 +209,7 @@
             <div class="h-48 relative overflow-hidden bg-gradient-to-br from-primary-50 to-accent-50">
               <img 
                 v-if="course.thumbnail_url" 
-                :src="course.thumbnail_url" 
+                :src="getThumbnailUrl(course.thumbnail_url)" 
                 :alt="course.title"
                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               />
@@ -650,6 +650,15 @@ useHead({
 })
 
 const config = useRuntimeConfig()
+const apiBase = config.public.apiBase || 'http://localhost:8080'
+
+// Get proper thumbnail URL - handle MinIO objects
+const getThumbnailUrl = (url: string | null | undefined): string => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) return `${apiBase}${url}`
+  return `${apiBase}/api/images/${url}`
+}
 
 // Featured Courses Carousel (for hero section)
 const currentCourseIndex = ref(0)

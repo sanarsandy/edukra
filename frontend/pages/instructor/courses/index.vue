@@ -98,7 +98,7 @@
                     v-if="course.thumbnail_url" 
                     class="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0"
                   >
-                    <img :src="course.thumbnail_url" :alt="course.title" class="w-full h-full object-cover" />
+                    <img :src="getThumbnailUrl(course.thumbnail_url)" :alt="course.title" class="w-full h-full object-cover" />
                   </div>
                   <div v-else :class="['w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', getCourseColor(course.id)]">
                     <svg class="w-6 h-6 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -525,6 +525,18 @@ const confirmSubmitReview = async () => {
     showReviewModal.value = false
     selectedCourse.value = null
   }
+}
+
+// Get proper thumbnail URL - handle MinIO objects
+const getThumbnailUrl = (url: string | null | undefined): string => {
+  if (!url) return ''
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/uploads')) {
+    const config = useRuntimeConfig()
+    return `${config.public.apiBase}${url}`
+  }
+  const config = useRuntimeConfig()
+  return `${config.public.apiBase}/api/images/${url}`
 }
 </script>
 

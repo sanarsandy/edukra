@@ -128,6 +128,21 @@ const tabs = computed(() => {
   ]
 })
 
+// Get proper thumbnail URL - handle MinIO objects
+const getThumbnailUrl = (url: string | null | undefined): string => {
+  if (!url) return ''
+  // Full URL - return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Legacy /uploads path - prepend apiBase
+  if (url.startsWith('/uploads')) {
+    const config = useRuntimeConfig()
+    return `${config.public.apiBase}${url}`
+  }
+  // MinIO object key - use public images endpoint
+  const config = useRuntimeConfig()
+  return `${config.public.apiBase}/api/images/${url}`
+}
+
 const courses = computed(() => {
   return enrollments.value.map(e => ({
     id: e.course_id,
@@ -135,7 +150,7 @@ const courses = computed(() => {
     instructor: e.course?.instructor?.full_name || 'Instructor',
     category: e.course?.category?.name || '',
     color: 'bg-primary-600',
-    thumbnail: e.course?.thumbnail_url,
+    thumbnail: getThumbnailUrl(e.course?.thumbnail_url),
     lessons: e.course?.lessons?.length || 0,
     duration: '-',
     progress: e.progress_percentage || 0

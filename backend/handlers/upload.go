@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/storage"
 )
 
 // Allowed file extensions by type
@@ -33,9 +34,10 @@ type UploadResponse struct {
 	Filename string `json:"filename"`
 	Size     int64  `json:"size"`
 	Type     string `json:"type"`
+	ObjectKey string `json:"object_key,omitempty"` // MinIO object key
 }
 
-// UploadFile handles file upload
+// UploadFile handles file upload - uploads to MinIO if configured, otherwise local
 func UploadFile(c echo.Context) error {
 	// Get uploaded file
 	file, err := c.FormFile("file")
@@ -69,37 +71,99 @@ func UploadFile(c echo.Context) error {
 	}
 	defer src.Close()
 
-	// Create uploads directory if not exists
-	uploadDir := "./uploads"
-	if err := os.MkdirAll(uploadDir, 0755); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create upload directory"})
-	}
-
 	// Generate unique filename
 	timestamp := time.Now().UnixNano()
 	safeFilename := sanitizeFilename(file.Filename)
 	newFilename := fmt.Sprintf("%d_%s", timestamp, safeFilename)
-	filePath := filepath.Join(uploadDir, newFilename)
 
-	// Create destination file
-	dst, err := os.Create(filePath)
+	// Try to upload to MinIO if configured
+	minioStorage := storage.GetStorage()
+	if minioStorage != nil {
+		return uploadToMinio(c, minioStorage, src, newFilename, file.Size, fileType, file.Filename)
+	}
+
+	// Fallback to local storage (legacy behavior)
+	return uploadToLocal(c, src, newFilename, file.Size, fileType, file.Filename)
+}
+
+// uploadToMinio handles upload to MinIO storage
+func uploadToMinio(c echo.Context, s *storage.MinioStorage, src io.Reader, objectName string, size int64, fileType, originalFilename string) error {
+	ctx := context.Background()
+	
+	// Determine content type
+	contentType := getContentType(objectName)
+	
+	// Upload to MinIO
+	err := s.Upload(ctx, "", objectName, src, size, contentType)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save file"})
-	}
-	defer dst.Close()
-
-	// Copy file content
-	if _, err = io.Copy(dst, src); err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to save file"})
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to upload file to storage",
+		})
 	}
 
-	// Return file URL
+	// Return the object key (not a presigned URL - that will be generated on access)
 	return c.JSON(http.StatusOK, UploadResponse{
-		URL:      fmt.Sprintf("/uploads/%s", newFilename),
-		Filename: file.Filename,
-		Size:     file.Size,
-		Type:     fileType,
+		URL:       objectName, // Store object key, not URL
+		Filename:  originalFilename,
+		Size:      size,
+		Type:      fileType,
+		ObjectKey: objectName,
 	})
+}
+
+// uploadToLocal handles upload to local filesystem (legacy - deprecated)
+func uploadToLocal(c echo.Context, src io.Reader, newFilename string, size int64, fileType, originalFilename string) error {
+	// Local storage is deprecated - MinIO must be configured
+	return c.JSON(http.StatusServiceUnavailable, map[string]string{
+		"error": "Local storage is deprecated. Please configure MinIO for file storage.",
+	})
+}
+
+// getContentType returns MIME type based on file extension
+func getContentType(filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	switch ext {
+	case ".mp4":
+		return "video/mp4"
+	case ".webm":
+		return "video/webm"
+	case ".mov":
+		return "video/quicktime"
+	case ".avi":
+		return "video/x-msvideo"
+	case ".mkv":
+		return "video/x-matroska"
+	case ".pdf":
+		return "application/pdf"
+	case ".doc":
+		return "application/msword"
+	case ".docx":
+		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	case ".ppt":
+		return "application/vnd.ms-powerpoint"
+	case ".pptx":
+		return "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+	case ".xls":
+		return "application/vnd.ms-excel"
+	case ".xlsx":
+		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case ".jpg", ".jpeg":
+		return "image/jpeg"
+	case ".png":
+		return "image/png"
+	case ".gif":
+		return "image/gif"
+	case ".webp":
+		return "image/webp"
+	case ".zip":
+		return "application/zip"
+	case ".rar":
+		return "application/x-rar-compressed"
+	case ".7z":
+		return "application/x-7z-compressed"
+	default:
+		return "application/octet-stream"
+	}
 }
 
 // getFileType determines the file type from extension

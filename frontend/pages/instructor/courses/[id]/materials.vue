@@ -402,11 +402,12 @@
             <div v-else-if="viewLesson?.content_type === 'pdf'" class="space-y-4">
               <div v-if="viewLesson?.video_url">
                 <div class="rounded-lg border border-neutral-200 overflow-hidden">
-                  <iframe :src="getFullUrl(viewLesson.video_url)" class="w-full h-[500px]" frameborder="0"></iframe>
+                  <!-- Use secureVideoUrl (blob) for MinIO objects, getFullUrl for legacy -->
+                  <iframe :src="secureVideoUrl || getFullUrl(viewLesson.video_url)" class="w-full h-[500px]" frameborder="0"></iframe>
                 </div>
                 <div class="flex items-center justify-between mt-2">
                   <span class="text-xs text-neutral-500 truncate flex-1">{{ viewLesson.video_url }}</span>
-                  <a :href="getFullUrl(viewLesson.video_url)" target="_blank" class="ml-2 px-3 py-1 bg-neutral-100 hover:bg-neutral-200 rounded text-xs font-medium text-neutral-700 transition-colors">
+                  <a :href="secureVideoUrl || getFullUrl(viewLesson.video_url)" target="_blank" class="ml-2 px-3 py-1 bg-neutral-100 hover:bg-neutral-200 rounded text-xs font-medium text-neutral-700 transition-colors">
                     Buka di Tab Baru ↗
                   </a>
                 </div>
@@ -688,6 +689,16 @@ const editingQuestion = ref<any>(null)
 const selectedLessonForQuiz = ref<any>(null)
 const saving = ref(false)
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
+
+// Secure Content for MinIO
+const { 
+  getSecureVideoUrl, 
+  getSecureDocumentUrl,
+  getContentBlobUrl,
+  isMinioObject,
+  loading: loadingSecureContent 
+} = useSecureContent()
+const secureVideoUrl = ref<string | null>(null)
 
 // Quiz form state
 const quizForm = ref({
@@ -1294,9 +1305,20 @@ const onTextEditorPaste = (event: ClipboardEvent) => {
 }
 
 // View modal
-const openViewModal = (lesson: any) => {
+const openViewModal = async (lesson: any) => {
   viewLesson.value = lesson
   isFullscreen.value = false
+  secureVideoUrl.value = null
+  
+  // If this is a MinIO object (not embed, not /uploads), fetch content via backend stream
+  if (lesson.video_url && isMinioObject(lesson.video_url)) {
+    // Use blob URL approach - this fetches content through backend proxy
+    const url = await getContentBlobUrl(lesson.id)
+    if (url) {
+      secureVideoUrl.value = url
+    }
+  }
+  
   showViewModal.value = true
 }
 
@@ -1314,6 +1336,12 @@ type VideoType = 'youtube' | 'vimeo' | 'gdrive' | 'zoom' | 'msstream' | 'sharepo
 
 const detectVideoType = (url: string | null | undefined): VideoType => {
   if (!url) return 'unknown'
+  
+  // Check if it's a MinIO object (not a URL, just object key like "1234567890_video.mp4")
+  // MinIO objects don't start with http/https or /uploads
+  if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('/uploads')) {
+    return 'direct' // MinIO objects are treated as direct video
+  }
   
   // YouTube
   if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube'
@@ -1409,9 +1437,23 @@ const getVideoProviderBadgeClass = (url: string | null | undefined): string => {
 
 const getFullUrl = (url: string) => {
   if (!url) return ''
+  // If we have a secure URL from MinIO, use that
+  if (secureVideoUrl.value && isMinioObject(url)) {
+    return secureVideoUrl.value
+  }
   // If it's already a full URL, return it
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  // Otherwise, prepend the API base URL
+  // If it's a legacy /uploads path, prepend the API base URL
+  if (url.startsWith('/uploads')) {
+    const config = useRuntimeConfig()
+    const apiUrl = config.public.apiBase || 'http://localhost:8080'
+    return `${apiUrl}${url}`
+  }
+  // For MinIO objects, if no secure URL yet, return empty (will trigger loading)
+  if (isMinioObject(url)) {
+    return '' // Will show loading state
+  }
+  // Fallback
   const config = useRuntimeConfig()
   const apiUrl = config.public.apiBase || 'http://localhost:8080'
   return `${apiUrl}${url}`

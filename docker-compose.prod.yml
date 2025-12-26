@@ -43,6 +43,13 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
       GOMEMLIMIT: 512MiB  # Prevent OOM during AI embedding processing
+      # MinIO Object Storage
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-lms-minio:9000}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-lms-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
+      MINIO_BUCKET_CONTENT: ${MINIO_BUCKET_CONTENT:-course-content}
     mem_limit: 1g         # Container memory limit
     memswap_limit: 2g     # Allow swap for burst workloads
     depends_on:
@@ -50,6 +57,7 @@ services:
         condition: service_healthy
     networks:
       - edukra-network
+      - minio-network
     volumes:
       - ./backend/uploads:/app/uploads
 
@@ -73,6 +81,8 @@ services:
 networks:
   edukra-network:
     driver: bridge
+  minio-network:
+    external: true
 
 volumes:
   postgres_data:

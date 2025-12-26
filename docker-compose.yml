@@ -36,12 +36,17 @@ services:
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-http://localhost:8080/api/auth/google/callback}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       JWT_SECRET: ${JWT_SECRET:-secret}
+      # MinIO endpoint override - use container name instead of localhost
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-lms-minio:9000}
+      # Public endpoint for browser access (use API domain in production since we stream via backend)
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-localhost:9000}
     mem_limit: 1g
     memswap_limit: 2g
     depends_on:
       - db
     networks:
       - lms-network
+      - minio-network
     volumes:
       - ./backend/uploads:/app/uploads
 
@@ -66,6 +71,8 @@ services:
 networks:
   lms-network:
     driver: bridge
+  minio-network:
+    external: true
 
 volumes:
   postgres_data:
