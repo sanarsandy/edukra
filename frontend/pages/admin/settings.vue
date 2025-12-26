@@ -413,6 +413,174 @@
             </form>
           </div>
         </div>
+
+        <!-- AI Tutor Settings -->
+        <div v-if="activeTab === 'ai'" class="space-y-6">
+          <!-- AI Enable Toggle -->
+          <div class="bg-white rounded-xl border border-neutral-200 p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-semibold text-neutral-900">AI Tutor</h3>
+                <p class="text-sm text-neutral-500 mt-1">Aktifkan fitur AI Tutor untuk membantu siswa memahami materi</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="aiSettings.enabled" @change="saveAISettings" class="sr-only peer">
+                <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-admin-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent-600"></div>
+              </label>
+            </div>
+          </div>
+
+          <!-- AI Provider Selection -->
+          <div class="bg-white rounded-xl border border-neutral-200 p-6">
+            <h3 class="font-semibold text-neutral-900 mb-4">Provider AI</h3>
+            <p class="text-sm text-neutral-500 mb-6">Pilih penyedia layanan AI yang akan digunakan</p>
+            
+            <div class="grid sm:grid-cols-2 gap-4 mb-6">
+              <div 
+                v-for="provider in aiProviders" 
+                :key="provider.id"
+                @click="aiSettings.provider = provider.id"
+                class="border rounded-xl p-4 cursor-pointer transition-all"
+                :class="aiSettings.provider === provider.id ? 'border-admin-500 bg-admin-50' : 'border-neutral-200 hover:border-neutral-300'"
+              >
+                <div class="flex items-center gap-3">
+                  <div 
+                    class="w-12 h-12 rounded-lg flex items-center justify-center"
+                    :class="provider.color"
+                  >
+                    <span class="text-white font-bold text-lg">{{ provider.icon }}</span>
+                  </div>
+                  <div>
+                    <p class="font-medium text-neutral-900">{{ provider.name }}</p>
+                    <p class="text-xs text-neutral-500">{{ provider.description }}</p>
+                  </div>
+                </div>
+                <div v-if="aiSettings.provider === provider.id" class="mt-3 flex items-center gap-2 text-xs text-admin-600">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  Provider Aktif
+                </div>
+              </div>
+            </div>
+
+            <!-- API Key Input -->
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">API Key {{ selectedProviderName }}</label>
+                <div class="relative">
+                  <input 
+                    v-model="aiSettings.apiKey"
+                    :type="showAIKey ? 'text' : 'password'"
+                    class="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
+                    :placeholder="getAPIKeyPlaceholder()"
+                  />
+                  <button 
+                    type="button" 
+                    @click="showAIKey = !showAIKey"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Model Selection -->
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Model Chat</label>
+                <select 
+                  v-model="aiSettings.model"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                >
+                  <option v-for="model in getModelsForProvider()" :key="model" :value="model">{{ model }}</option>
+                </select>
+              </div>
+              
+              <!-- Embedding Model Selection -->
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Model Embedding</label>
+                <select 
+                  v-model="aiSettings.embeddingModel"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                  :disabled="!supportsEmbedding()"
+                >
+                  <option v-if="!supportsEmbedding()" value="">Provider tidak mendukung embedding</option>
+                  <option v-for="model in getEmbeddingModelsForProvider()" :key="model" :value="model">{{ model }}</option>
+                </select>
+                <p class="text-xs text-neutral-500 mt-1">Model untuk generate embeddings konten kursus (RAG)</p>
+              </div>
+
+              <div class="pt-4 flex gap-3">
+                <button type="button" @click="validateAIKey" :disabled="validatingKey" class="px-4 py-2.5 text-sm font-medium text-admin-600 bg-admin-50 rounded-lg hover:bg-admin-100 transition-colors disabled:opacity-50">
+                  {{ validatingKey ? 'Validating...' : 'Test API Key' }}
+                </button>
+                <button type="button" @click="saveAISettings" :disabled="saving" class="btn-admin">
+                  {{ saving ? 'Menyimpan...' : 'Simpan Konfigurasi' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- AI Parameters -->
+          <div class="bg-white rounded-xl border border-neutral-200 p-6">
+            <h3 class="font-semibold text-neutral-900 mb-4">Parameter AI</h3>
+
+            <div class="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Max Tokens</label>
+                <input 
+                  v-model.number="aiSettings.maxTokens"
+                  type="number" 
+                  min="100"
+                  max="8000"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Temperature</label>
+                <input 
+                  v-model.number="aiSettings.temperature"
+                  type="number" 
+                  step="0.1"
+                  min="0"
+                  max="2"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Batas Harian per User</label>
+                <input 
+                  v-model.number="aiSettings.rateLimitPerDay"
+                  type="number" 
+                  min="1"
+                  max="1000"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- System Prompt -->
+          <div class="bg-white rounded-xl border border-neutral-200 p-6">
+            <h3 class="font-semibold text-neutral-900 mb-4">System Prompt</h3>
+            <p class="text-sm text-neutral-500 mb-4">Instruksi dan persona untuk AI Tutor</p>
+            
+            <textarea 
+              v-model="aiSettings.systemPrompt"
+              rows="8"
+              class="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm resize-none"
+              placeholder="Contoh: Kamu adalah AI Tutor yang membantu siswa memahami materi kursus..."
+            ></textarea>
+
+            <div class="pt-4">
+              <button type="button" @click="saveAISettings" :disabled="saving" class="btn-admin">
+                {{ saving ? 'Menyimpan...' : 'Simpan Semua' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -457,6 +625,7 @@ const tabs = [
   { id: 'general', name: 'Umum', description: 'Informasi dasar', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
   { id: 'theme', name: 'Tema', description: 'Tampilan platform', icon: 'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01' },
   { id: 'payment', name: 'Pembayaran', description: 'Gateway pembayaran', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
+  { id: 'ai', name: 'AI Tutor', description: 'Konfigurasi AI', icon: 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611l-.932.156a2.25 2.25 0 01-2.585-2.586l.156-.931a2.25 2.25 0 00.598-1.652' },
   { id: 'features', name: 'Fitur', description: 'Toggle fitur', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
   { id: 'security', name: 'Keamanan', description: 'Pengaturan keamanan', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' }
 ]
@@ -573,6 +742,70 @@ const paymentForm = ref({
 const showServerKey = ref(false)
 const testingConnection = ref(false)
 
+// AI Settings
+const showAIKey = ref(false)
+const validatingKey = ref(false)
+const aiSettings = ref({
+  enabled: false,
+  provider: 'openai',
+  model: 'gpt-4-turbo',
+  apiKey: '',
+  maxTokens: 2048,
+  temperature: 0.7,
+  rateLimitPerDay: 50,
+  systemPrompt: '',
+  embeddingModel: ''
+})
+
+const aiProviders = [
+  { id: 'openai', name: 'OpenAI', description: 'GPT-4, GPT-3.5', color: 'bg-emerald-600', icon: '✦' },
+  { id: 'claude', name: 'Anthropic Claude', description: 'Claude 3.5, Claude 3', color: 'bg-amber-600', icon: 'A' },
+  { id: 'groq', name: 'Groq', description: 'LLaMA 3, Mixtral', color: 'bg-blue-600', icon: 'G' },
+  { id: 'gemini', name: 'Google Gemini', description: 'Gemini Pro, Gemini Flash', color: 'bg-purple-600', icon: '◆' }
+]
+
+const aiModels: Record<string, string[]> = {
+  openai: ['gpt-4-turbo', 'gpt-4', 'gpt-4o', 'gpt-4o-mini', 'gpt-3.5-turbo'],
+  claude: ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229', 'claude-3-sonnet-20240229', 'claude-3-haiku-20240307'],
+  groq: ['llama-3.3-70b-versatile', 'llama-3.1-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
+  gemini: ['gemini-3-flash', 'gemini-2.5-flash', 'gemini-2.5-flash-lite']
+}
+
+// Embedding models per provider (only some providers support embedding)
+const aiEmbeddingModels: Record<string, string[]> = {
+  openai: ['text-embedding-ada-002', 'text-embedding-3-small', 'text-embedding-3-large'],
+  gemini: ['gemini-embedding-001', 'text-embedding-004']
+}
+
+const selectedProviderName = computed(() => {
+  const provider = aiProviders.find(p => p.id === aiSettings.value.provider)
+  return provider?.name || ''
+})
+
+const getModelsForProvider = () => {
+  return aiModels[aiSettings.value.provider] || []
+}
+
+// Check if current provider supports embedding
+const supportsEmbedding = () => {
+  return Object.keys(aiEmbeddingModels).includes(aiSettings.value.provider)
+}
+
+// Get embedding models for current provider
+const getEmbeddingModelsForProvider = () => {
+  return aiEmbeddingModels[aiSettings.value.provider] || []
+}
+
+const getAPIKeyPlaceholder = () => {
+  switch (aiSettings.value.provider) {
+    case 'openai': return 'sk-...'
+    case 'claude': return 'sk-ant-...'
+    case 'groq': return 'gsk_...'
+    case 'gemini': return 'AI...'
+    default: return 'API Key'
+  }
+}
+
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
   toast.value = { show: true, message, type }
   setTimeout(() => {
@@ -636,8 +869,119 @@ const testPaymentConnection = async () => {
   showToast('Koneksi berhasil! Gateway siap digunakan')
 }
 
-// Load payment settings from localStorage on mount
+// AI Settings Functions
+const fetchAISettings = async () => {
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    const data = await $fetch<any>(`${config.public.apiBase}/api/admin/ai/settings`, {
+      headers: { 'Authorization': `Bearer ${token.value}` }
+    })
+    
+    // Determine which provider's key to show based on active provider
+    let currentApiKey = ''
+    const provider = data.provider || 'openai'
+    
+    if (provider === 'openai' && data.openai_configured) {
+      currentApiKey = data.api_key_openai || ''
+    } else if (provider === 'claude' && data.claude_configured) {
+      currentApiKey = data.api_key_claude || ''
+    } else if (provider === 'groq' && data.groq_configured) {
+      currentApiKey = data.api_key_groq || ''
+    } else if (provider === 'gemini' && data.gemini_configured) {
+      currentApiKey = data.api_key_gemini || ''
+    }
+    
+    aiSettings.value = {
+      enabled: data.enabled,
+      provider: provider,
+      model: data.model || 'gpt-4-turbo',
+      apiKey: currentApiKey,
+      maxTokens: data.max_tokens || 2048,
+      temperature: data.temperature || 0.7,
+      rateLimitPerDay: data.rate_limit_per_day || 50,
+      systemPrompt: data.system_prompt || '',
+      embeddingModel: data.embedding_model || ''
+    }
+  } catch (err) {
+    console.error('Failed to fetch AI settings:', err)
+  }
+}
+
+const saveAISettings = async () => {
+  saving.value = true
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    
+    const payload: any = {
+      enabled: aiSettings.value.enabled,
+      provider: aiSettings.value.provider,
+      model: aiSettings.value.model,
+      embedding_model: aiSettings.value.embeddingModel, // Separate embedding model
+      max_tokens: aiSettings.value.maxTokens,
+      temperature: aiSettings.value.temperature,
+      rate_limit_per_day: aiSettings.value.rateLimitPerDay,
+      system_prompt: aiSettings.value.systemPrompt
+    }
+    
+    // Add API key based on provider
+    const apiKeyField = `api_key_${aiSettings.value.provider}`
+    if (aiSettings.value.apiKey && !aiSettings.value.apiKey.startsWith('****')) {
+      payload[apiKeyField] = aiSettings.value.apiKey
+    }
+    
+    await $fetch(`${config.public.apiBase}/api/admin/ai/settings`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token.value}` },
+      body: payload
+    })
+    
+    showToast('Pengaturan AI berhasil disimpan')
+  } catch (err) {
+    console.error('Failed to save AI settings:', err)
+    showToast('Gagal menyimpan pengaturan AI', 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+const validateAIKey = async () => {
+  if (!aiSettings.value.apiKey) {
+    showToast('Masukkan API Key terlebih dahulu', 'error')
+    return
+  }
+  
+  validatingKey.value = true
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    
+    const result = await $fetch<{ valid: boolean; message: string }>(`${config.public.apiBase}/api/admin/ai/validate-key`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token.value}` },
+      body: {
+        provider: aiSettings.value.provider,
+        api_key: aiSettings.value.apiKey
+      }
+    })
+    
+    if (result.valid) {
+      showToast('API Key valid! ✓')
+    } else {
+      showToast(result.message || 'API Key tidak valid', 'error')
+    }
+  } catch (err: any) {
+    showToast('Gagal memvalidasi API Key', 'error')
+  } finally {
+    validatingKey.value = false
+  }
+}
+
+// Load settings on mount
 onMounted(async () => {
+  // Load AI settings
+  await fetchAISettings()
   await fetchSettings()
   if (settings.value) {
     form.value.site_name = settings.value.site_name || ''

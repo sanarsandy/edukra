@@ -26,7 +26,11 @@ FROM alpine:3.19
 WORKDIR /app
 
 # Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata
+# - ca-certificates, tzdata: standard runtime deps
+# - poppler-utils: for pdftotext (PDF processing in AI Tutor)
+# - yt-dlp, python3: for YouTube transcript extraction
+RUN apk add --no-cache ca-certificates tzdata poppler-utils python3 py3-pip && \
+    pip3 install --break-system-packages yt-dlp
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S appgroup && \

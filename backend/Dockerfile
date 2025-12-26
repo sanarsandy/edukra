@@ -25,8 +25,8 @@ FROM alpine:3.19 AS production
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata
+# Install runtime dependencies including PDF and video processing tools
+RUN apk add --no-cache ca-certificates tzdata poppler-utils yt-dlp
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S appgroup && \
@@ -48,3 +48,24 @@ USER appuser
 EXPOSE 8080
 
 CMD ["./main"]
+
+# ======================================
+# Development Stage
+# ======================================
+FROM golang:1.21-alpine AS development
+
+WORKDIR /app
+
+# Install dev tools and PDF/video processing tools
+RUN apk add --no-cache git poppler-utils yt-dlp
+
+# Copy go mod files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source
+COPY . .
+
+EXPOSE 8080
+
+CMD ["go", "run", "main.go"]

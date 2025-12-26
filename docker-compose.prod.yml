@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15  # pgvector-enabled PostgreSQL for AI Tutor
     container_name: edukra-db-prod
     restart: unless-stopped
     environment:
@@ -42,6 +42,9 @@ services:
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      GOMEMLIMIT: 512MiB  # Prevent OOM during AI embedding processing
+    mem_limit: 1g         # Container memory limit
+    memswap_limit: 2g     # Allow swap for burst workloads
     depends_on:
       db:
         condition: service_healthy

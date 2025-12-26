@@ -121,6 +121,13 @@ func EchoServer() *echo.Echo {
 	api.POST("/courses/:courseId/ratings", handlers.CreateCourseRating)
 	api.PUT("/courses/:courseId/ratings", handlers.UpdateCourseRating)
 	api.DELETE("/courses/:courseId/ratings", handlers.DeleteCourseRating)
+
+	// AI Tutor Chat (for students)
+	api.POST("/courses/:id/chat", handlers.SendChatMessage)
+	api.GET("/courses/:id/chat/session", handlers.GetChatSession)
+	api.DELETE("/courses/:id/chat/session", handlers.ClearChatSession)
+	api.GET("/courses/:id/chat/quota", handlers.GetChatQuota)
+	api.GET("/courses/:id/ai-status", handlers.GetAIStatus)
 	
 	// Admin Routes (requires admin role)
 	admin := e.Group("/api/admin")
@@ -176,6 +183,19 @@ func EchoServer() *echo.Echo {
 	// Admin Settings
 	admin.GET("/settings", handlers.GetSettings)
 	admin.PUT("/settings", handlers.UpdateSettings)
+
+	// Admin AI Settings
+	admin.GET("/ai/settings", handlers.GetAISettings)
+	admin.PUT("/ai/settings", handlers.UpdateAISettings)
+	admin.POST("/ai/validate-key", handlers.ValidateAIKey)
+	admin.GET("/ai/providers", handlers.GetAIProviders)
+	admin.GET("/ai/models", handlers.FetchProviderModels) // Fetch models from provider API
+	admin.DELETE("/ai/key", handlers.ClearAPIKey)
+
+	// Admin AI Content Processing
+	admin.POST("/courses/:id/process-ai", handlers.ProcessCourseContent)
+	admin.GET("/courses/:id/ai-processing-status", handlers.GetProcessingStatus)
+	admin.DELETE("/courses/:id/embeddings", handlers.ClearCourseEmbeddings)
 
 	// Admin File Upload
 	admin.POST("/upload", handlers.UploadFile)

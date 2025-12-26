@@ -6,9 +6,16 @@ FROM node:22-alpine AS base
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --only=production=false
+RUN npm ci
 
 COPY . .
+
+# ======================================
+# Development Stage
+# ======================================
+FROM base AS development
+ENV NODE_ENV=development
+CMD ["npm", "run", "dev", "--", "-o"]
 
 # ======================================
 # Builder Stage

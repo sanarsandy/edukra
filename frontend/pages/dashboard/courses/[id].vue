@@ -538,6 +538,12 @@
         </div>
       </div>
     </Transition>
+
+    <!-- AI Tutor Chat Widget -->
+    <AIChatWidget 
+      v-if="isEnrolled" 
+      :course-id="courseId" 
+    />
   </div>
 </template>
 

@@ -153,6 +153,23 @@
                   Pengaturan
                 </div>
               </NuxtLink>
+              
+              <NuxtLink 
+                to="/admin/ai-processing" 
+                class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
+                :class="[
+                  isActive('/admin/ai-processing') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white',
+                  sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" :class="sidebarCollapsed ? '' : 'mr-3'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 15.3m14.8 0l.21 1.847a1.5 1.5 0 01-1.48 1.71H5.47a1.5 1.5 0 01-1.48-1.71L5 15.3"/>
+                </svg>
+                <span v-if="!sidebarCollapsed">AI Processing</span>
+                <div v-if="sidebarCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-white text-neutral-900 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                  AI Processing
+                </div>
+              </NuxtLink>
             </div>
           </div>
         </nav>
