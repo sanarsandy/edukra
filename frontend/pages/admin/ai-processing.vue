@@ -192,8 +192,12 @@ const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'er
 
 const getFullUrl = (url: string) => {
   if (!url) return ''
-  if (url.startsWith('http')) return url
-  return `${apiBase}${url}`
+  // External URL - return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Legacy /uploads path
+  if (url.startsWith('/uploads')) return `${apiBase}${url}`
+  // MinIO object key - use public images endpoint
+  return `${apiBase}/api/images/${url}`
 }
 
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
