@@ -2,8 +2,12 @@ package handlers
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -12,6 +16,7 @@ import (
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/ai/processor"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/ai/rag"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/repository/postgres"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/storage"
 )
 
 // ProcessCourseContent triggers AI content processing for a course
@@ -141,19 +146,38 @@ func processCourseContentAsync(ctx context.Context, courseID, apiKey, provider, 
 				pdfPath := *lesson.VideoURL
 				log.Printf("[AI Processing] Lesson %s has PDF: %s", lesson.ID, pdfPath)
 				
-				// Check if it's a local path or URL
 				var pdfChunks []rag.Chunk
 				var err error
+				
+				// Case 1: External URL (http:// or https://)
 				if strings.HasPrefix(pdfPath, "http://") || strings.HasPrefix(pdfPath, "https://") {
+					log.Printf("[AI Processing] Downloading PDF from URL: %s", pdfPath)
 					pdfChunks, err = proc.ProcessPDFFromURL(ctx, pdfPath)
-				} else {
-					// Local path - prepend /app for container or current dir for local
+				// Case 2: Legacy local uploads (/uploads/...)
+				} else if strings.HasPrefix(pdfPath, "/uploads/") {
 					// In Docker, files are at /app/uploads/...
-					if strings.HasPrefix(pdfPath, "/uploads/") {
-						pdfPath = "/app" + pdfPath
+					localPath := "/app" + pdfPath
+					log.Printf("[AI Processing] Processing legacy local PDF: %s", localPath)
+					pdfChunks, err = proc.ProcessPDFFromFile(localPath)
+				// Case 3: MinIO object key (no prefix - e.g., "courses/xxx/file.pdf")
+				} else {
+					// Download from MinIO to temp file
+					minioStorage := storage.GetStorage()
+					if minioStorage != nil {
+						log.Printf("[AI Processing] Downloading PDF from MinIO: %s", pdfPath)
+						tempPath, downloadErr := downloadMinIOToTemp(ctx, minioStorage, pdfPath)
+						if downloadErr != nil {
+							log.Printf("[AI Processing] MinIO download error: %v", downloadErr)
+							err = downloadErr
+						} else {
+							defer os.Remove(tempPath) // Clean up temp file
+							log.Printf("[AI Processing] Processing MinIO PDF from temp: %s", tempPath)
+							pdfChunks, err = proc.ProcessPDFFromFile(tempPath)
+						}
+					} else {
+						log.Printf("[AI Processing] MinIO not configured, cannot process object key: %s", pdfPath)
+						err = fmt.Errorf("MinIO not configured")
 					}
-					log.Printf("[AI Processing] Processing local PDF: %s", pdfPath)
-					pdfChunks, err = proc.ProcessPDFFromFile(pdfPath)
 				}
 				
 				if err == nil {
@@ -311,4 +335,39 @@ func ClearCourseEmbeddings(c echo.Context) error {
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Embeddings cleared",
 	})
+}
+
+// downloadMinIOToTemp downloads a MinIO object to a temporary file
+// Returns the temp file path (caller is responsible for cleanup with os.Remove)
+func downloadMinIOToTemp(ctx context.Context, minioStorage *storage.MinioStorage, objectKey string) (string, error) {
+	// Get object from MinIO
+	obj, err := minioStorage.GetObject(ctx, "", objectKey)
+	if err != nil {
+		return "", fmt.Errorf("failed to get object from MinIO: %w", err)
+	}
+	defer obj.Close()
+
+	// Create temp file with same extension as original
+	ext := filepath.Ext(objectKey)
+	if ext == "" {
+		ext = ".pdf" // Default to pdf for AI processing
+	}
+	
+	tempFile, err := os.CreateTemp("", "minio-ai-*"+ext)
+	if err != nil {
+		return "", fmt.Errorf("failed to create temp file: %w", err)
+	}
+	tempPath := tempFile.Name()
+
+	// Copy content to temp file
+	_, err = io.Copy(tempFile, obj)
+	tempFile.Close() // Close immediately after writing
+	
+	if err != nil {
+		os.Remove(tempPath) // Clean up on error
+		return "", fmt.Errorf("failed to write to temp file: %w", err)
+	}
+
+	log.Printf("[AI Processing] Downloaded MinIO object %s to temp file %s", objectKey, tempPath)
+	return tempPath, nil
 }
