@@ -64,17 +64,17 @@
           <svg v-else class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
-          <div class="absolute top-3 left-3 flex gap-2">
-            <span v-if="course.category" class="px-2.5 py-1 bg-black/50 text-white text-xs font-medium rounded-lg backdrop-blur-sm">{{ course.category.name }}</span>
-            <span v-if="isEnrolled(course.id)" class="px-2.5 py-1 bg-green-500 text-white text-xs font-medium rounded-lg flex items-center gap-1">
+          <div class="absolute top-3 left-3 flex gap-2 z-10">
+            <span v-if="course.category" class="px-2.5 py-1 bg-black/50 text-white text-xs font-medium rounded-lg backdrop-blur-sm shadow-sm">{{ course.category.name }}</span>
+            <span v-if="isEnrolled(course.id)" class="px-2.5 py-1 bg-emerald-500 text-white text-xs font-medium rounded-lg flex items-center gap-1 shadow-sm border border-emerald-400">
               <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
               </svg>
               Terdaftar
             </span>
           </div>
-          <div v-if="course.is_featured" class="absolute top-3 right-3">
-            <span class="px-2.5 py-1 bg-warm-500 text-white text-xs font-medium rounded-lg">Featured</span>
+          <div v-if="course.is_featured" class="absolute top-3 right-3 z-10">
+            <span class="px-2.5 py-1 bg-warm-500 text-white text-xs font-medium rounded-lg shadow-sm">Featured</span>
           </div>
         </div>
         <div class="p-5">
@@ -97,7 +97,7 @@
               <span class="text-lg font-bold text-neutral-900">{{ course.price > 0 ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) : 'Gratis' }}</span>
             </div>
             <NuxtLink :to="`/dashboard/courses/${course.id}`" class="px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
-              Lihat Detail
+              {{ isEnrolled(course.id) ? 'Lanjutkan Belajar' : 'Lihat Detail' }}
             </NuxtLink>
           </div>
         </div>
@@ -130,17 +130,38 @@ const enrolledCourseIds = ref<Set<string>>(new Set())
 
 const fetchUserEnrollments = async () => {
   try {
-    const enrollments = await api.fetch<any[]>('/api/enrollments')
-    if (enrollments && Array.isArray(enrollments)) {
-      enrolledCourseIds.value = new Set(enrollments.map((e: any) => e.course_id))
+    const response = await api.fetch<any>('/api/enrollments')
+    console.log('[Explore] Raw enrollments response:', response)
+    
+    // Handle different response structures
+    let enrollments = []
+    if (response && response.enrollments) {
+      enrollments = response.enrollments
+    } else if (response && response.data) {
+      enrollments = response.data
+    } else if (Array.isArray(response)) {
+      enrollments = response
+    }
+    
+    console.log('[Explore] Parsed enrollments:', enrollments)
+
+    if (Array.isArray(enrollments)) {
+      // Use lowercase for reliable comparison
+      const courseIds = enrollments
+        .map((e: any) => e.course_id?.toLowerCase())
+        .filter(Boolean)
+      
+      console.log('[Explore] Enrolled course IDs:', courseIds)
+      enrolledCourseIds.value = new Set(courseIds)
     }
   } catch (err) {
-    // Ignore errors - user might not be logged in
+    console.error('[Explore] Error fetching enrollments:', err)
   }
 }
 
 const isEnrolled = (courseId: string): boolean => {
-  return enrolledCourseIds.value.has(courseId)
+  if (!courseId) return false
+  return enrolledCourseIds.value.has(courseId.toLowerCase())
 }
 
 const fetchCourseRatings = async () => {
