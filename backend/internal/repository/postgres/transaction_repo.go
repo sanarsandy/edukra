@@ -168,24 +168,30 @@ func (r *TransactionRepository) GetByOrderID(orderID string) (*Transaction, erro
 	`
 	
 	var tx Transaction
-	var courseID, orderIDVal, gatewayRef, method, paymentType, snapToken, paymentURL, fraudStatus sql.NullString
+	var tenantID, courseID, orderIDVal, gatewayRef, method, paymentType, snapToken, paymentURL, fraudStatus sql.NullString
 	var grossAmount sql.NullFloat64
 	var transactionTime, settlementTime, expiredAt sql.NullTime
+	var metadata []byte
 	
 	err := r.db.QueryRow(query, orderID).Scan(
-		&tx.ID, &tx.TenantID, &tx.UserID, &courseID, &orderIDVal, &tx.Amount, &grossAmount, &tx.Currency,
+		&tx.ID, &tenantID, &tx.UserID, &courseID, &orderIDVal, &tx.Amount, &grossAmount, &tx.Currency,
 		&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &paymentType, &snapToken,
 		&paymentURL, &fraudStatus, &transactionTime, &settlementTime, &expiredAt,
-		&tx.Metadata, &tx.CreatedAt, &tx.UpdatedAt,
+		&metadata, &tx.CreatedAt, &tx.UpdatedAt,
 	)
 	
 	if err == sql.ErrNoRows {
+		log.Printf("[GetByOrderID] No rows found for order_id: %s", orderID)
 		return nil, nil
 	}
 	if err != nil {
+		log.Printf("[GetByOrderID] Scan error for order_id %s: %v", orderID, err)
 		return nil, err
 	}
 	
+	if tenantID.Valid {
+		tx.TenantID = tenantID.String
+	}
 	if courseID.Valid {
 		tx.CourseID = &courseID.String
 	}
