@@ -400,13 +400,50 @@ func (p *DuitkuProvider) VerifySignature(data map[string]interface{}) bool {
 	return signature == expectedSignature
 }
 
-// verifySignatureFromBytes verifies signature from raw JSON bytes
+// verifySignatureFromBytes verifies signature from raw bytes (JSON or form-urlencoded)
 func (p *DuitkuProvider) verifySignatureFromBytes(body []byte) bool {
+	// First try JSON
 	var data map[string]interface{}
-	if err := json.Unmarshal(body, &data); err != nil {
+	if err := json.Unmarshal(body, &data); err == nil {
+		return p.VerifySignature(data)
+	}
+	
+	// If JSON fails, try form-urlencoded
+	values, err := url.ParseQuery(string(body))
+	if err != nil {
+		log.Printf("[Duitku] Failed to parse callback body: %v", err)
 		return false
 	}
-	return p.VerifySignature(data)
+	
+	merchantOrderID := values.Get("merchantOrderId")
+	amountStr := values.Get("amount")
+	signature := values.Get("signature")
+	
+	if merchantOrderID == "" || amountStr == "" || signature == "" {
+		log.Printf("[Duitku] Missing required fields: orderID=%s, amount=%s, sig=%s", merchantOrderID, amountStr, signature != "")
+		return false
+	}
+	
+	// Parse amount
+	amount, err := strconv.ParseInt(amountStr, 10, 64)
+	if err != nil {
+		amountFloat, err := strconv.ParseFloat(amountStr, 64)
+		if err != nil {
+			log.Printf("[Duitku] Failed to parse amount: %s", amountStr)
+			return false
+		}
+		amount = int64(amountFloat)
+	}
+	
+	// Generate expected signature and compare
+	expectedSignature := p.generateSignatureForCallback(merchantOrderID, amount)
+	
+	if signature != expectedSignature {
+		log.Printf("[Duitku] Signature mismatch: received=%s, expected=%s", signature, expectedSignature)
+		log.Printf("[Duitku] Signature input: merchantCode=%s, amount=%d, orderId=%s", p.merchantCode, amount, merchantOrderID)
+	}
+	
+	return signature == expectedSignature
 }
 
 // GetTransactionStatus retrieves transaction status from Duitku
