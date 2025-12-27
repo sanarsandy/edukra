@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -139,6 +140,7 @@ func ListTransactions(c echo.Context) error {
 	}
 	
 	if err != nil {
+		log.Printf("[ListTransactions] Error: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch transactions"})
 	}
 	
@@ -217,6 +219,31 @@ func UpdateTransactionStatus(c echo.Context) error {
 	
 	transaction, _ = transactionRepo.GetByID(id)
 	return c.JSON(http.StatusOK, transaction)
+}
+
+// DeleteTransaction deletes a transaction (only non-success)
+func DeleteTransaction(c echo.Context) error {
+	initAdminRepos()
+	
+	id := c.Param("id")
+	
+	transaction, err := transactionRepo.GetByID(id)
+	if err != nil || transaction == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Transaction not found"})
+	}
+	
+	// Prevent deletion of successful transactions
+	if transaction.Status == "success" {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "Cannot delete successful transactions"})
+	}
+	
+	err = transactionRepo.Delete(id)
+	if err != nil {
+		log.Printf("[DeleteTransaction] Error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to delete transaction"})
+	}
+	
+	return c.JSON(http.StatusOK, map[string]string{"message": "Transaction deleted successfully"})
 }
 
 // GetDashboardChartData returns monthly stats for charts

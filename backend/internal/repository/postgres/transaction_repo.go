@@ -47,18 +47,19 @@ func NewTransactionRepository(db *sqlx.DB) *TransactionRepository {
 // GetByID retrieves a transaction by ID
 func (r *TransactionRepository) GetByID(id string) (*Transaction, error) {
 	query := `
-		SELECT id, tenant_id, user_id, course_id, amount, currency, status,
+		SELECT id::text, tenant_id::text, user_id::text, course_id::text, order_id, amount, currency, status,
 		       payment_gateway, payment_gateway_ref, payment_method, metadata,
 		       created_at, updated_at
 		FROM transactions WHERE id = $1
 	`
 	
 	var tx Transaction
-	var courseID, gatewayRef, method sql.NullString
+	var tenantID, courseID, orderID, gatewayRef, method sql.NullString
+	var metadata []byte
 	
 	err := r.db.QueryRow(query, id).Scan(
-		&tx.ID, &tx.TenantID, &tx.UserID, &courseID, &tx.Amount, &tx.Currency,
-		&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &tx.Metadata,
+		&tx.ID, &tenantID, &tx.UserID, &courseID, &orderID, &tx.Amount, &tx.Currency,
+		&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &metadata,
 		&tx.CreatedAt, &tx.UpdatedAt,
 	)
 	
@@ -69,14 +70,23 @@ func (r *TransactionRepository) GetByID(id string) (*Transaction, error) {
 		return nil, err
 	}
 	
+	if tenantID.Valid {
+		tx.TenantID = tenantID.String
+	}
 	if courseID.Valid {
 		tx.CourseID = &courseID.String
+	}
+	if orderID.Valid {
+		tx.OrderID = &orderID.String
 	}
 	if gatewayRef.Valid {
 		tx.PaymentGatewayRef = &gatewayRef.String
 	}
 	if method.Valid {
 		tx.PaymentMethod = &method.String
+	}
+	if metadata != nil {
+		tx.Metadata = metadata
 	}
 	
 	return &tx, nil
@@ -85,10 +95,10 @@ func (r *TransactionRepository) GetByID(id string) (*Transaction, error) {
 // Create inserts a new transaction
 func (r *TransactionRepository) Create(tx *Transaction) error {
 	query := `
-		INSERT INTO transactions (tenant_id, user_id, course_id, amount, currency, 
+		INSERT INTO transactions (tenant_id, user_id, course_id, order_id, amount, currency, 
 		                          status, payment_gateway, payment_gateway_ref, 
 		                          payment_method, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
 		RETURNING id
 	`
 	
@@ -120,7 +130,7 @@ func (r *TransactionRepository) Create(tx *Transaction) error {
 	}
 	
 	return r.db.QueryRow(query,
-		tenantID, tx.UserID, tx.CourseID, tx.Amount, tx.Currency,
+		tenantID, tx.UserID, tx.CourseID, tx.OrderID, tx.Amount, tx.Currency,
 		tx.Status, tx.PaymentGateway, tx.PaymentGatewayRef,
 		tx.PaymentMethod, metadata, tx.CreatedAt, tx.UpdatedAt,
 	).Scan(&tx.ID)
@@ -130,6 +140,13 @@ func (r *TransactionRepository) Create(tx *Transaction) error {
 func (r *TransactionRepository) UpdateStatus(id, status string) error {
 	query := `UPDATE transactions SET status = $2, updated_at = $3 WHERE id = $1`
 	_, err := r.db.Exec(query, id, status, time.Now())
+	return err
+}
+
+// Delete removes a transaction from the database
+func (r *TransactionRepository) Delete(id string) error {
+	query := `DELETE FROM transactions WHERE id = $1`
+	_, err := r.db.Exec(query, id)
 	return err
 }
 
@@ -282,7 +299,7 @@ func (r *TransactionRepository) CancelPendingByUserAndCourse(userID, courseID st
 func (r *TransactionRepository) ListByTenant(tenantID string, limit, offset int) ([]*Transaction, error) {
 	if tenantID == "" || tenantID == "default" {
 		query := `
-			SELECT id, tenant_id, user_id, course_id, amount, currency, status,
+			SELECT id::text, tenant_id::text, user_id::text, course_id::text, order_id, amount, currency, status,
 			       payment_gateway, payment_gateway_ref, payment_method, metadata,
 			       created_at, updated_at
 			FROM transactions 
@@ -294,7 +311,7 @@ func (r *TransactionRepository) ListByTenant(tenantID string, limit, offset int)
 	}
 	
 	query := `
-		SELECT id, tenant_id, user_id, course_id, amount, currency, status,
+		SELECT id::text, tenant_id::text, user_id::text, course_id::text, order_id, amount, currency, status,
 		       payment_gateway, payment_gateway_ref, payment_method, metadata,
 		       created_at, updated_at
 		FROM transactions 
@@ -308,7 +325,7 @@ func (r *TransactionRepository) ListByTenant(tenantID string, limit, offset int)
 // ListByUser retrieves transactions for a user
 func (r *TransactionRepository) ListByUser(userID string, limit, offset int) ([]*Transaction, error) {
 	query := `
-		SELECT id, tenant_id, user_id, course_id, amount, currency, status,
+		SELECT id::text, tenant_id::text, user_id::text, course_id::text, order_id, amount, currency, status,
 		       payment_gateway, payment_gateway_ref, payment_method, metadata,
 		       created_at, updated_at
 		FROM transactions 
@@ -331,7 +348,7 @@ func (r *TransactionRepository) CountByUser(userID string) (int, error) {
 // ListByStatus retrieves transactions by status
 func (r *TransactionRepository) ListByStatus(tenantID, status string, limit, offset int) ([]*Transaction, error) {
 	query := `
-		SELECT id, tenant_id, user_id, course_id, amount, currency, status,
+		SELECT id::text, tenant_id::text, user_id::text, course_id::text, order_id, amount, currency, status,
 		       payment_gateway, payment_gateway_ref, payment_method, metadata,
 		       created_at, updated_at
 		FROM transactions 
@@ -396,25 +413,35 @@ func (r *TransactionRepository) scanTransactionRows(rows *sql.Rows) ([]*Transact
 	var transactions []*Transaction
 	for rows.Next() {
 		var tx Transaction
-		var courseID, gatewayRef, method sql.NullString
+		var tenantID, courseID, orderID, gatewayRef, method sql.NullString
+		var metadata []byte
 		
 		err := rows.Scan(
-			&tx.ID, &tx.TenantID, &tx.UserID, &courseID, &tx.Amount, &tx.Currency,
-			&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &tx.Metadata,
+			&tx.ID, &tenantID, &tx.UserID, &courseID, &orderID, &tx.Amount, &tx.Currency,
+			&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &metadata,
 			&tx.CreatedAt, &tx.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
 		
+		if tenantID.Valid {
+			tx.TenantID = tenantID.String
+		}
 		if courseID.Valid {
 			tx.CourseID = &courseID.String
+		}
+		if orderID.Valid {
+			tx.OrderID = &orderID.String
 		}
 		if gatewayRef.Valid {
 			tx.PaymentGatewayRef = &gatewayRef.String
 		}
 		if method.Valid {
 			tx.PaymentMethod = &method.String
+		}
+		if metadata != nil {
+			tx.Metadata = metadata
 		}
 		
 		transactions = append(transactions, &tx)

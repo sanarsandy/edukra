@@ -192,6 +192,7 @@ func EchoServer() *echo.Echo {
 	admin.GET("/transactions", handlers.ListTransactions)
 	admin.GET("/transactions/:id", handlers.GetTransaction)
 	admin.PUT("/transactions/:id/status", handlers.UpdateTransactionStatus)
+	admin.DELETE("/transactions/:id", handlers.DeleteTransaction)
 
 	// Admin Payment Settings
 	admin.GET("/payment/settings", handlers.GetPaymentSettings)
