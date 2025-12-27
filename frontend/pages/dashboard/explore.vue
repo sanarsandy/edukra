@@ -64,8 +64,14 @@
           <svg v-else class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
-          <div class="absolute top-3 left-3" v-if="course.category">
-            <span class="px-2.5 py-1 bg-black/50 text-white text-xs font-medium rounded-lg backdrop-blur-sm">{{ course.category.name }}</span>
+          <div class="absolute top-3 left-3 flex gap-2">
+            <span v-if="course.category" class="px-2.5 py-1 bg-black/50 text-white text-xs font-medium rounded-lg backdrop-blur-sm">{{ course.category.name }}</span>
+            <span v-if="isEnrolled(course.id)" class="px-2.5 py-1 bg-green-500 text-white text-xs font-medium rounded-lg flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              Terdaftar
+            </span>
           </div>
           <div v-if="course.is_featured" class="absolute top-3 right-3">
             <span class="px-2.5 py-1 bg-warm-500 text-white text-xs font-medium rounded-lg">Featured</span>
@@ -119,6 +125,24 @@ const { categories: apiCategories, fetchCategories, loading: loadingCategories }
 const api = useApi()
 const ratingStats = ref<Record<string, number>>({})
 
+// User enrollments to show enrolled badge
+const enrolledCourseIds = ref<Set<string>>(new Set())
+
+const fetchUserEnrollments = async () => {
+  try {
+    const enrollments = await api.fetch<any[]>('/api/enrollments')
+    if (enrollments && Array.isArray(enrollments)) {
+      enrolledCourseIds.value = new Set(enrollments.map((e: any) => e.course_id))
+    }
+  } catch (err) {
+    // Ignore errors - user might not be logged in
+  }
+}
+
+const isEnrolled = (courseId: string): boolean => {
+  return enrolledCourseIds.value.has(courseId)
+}
+
 const fetchCourseRatings = async () => {
   if (!courses.value || courses.value.length === 0) return
   
@@ -150,7 +174,8 @@ useHead({
 onMounted(async () => {
   await Promise.all([
     fetchCourses({ limit: 100 }),
-    fetchCategories()
+    fetchCategories(),
+    fetchUserEnrollments()
   ])
   // Fetch ratings after courses loaded
   await fetchCourseRatings()
