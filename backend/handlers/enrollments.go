@@ -210,10 +210,19 @@ func CheckEnrollment(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
-	courseID := c.Param("id")
+	// Try both parameter names for different routes
+	courseID := c.Param("courseId")
+	if courseID == "" {
+		courseID = c.Param("id")
+	}
+	
+	if courseID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Course ID is required"})
+	}
 	
 	enrollment, err := enrollmentRepo.GetByUserAndCourse(userID, courseID)
 	if err != nil {
+		log.Printf("[CheckEnrollment] Error checking enrollment for user=%s, course=%s: %v", userID, courseID, err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to check enrollment"})
 	}
 	
