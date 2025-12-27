@@ -424,6 +424,75 @@ func DuitkuWebhook(c echo.Context) error {
 	return c.String(http.StatusOK, "SUCCESS")
 }
 
+// SimulatePaymentSuccess simulates a successful payment callback (FOR TESTING ONLY)
+// POST /api/test/simulate-payment
+func SimulatePaymentSuccess(c echo.Context) error {
+	initPaymentRepos()
+
+	var req struct {
+		OrderID string `json:"order_id"`
+	}
+
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+
+	if req.OrderID == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "order_id is required"})
+	}
+
+	log.Printf("[SimulatePayment] Simulating payment for order: %s", req.OrderID)
+
+	// Get transaction by order ID
+	tx, err := paymentTxRepo.GetByOrderID(req.OrderID)
+	if err != nil || tx == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Transaction not found"})
+	}
+
+	if tx.Status == "success" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Transaction already successful"})
+	}
+
+	// Update transaction to success
+	now := time.Now()
+	err = paymentTxRepo.UpdateFromCallback(
+		req.OrderID,
+		"settlement", // Duitku success status
+		nil,          // payment_type
+		nil,          // fraud_status
+		&now,         // transaction_time
+		&now,         // settlement_time
+		nil,          // gateway_transaction_id
+	)
+	if err != nil {
+		log.Printf("[SimulatePayment] Failed to update transaction: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update transaction"})
+	}
+
+	// Create enrollment if not exists
+	if tx.CourseID != nil {
+		enrolled, _ := enrollmentRepoCheckout.IsEnrolled(tx.UserID, *tx.CourseID)
+		if !enrolled {
+			enrollment := &postgres.Enrollment{
+				UserID:        tx.UserID,
+				CourseID:      *tx.CourseID,
+				TransactionID: &tx.ID,
+			}
+			if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
+				log.Printf("[SimulatePayment] Failed to create enrollment: %v", err)
+			} else {
+				log.Printf("[SimulatePayment] Enrollment created for user %s, course %s", tx.UserID, *tx.CourseID)
+			}
+		}
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message":  "Payment simulated successfully",
+		"order_id": req.OrderID,
+		"status":   "success",
+	})
+}
+
 // GetMyTransactions returns current user's transactions
 // GET /api/my/transactions
 func GetMyTransactions(c echo.Context) error {

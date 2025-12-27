@@ -156,6 +156,9 @@ func EchoServer() *echo.Echo {
 	e.POST("/api/webhooks/midtrans", handlers.MidtransWebhook)
 	e.POST("/api/webhooks/duitku", handlers.DuitkuWebhook)
 	
+	// Test endpoint for simulating payments (development only - protected by admin auth)
+	e.POST("/api/test/simulate-payment", handlers.SimulatePaymentSuccess, customMiddleware.JWTMiddleware(), customMiddleware.RequireAdmin())
+	
 	// Admin Routes (requires admin role)
 	admin := e.Group("/api/admin")
 	admin.Use(customMiddleware.JWTMiddleware())

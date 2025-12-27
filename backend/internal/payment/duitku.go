@@ -69,12 +69,12 @@ func (p *DuitkuProvider) generatePopSignature(timestamp int64) string {
 }
 
 // generateSignature creates MD5 signature for Duitku callback verification
-// Format: MD5(merchantCode + orderId + amount + merchantKey)
+// Format: MD5(merchantCode + amount + merchantOrderId + merchantKey)
 func (p *DuitkuProvider) generateSignature(merchantOrderID string, amount int64) string {
-	signatureString := fmt.Sprintf("%s%s%d%s",
+	signatureString := fmt.Sprintf("%s%d%s%s",
 		p.merchantCode,
-		merchantOrderID,
 		amount,
+		merchantOrderID,
 		p.merchantKey,
 	)
 	hash := md5.Sum([]byte(signatureString))
