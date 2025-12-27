@@ -44,7 +44,7 @@ export function usePayment() {
             headers: { 'Authorization': `Bearer ${token.value}` },
             body: {
                 course_id: courseId,
-                return_url: returnUrl || window.location.origin + '/dashboard/courses/' + courseId,
+                return_url: returnUrl || window.location.origin + '/dashboard/courses/' + courseId + '?payment=pending',
                 payment_method: paymentMethod // For Duitku payment method selection
             }
         })

@@ -838,6 +838,30 @@ onMounted(async () => {
     await fetchCourseProgress(courseId.value)
   }
   
+  // Check for payment status from return URL
+  const route = useRoute()
+  if (route.query.payment === 'pending') {
+    toast.value = {
+      show: true,
+      message: 'Pembayaran sedang diproses. Mohon tunggu status terupdate.',
+      type: 'success'
+    }
+    
+    // Check enrollment again after a short delay
+    setTimeout(async () => {
+      const check = await checkEnrollment(courseId.value)
+      if (check.enrolled) {
+        isEnrolled.value = true
+        enrollmentData.value = check.enrollment
+        toast.value = {
+          show: true,
+          message: 'Pembayaran berhasil! Anda telah terdaftar.',
+          type: 'success'
+        }
+      }
+    }, 2000)
+  }
+
   // Load ratings
   await loadRatings()
   
