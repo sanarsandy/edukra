@@ -68,9 +68,22 @@ func (p *DuitkuProvider) generatePopSignature(timestamp int64) string {
 	return hex.EncodeToString(hash[:])
 }
 
-// generateSignature creates MD5 signature for Duitku callback verification
+// generateSignatureForCreate creates MD5 signature for Duitku transaction creation
+// Format: MD5(merchantCode + merchantOrderId + amount + merchantKey)
+func (p *DuitkuProvider) generateSignatureForCreate(merchantOrderID string, amount int64) string {
+	signatureString := fmt.Sprintf("%s%s%d%s",
+		p.merchantCode,
+		merchantOrderID,
+		amount,
+		p.merchantKey,
+	)
+	hash := md5.Sum([]byte(signatureString))
+	return hex.EncodeToString(hash[:])
+}
+
+// generateSignatureForCallback creates MD5 signature for Duitku callback verification
 // Format: MD5(merchantCode + amount + merchantOrderId + merchantKey)
-func (p *DuitkuProvider) generateSignature(merchantOrderID string, amount int64) string {
+func (p *DuitkuProvider) generateSignatureForCallback(merchantOrderID string, amount int64) string {
 	signatureString := fmt.Sprintf("%s%d%s%s",
 		p.merchantCode,
 		amount,
@@ -79,6 +92,11 @@ func (p *DuitkuProvider) generateSignature(merchantOrderID string, amount int64)
 	)
 	hash := md5.Sum([]byte(signatureString))
 	return hex.EncodeToString(hash[:])
+}
+
+// generateSignature is an alias for generateSignatureForCallback (for backward compatibility)
+func (p *DuitkuProvider) generateSignature(merchantOrderID string, amount int64) string {
+	return p.generateSignatureForCallback(merchantOrderID, amount)
 }
 
 // DuitkuInquiryRequest represents the transaction request to Duitku API v2
@@ -121,7 +139,7 @@ func (p *DuitkuProvider) CreateTransaction(ctx context.Context, req *CreateTrans
 	}
 
 	// Generate MD5 signature for API v2: md5(merchantCode + merchantOrderId + paymentAmount + apiKey)
-	signature := p.generateSignature(req.OrderID, amount)
+	signature := p.generateSignatureForCreate(req.OrderID, amount)
 
 	// Build request for API v2
 	inquiryReq := DuitkuInquiryRequest{
