@@ -88,7 +88,7 @@
           
           <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
             <div>
-              <span class="text-lg font-bold text-neutral-900">{{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) }}</span>
+              <span class="text-lg font-bold text-neutral-900">{{ course.price > 0 ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) : 'Gratis' }}</span>
             </div>
             <NuxtLink :to="`/dashboard/courses/${course.id}`" class="px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
               Lihat Detail

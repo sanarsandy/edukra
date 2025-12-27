@@ -54,8 +54,8 @@
                 <div class="text-sm text-neutral-500">Selesai</div>
               </div>
               <div v-else class="text-center">
-                <div class="text-lg font-bold text-neutral-900 mb-2">{{ new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) }}</div>
-                <button @click="handleEnroll" class="btn-primary">Daftar Sekarang</button>
+                <div class="text-lg font-bold text-neutral-900 mb-2">{{ course.price > 0 ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) : 'Gratis' }}</div>
+                <button @click="handleEnroll" class="btn-primary">{{ course.price > 0 ? 'Beli Sekarang' : 'Daftar Gratis' }}</button>
               </div>
             </div>
           </div>
@@ -278,7 +278,7 @@
             @click="handleEnroll"
             class="w-full btn-primary mt-4"
           >
-            Daftar Kursus
+            {{ course.price > 0 ? 'Beli Kursus' : 'Daftar Gratis' }}
           </button>
         </div>
 
@@ -960,6 +960,13 @@ const selectLesson = (lesson: any) => {
 }
 
 const handleEnroll = async () => {
+  // If course is paid, redirect to checkout page
+  if (course.value && course.value.price > 0) {
+    navigateTo(`/checkout/${courseId.value}`)
+    return
+  }
+  
+  // Free course - enroll directly
   const result = await enrollInCourse(courseId.value)
   if (result) {
     isEnrolled.value = true

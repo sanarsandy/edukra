@@ -144,6 +144,17 @@ func EchoServer() *echo.Echo {
 	api.DELETE("/courses/:id/chat/session", handlers.ClearChatSession)
 	api.GET("/courses/:id/chat/quota", handlers.GetChatQuota)
 	api.GET("/courses/:id/ai-status", handlers.GetAIStatus)
+
+	// Payment & Checkout
+	api.POST("/checkout", handlers.CreateCheckout)
+	api.GET("/checkout/config", handlers.GetCheckoutConfig)
+	api.GET("/checkout/payment-methods", handlers.GetPaymentMethods)
+	api.GET("/my/transactions", handlers.GetMyTransactions)
+	api.GET("/enrollments/check/:id", handlers.CheckEnrollment)
+	
+	// Payment Webhooks (no auth - verified by signature)
+	e.POST("/api/webhooks/midtrans", handlers.MidtransWebhook)
+	e.POST("/api/webhooks/duitku", handlers.DuitkuWebhook)
 	
 	// Admin Routes (requires admin role)
 	admin := e.Group("/api/admin")
@@ -181,6 +192,10 @@ func EchoServer() *echo.Echo {
 	admin.GET("/transactions", handlers.ListTransactions)
 	admin.GET("/transactions/:id", handlers.GetTransaction)
 	admin.PUT("/transactions/:id/status", handlers.UpdateTransactionStatus)
+
+	// Admin Payment Settings
+	admin.GET("/payment/settings", handlers.GetPaymentSettings)
+	admin.PUT("/payment/settings", handlers.UpdatePaymentSettings)
 
 	// Admin Categories
 	admin.GET("/categories", handlers.ListCategories)

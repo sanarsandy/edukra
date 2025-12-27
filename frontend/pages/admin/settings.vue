@@ -172,248 +172,183 @@
           </div>
         </div>
         
-        <!-- Payment Gateway Settings -->
+        <!-- Payment Settings -->
         <div v-if="activeTab === 'payment'" class="space-y-6">
-          <!-- Active Gateway Selection -->
-          <div class="bg-white rounded-xl border border-neutral-200 p-6">
-            <h3 class="font-semibold text-neutral-900 mb-4">Payment Gateway Aktif</h3>
-            <p class="text-sm text-neutral-500 mb-6">Pilih gateway pembayaran yang akan digunakan</p>
-            
-            <div class="grid sm:grid-cols-2 gap-4">
-              <div 
-                v-for="gateway in paymentGateways" 
-                :key="gateway.id"
-                @click="paymentForm.active_gateway = gateway.id"
-                class="border rounded-xl p-4 cursor-pointer transition-all"
-                :class="paymentForm.active_gateway === gateway.id ? 'border-admin-500 bg-admin-50' : 'border-neutral-200 hover:border-neutral-300'"
-              >
-                <div class="flex items-center gap-3">
-                  <div 
-                    class="w-12 h-12 rounded-lg flex items-center justify-center"
-                    :class="gateway.color"
-                  >
-                    <span class="text-white font-bold text-sm">{{ gateway.icon }}</span>
-                  </div>
-                  <div>
-                    <p class="font-medium text-neutral-900">{{ gateway.name }}</p>
-                    <p class="text-xs text-neutral-500">{{ gateway.description }}</p>
-                  </div>
-                </div>
-                <div v-if="paymentForm.active_gateway === gateway.id" class="mt-3 flex items-center gap-2 text-xs text-admin-600">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                  </svg>
-                  Gateway Aktif
-                </div>
-              </div>
-            </div>
+          <!-- Loading Payment -->
+          <div v-if="paymentLoading" class="flex items-center justify-center py-8">
+            <div class="animate-spin w-8 h-8 border-4 border-admin-500 border-t-transparent rounded-full"></div>
           </div>
-          
-          <!-- Midtrans Configuration -->
-          <div v-if="paymentForm.active_gateway === 'midtrans'" class="bg-white rounded-xl border border-neutral-200 p-6">
-            <div class="flex items-center gap-3 mb-6">
-              <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">M</span>
-              </div>
-              <div>
-                <h3 class="font-semibold text-neutral-900">Konfigurasi Midtrans</h3>
-                <p class="text-xs text-neutral-500">Sandbox & Production credentials</p>
-              </div>
-            </div>
-            
-            <form @submit.prevent="savePaymentSettings" class="space-y-4">
-              <div class="flex items-center gap-4 mb-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" v-model="paymentForm.midtrans.environment" value="sandbox" class="w-4 h-4 text-admin-600">
-                  <span class="text-sm text-neutral-700">Sandbox (Testing)</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" v-model="paymentForm.midtrans.environment" value="production" class="w-4 h-4 text-admin-600">
-                  <span class="text-sm text-neutral-700">Production</span>
-                </label>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Merchant ID</label>
-                <input 
-                  v-model="paymentForm.midtrans.merchant_id"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                  placeholder="G123456789"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Client Key</label>
-                <input 
-                  v-model="paymentForm.midtrans.client_key"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                  placeholder="SB-Mid-client-xxxxx"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Server Key</label>
-                <div class="relative">
-                  <input 
-                    v-model="paymentForm.midtrans.server_key"
-                    :type="showServerKey ? 'text' : 'password'"
-                    class="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                    placeholder="SB-Mid-server-xxxxx"
-                  />
-                  <button 
-                    type="button" 
-                    @click="showServerKey = !showServerKey"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
-                  >
-                    <svg v-if="!showServerKey" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              
-              <div class="pt-4 flex gap-3">
-                <button type="button" @click="testPaymentConnection" :disabled="testingConnection" class="px-4 py-2.5 text-sm font-medium text-admin-600 bg-admin-50 rounded-lg hover:bg-admin-100 transition-colors disabled:opacity-50">
-                  {{ testingConnection ? 'Testing...' : 'Test Koneksi' }}
-                </button>
-                <button type="submit" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Konfigurasi' }}</button>
-              </div>
-            </form>
-          </div>
-          
-          <!-- Xendit Configuration -->
-          <div v-if="paymentForm.active_gateway === 'xendit'" class="bg-white rounded-xl border border-neutral-200 p-6">
-            <div class="flex items-center gap-3 mb-6">
-              <div class="w-10 h-10 bg-cyan-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">X</span>
-              </div>
-              <div>
-                <h3 class="font-semibold text-neutral-900">Konfigurasi Xendit</h3>
-                <p class="text-xs text-neutral-500">API keys untuk Xendit</p>
-              </div>
-            </div>
-            
-            <form @submit.prevent="savePaymentSettings" class="space-y-4">
-              <div class="flex items-center gap-4 mb-4">
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" v-model="paymentForm.xendit.environment" value="sandbox" class="w-4 h-4 text-admin-600">
-                  <span class="text-sm text-neutral-700">Sandbox (Testing)</span>
-                </label>
-                <label class="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" v-model="paymentForm.xendit.environment" value="production" class="w-4 h-4 text-admin-600">
-                  <span class="text-sm text-neutral-700">Production</span>
-                </label>
-              </div>
-              
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Public API Key</label>
-                <input 
-                  v-model="paymentForm.xendit.public_key"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                  placeholder="xnd_public_development_xxxxx"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Secret API Key</label>
-                <div class="relative">
-                  <input 
-                    v-model="paymentForm.xendit.secret_key"
-                    :type="showServerKey ? 'text' : 'password'"
-                    class="w-full px-4 py-2.5 pr-12 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                    placeholder="xnd_development_xxxxx"
-                  />
-                  <button 
-                    type="button" 
-                    @click="showServerKey = !showServerKey"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
-                  >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Callback Token (Webhook Verification)</label>
-                <input 
-                  v-model="paymentForm.xendit.callback_token"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                  placeholder="Token untuk verifikasi webhook"
-                />
-              </div>
-              
-              <div class="pt-4 flex gap-3">
-                <button type="button" @click="testPaymentConnection" :disabled="testingConnection" class="px-4 py-2.5 text-sm font-medium text-admin-600 bg-admin-50 rounded-lg hover:bg-admin-100 transition-colors disabled:opacity-50">
-                  {{ testingConnection ? 'Testing...' : 'Test Koneksi' }}
-                </button>
-                <button type="submit" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Konfigurasi' }}</button>
-              </div>
-            </form>
-          </div>
-          
-          <!-- Manual Transfer -->
-          <div v-if="paymentForm.active_gateway === 'manual'" class="bg-white rounded-xl border border-neutral-200 p-6">
-            <div class="flex items-center gap-3 mb-6">
-              <div class="w-10 h-10 bg-neutral-600 rounded-lg flex items-center justify-center">
-                <span class="text-white font-bold text-sm">$</span>
-              </div>
-              <div>
-                <h3 class="font-semibold text-neutral-900">Transfer Manual</h3>
-                <p class="text-xs text-neutral-500">Konfigurasi rekening bank</p>
-              </div>
-            </div>
-            
-            <form @submit.prevent="savePaymentSettings" class="space-y-4">
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Nama Bank</label>
-                <input 
-                  v-model="paymentForm.manual.bank_name"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
-                  placeholder="BCA, Mandiri, BNI, etc."
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Nomor Rekening</label>
-                <input 
-                  v-model="paymentForm.manual.account_number"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
-                  placeholder="1234567890"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Nama Pemilik Rekening</label>
-                <input 
-                  v-model="paymentForm.manual.account_name"
-                  type="text" 
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
-                  placeholder="PT LearnHub Indonesia"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-neutral-700 mb-2">Instruksi Pembayaran</label>
-                <textarea 
-                  v-model="paymentForm.manual.instructions"
-                  rows="3"
-                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm resize-none"
-                  placeholder="Instruksi untuk pembayaran manual..."
-                ></textarea>
-              </div>
-              
-              <div class="pt-4">
-                <button type="submit" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Konfigurasi' }}</button>
-              </div>
-            </form>
-          </div>
-        </div>
 
+          <template v-else>
+            <!-- Enable Payment Toggle -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="font-semibold text-neutral-900">Aktifkan Modul Pembayaran</h3>
+                  <p class="text-sm text-neutral-500 mt-1">Aktifkan untuk menggunakan fitur pembayaran kursus berbayar</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" v-model="paymentSettings.enabled" @change="savePaymentSettings" class="sr-only peer">
+                  <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-admin-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-admin-600"></div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Provider Selection -->
+            <div class="bg-white rounded-xl border border-neutral-200 p-6">
+              <h3 class="font-semibold text-neutral-900 mb-4">Payment Provider</h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Midtrans -->
+                <div 
+                  @click="paymentSettings.provider = 'midtrans'"
+                  :class="[
+                    'border-2 rounded-xl p-4 cursor-pointer transition-all',
+                    paymentSettings.provider === 'midtrans' 
+                      ? 'border-admin-500 bg-admin-50' 
+                      : 'border-neutral-200 hover:border-neutral-300'
+                  ]"
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <span class="text-lg font-bold text-blue-600">M</span>
+                    </div>
+                    <div>
+                      <h4 class="font-medium text-neutral-900 text-sm">Midtrans</h4>
+                      <p class="text-xs text-neutral-500">Popular</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Duitku -->
+                <div 
+                  @click="paymentSettings.provider = 'duitku'"
+                  :class="[
+                    'border-2 rounded-xl p-4 cursor-pointer transition-all',
+                    paymentSettings.provider === 'duitku' 
+                      ? 'border-admin-500 bg-admin-50' 
+                      : 'border-neutral-200 hover:border-neutral-300'
+                  ]"
+                >
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <span class="text-lg font-bold text-green-600">D</span>
+                    </div>
+                    <div>
+                      <h4 class="font-medium text-neutral-900 text-sm">Duitku</h4>
+                      <p class="text-xs text-neutral-500">Alternatif</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Xendit (Coming Soon) -->
+                <div class="border-2 border-neutral-200 rounded-xl p-4 opacity-50 cursor-not-allowed">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <span class="text-lg font-bold text-purple-600">X</span>
+                    </div>
+                    <div>
+                      <h4 class="font-medium text-neutral-900 text-sm">Xendit</h4>
+                      <p class="text-xs text-neutral-500">Coming Soon</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Midtrans Configuration -->
+            <div v-if="paymentSettings.provider === 'midtrans'" class="bg-white rounded-xl border border-neutral-200 p-6">
+              <h3 class="font-semibold text-neutral-900 mb-4">Konfigurasi Midtrans</h3>
+              
+              <div class="space-y-4">
+                <!-- Environment -->
+                <div class="flex items-center gap-4">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="paymentSettings.midtrans_is_production" class="sr-only peer">
+                    <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-admin-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                  <div>
+                    <span class="font-medium text-neutral-900 text-sm">
+                      {{ paymentSettings.midtrans_is_production ? 'Production Mode' : 'Sandbox Mode' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-1">Server Key</label>
+                  <input 
+                    type="password"
+                    v-model="paymentSettings.midtrans_server_key"
+                    placeholder="SB-Mid-server-xxxxx atau Mid-server-xxxxx"
+                    class="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-1">Client Key</label>
+                  <input 
+                    type="text"
+                    v-model="paymentSettings.midtrans_client_key"
+                    placeholder="SB-Mid-client-xxxxx atau Mid-client-xxxxx"
+                    class="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500 text-sm"
+                  />
+                </div>
+
+                <div class="pt-2">
+                  <button @click="savePaymentSettings" :disabled="savingPayment" class="btn-admin">
+                    {{ savingPayment ? 'Menyimpan...' : 'Simpan Pengaturan' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Duitku Configuration -->
+            <div v-if="paymentSettings.provider === 'duitku'" class="bg-white rounded-xl border border-neutral-200 p-6">
+              <h3 class="font-semibold text-neutral-900 mb-4">Konfigurasi Duitku</h3>
+              
+              <div class="space-y-4">
+                <!-- Environment -->
+                <div class="flex items-center gap-4">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" v-model="paymentSettings.duitku_is_production" class="sr-only peer">
+                    <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-admin-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                  </label>
+                  <div>
+                    <span class="font-medium text-neutral-900 text-sm">
+                      {{ paymentSettings.duitku_is_production ? 'Production Mode' : 'Sandbox Mode' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-1">Merchant Code</label>
+                  <input 
+                    type="text"
+                    v-model="paymentSettings.duitku_merchant_code"
+                    placeholder="DXXXXX"
+                    class="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500 text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-neutral-700 mb-1">Merchant Key (API Key)</label>
+                  <input 
+                    type="password"
+                    v-model="paymentSettings.duitku_merchant_key"
+                    placeholder="API Key dari Duitku"
+                    class="w-full px-4 py-2 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500 text-sm"
+                  />
+                </div>
+
+                <div class="pt-2">
+                  <button @click="savePaymentSettings" :disabled="savingPayment" class="btn-admin">
+                    {{ savingPayment ? 'Menyimpan...' : 'Simpan Pengaturan' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
         <!-- AI Tutor Settings -->
         <div v-if="activeTab === 'ai'" class="space-y-6">
           <!-- AI Enable Toggle -->
@@ -645,6 +580,56 @@ const form = ref({
 const uploadingLogo = ref(false)
 const logoInput = ref<HTMLInputElement | null>(null)
 
+// Payment settings state
+const paymentLoading = ref(true)
+const savingPayment = ref(false)
+const paymentSettings = ref({
+  enabled: false,
+  provider: 'midtrans',
+  midtrans_server_key: '',
+  midtrans_client_key: '',
+  midtrans_is_production: false,
+  duitku_merchant_code: '',
+  duitku_merchant_key: '',
+  duitku_is_production: false
+})
+
+// Fetch payment settings
+const fetchPaymentSettings = async () => {
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    const data = await $fetch<any>(`${config.public.apiBase}/api/admin/payment/settings`, {
+      headers: { 'Authorization': `Bearer ${token.value}` }
+    })
+    paymentSettings.value = { ...paymentSettings.value, ...data }
+  } catch (err) {
+    console.error('Failed to fetch payment settings:', err)
+  } finally {
+    paymentLoading.value = false
+  }
+}
+
+// Save payment settings
+const savePaymentSettings = async () => {
+  savingPayment.value = true
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    await $fetch(`${config.public.apiBase}/api/admin/payment/settings`, {
+      method: 'PUT',
+      headers: { 'Authorization': `Bearer ${token.value}` },
+      body: paymentSettings.value
+    })
+    showToast('Pengaturan pembayaran berhasil disimpan')
+  } catch (err: any) {
+    console.error('Failed to save payment settings:', err)
+    showToast(err.data?.error || 'Gagal menyimpan pengaturan', 'error')
+  } finally {
+    savingPayment.value = false
+  }
+}
+
 // Get full logo URL
 const getLogoUrl = (url: string) => {
   if (!url) return ''
@@ -709,38 +694,6 @@ const features = ref([
   { id: 5, name: 'Drip Content', description: 'Buka materi berdasarkan jadwal', enabled: true },
   { id: 6, name: 'Sistem Afiliasi', description: 'Program referral untuk pengguna', enabled: false }
 ])
-
-// Payment Gateway Configuration
-const paymentGateways = [
-  { id: 'midtrans', name: 'Midtrans', description: 'Payment gateway Indonesia', color: 'bg-blue-600', icon: 'M' },
-  { id: 'xendit', name: 'Xendit', description: 'Multi-payment solution', color: 'bg-cyan-600', icon: 'X' },
-  { id: 'manual', name: 'Transfer Manual', description: 'Bank transfer langsung', color: 'bg-neutral-600', icon: '$' }
-]
-
-const paymentForm = ref({
-  active_gateway: 'midtrans',
-  midtrans: {
-    environment: 'sandbox',
-    merchant_id: '',
-    client_key: '',
-    server_key: ''
-  },
-  xendit: {
-    environment: 'sandbox',
-    public_key: '',
-    secret_key: '',
-    callback_token: ''
-  },
-  manual: {
-    bank_name: '',
-    account_number: '',
-    account_name: '',
-    instructions: ''
-  }
-})
-
-const showServerKey = ref(false)
-const testingConnection = ref(false)
 
 // AI Settings
 const showAIKey = ref(false)
@@ -841,32 +794,6 @@ const saveThemeSettings = async () => {
   } else {
     showToast('Gagal menyimpan tema', 'error')
   }
-}
-
-const savePaymentSettings = async () => {
-  saving.value = true
-  
-  // In production, this would save to backend
-  // For now, simulate save
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  
-  // Store in localStorage for demo
-  if (process.client) {
-    localStorage.setItem('payment_config', JSON.stringify(paymentForm.value))
-  }
-  
-  saving.value = false
-  showToast('Konfigurasi pembayaran berhasil disimpan')
-}
-
-const testPaymentConnection = async () => {
-  testingConnection.value = true
-  
-  // Simulate API test
-  await new Promise(resolve => setTimeout(resolve, 2000))
-  
-  testingConnection.value = false
-  showToast('Koneksi berhasil! Gateway siap digunakan')
 }
 
 // AI Settings Functions
@@ -983,24 +910,13 @@ onMounted(async () => {
   // Load AI settings
   await fetchAISettings()
   await fetchSettings()
+  await fetchPaymentSettings()
   if (settings.value) {
     form.value.site_name = settings.value.site_name || ''
     form.value.site_description = settings.value.site_description || ''
     form.value.contact_email = settings.value.contact_email || ''
     form.value.theme = settings.value.theme || 'default'
     form.value.logo_url = settings.value.logo_url || ''
-  }
-  
-  // Load payment config from localStorage
-  if (process.client) {
-    const savedPaymentConfig = localStorage.getItem('payment_config')
-    if (savedPaymentConfig) {
-      try {
-        paymentForm.value = JSON.parse(savedPaymentConfig)
-      } catch (e) {
-        // Use default config
-      }
-    }
   }
 })
 </script>

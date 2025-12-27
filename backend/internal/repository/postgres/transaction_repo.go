@@ -14,12 +14,21 @@ type Transaction struct {
 	TenantID          string          `json:"tenant_id"`
 	UserID            string          `json:"user_id"`
 	CourseID          *string         `json:"course_id,omitempty"`
+	OrderID           *string         `json:"order_id,omitempty"`
 	Amount            float64         `json:"amount"`
+	GrossAmount       *float64        `json:"gross_amount,omitempty"`
 	Currency          string          `json:"currency"`
-	Status            string          `json:"status"` // pending, success, failed, refunded
+	Status            string          `json:"status"` // pending, settlement, capture, deny, cancel, expire, failure, refund
 	PaymentGateway    string          `json:"payment_gateway"`
 	PaymentGatewayRef *string         `json:"payment_gateway_ref,omitempty"`
 	PaymentMethod     *string         `json:"payment_method,omitempty"`
+	PaymentType       *string         `json:"payment_type,omitempty"`
+	SnapToken         *string         `json:"snap_token,omitempty"`
+	PaymentURL        *string         `json:"payment_url,omitempty"`
+	FraudStatus       *string         `json:"fraud_status,omitempty"`
+	TransactionTime   *time.Time      `json:"transaction_time,omitempty"`
+	SettlementTime    *time.Time      `json:"settlement_time,omitempty"`
+	ExpiredAt         *time.Time      `json:"expired_at,omitempty"`
 	Metadata          json.RawMessage `json:"metadata,omitempty"`
 	CreatedAt         time.Time       `json:"created_at"`
 	UpdatedAt         time.Time       `json:"updated_at"`
@@ -94,10 +103,26 @@ func (r *TransactionRepository) Create(tx *Transaction) error {
 		tx.Currency = "IDR"
 	}
 	
+	// Handle empty TenantID - pass NULL to DB instead of empty string
+	var tenantID interface{}
+	if tx.TenantID == "" {
+		tenantID = nil
+	} else {
+		tenantID = tx.TenantID
+	}
+	
+	// Handle empty Metadata - pass NULL to DB instead of empty/invalid json
+	var metadata interface{}
+	if len(tx.Metadata) == 0 {
+		metadata = nil
+	} else {
+		metadata = tx.Metadata
+	}
+	
 	return r.db.QueryRow(query,
-		tx.TenantID, tx.UserID, tx.CourseID, tx.Amount, tx.Currency,
+		tenantID, tx.UserID, tx.CourseID, tx.Amount, tx.Currency,
 		tx.Status, tx.PaymentGateway, tx.PaymentGatewayRef,
-		tx.PaymentMethod, tx.Metadata, tx.CreatedAt, tx.UpdatedAt,
+		tx.PaymentMethod, metadata, tx.CreatedAt, tx.UpdatedAt,
 	).Scan(&tx.ID)
 }
 
@@ -112,6 +137,144 @@ func (r *TransactionRepository) UpdateStatus(id, status string) error {
 func (r *TransactionRepository) UpdateGatewayRef(id, gatewayRef string) error {
 	query := `UPDATE transactions SET payment_gateway_ref = $2, updated_at = $3 WHERE id = $1`
 	_, err := r.db.Exec(query, id, gatewayRef, time.Now())
+	return err
+}
+
+// GetByOrderID retrieves a transaction by order_id (used for payment gateway callbacks)
+func (r *TransactionRepository) GetByOrderID(orderID string) (*Transaction, error) {
+	query := `
+		SELECT id, tenant_id, user_id, course_id, order_id, amount, gross_amount, currency, status,
+		       payment_gateway, payment_gateway_ref, payment_method, payment_type, snap_token,
+		       payment_url, fraud_status, transaction_time, settlement_time, expired_at,
+		       metadata, created_at, updated_at
+		FROM transactions WHERE order_id = $1
+	`
+	
+	var tx Transaction
+	var courseID, orderIDVal, gatewayRef, method, paymentType, snapToken, paymentURL, fraudStatus sql.NullString
+	var grossAmount sql.NullFloat64
+	var transactionTime, settlementTime, expiredAt sql.NullTime
+	
+	err := r.db.QueryRow(query, orderID).Scan(
+		&tx.ID, &tx.TenantID, &tx.UserID, &courseID, &orderIDVal, &tx.Amount, &grossAmount, &tx.Currency,
+		&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &paymentType, &snapToken,
+		&paymentURL, &fraudStatus, &transactionTime, &settlementTime, &expiredAt,
+		&tx.Metadata, &tx.CreatedAt, &tx.UpdatedAt,
+	)
+	
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	
+	if courseID.Valid {
+		tx.CourseID = &courseID.String
+	}
+	if orderIDVal.Valid {
+		tx.OrderID = &orderIDVal.String
+	}
+	if grossAmount.Valid {
+		tx.GrossAmount = &grossAmount.Float64
+	}
+	if gatewayRef.Valid {
+		tx.PaymentGatewayRef = &gatewayRef.String
+	}
+	if method.Valid {
+		tx.PaymentMethod = &method.String
+	}
+	if paymentType.Valid {
+		tx.PaymentType = &paymentType.String
+	}
+	if snapToken.Valid {
+		tx.SnapToken = &snapToken.String
+	}
+	if paymentURL.Valid {
+		tx.PaymentURL = &paymentURL.String
+	}
+	if fraudStatus.Valid {
+		tx.FraudStatus = &fraudStatus.String
+	}
+	if transactionTime.Valid {
+		tx.TransactionTime = &transactionTime.Time
+	}
+	if settlementTime.Valid {
+		tx.SettlementTime = &settlementTime.Time
+	}
+	if expiredAt.Valid {
+		tx.ExpiredAt = &expiredAt.Time
+	}
+	
+	return &tx, nil
+}
+
+// UpdateFromCallback updates transaction with payment gateway callback data
+func (r *TransactionRepository) UpdateFromCallback(orderID string, status string, paymentType *string, fraudStatus *string, transactionTime *time.Time, settlementTime *time.Time, paymentGatewayRef *string) error {
+	query := `
+		UPDATE transactions SET 
+			status = $2,
+			payment_type = $3,
+			fraud_status = $4,
+			transaction_time = $5,
+			settlement_time = $6,
+			payment_gateway_ref = $7,
+			updated_at = $8
+		WHERE order_id = $1
+	`
+	_, err := r.db.Exec(query, orderID, status, paymentType, fraudStatus, transactionTime, settlementTime, paymentGatewayRef, time.Now())
+	return err
+}
+
+// UpdateSnapToken updates the Midtrans snap token
+func (r *TransactionRepository) UpdateSnapToken(id, snapToken, paymentURL string, expiredAt time.Time) error {
+	query := `UPDATE transactions SET snap_token = $2, payment_url = $3, expired_at = $4, updated_at = $5 WHERE id = $1`
+	_, err := r.db.Exec(query, id, snapToken, paymentURL, expiredAt, time.Now())
+	return err
+}
+
+// GetPendingByUserAndCourse checks if user has pending transaction for a course
+func (r *TransactionRepository) GetPendingByUserAndCourse(userID, courseID string) (*Transaction, error) {
+	query := `
+		SELECT id, snap_token, payment_url, expired_at FROM transactions 
+		WHERE user_id = $1 AND course_id = $2 AND status = 'pending'
+		AND (expired_at IS NULL OR expired_at > NOW())
+		ORDER BY created_at DESC LIMIT 1
+	`
+	
+	var tx Transaction
+	var snapToken, paymentURL sql.NullString
+	var expiredAt sql.NullTime
+	
+	err := r.db.QueryRow(query, userID, courseID).Scan(&tx.ID, &snapToken, &paymentURL, &expiredAt)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	
+	if snapToken.Valid {
+		tx.SnapToken = &snapToken.String
+	}
+	if paymentURL.Valid {
+		tx.PaymentURL = &paymentURL.String
+	}
+	if expiredAt.Valid {
+		tx.ExpiredAt = &expiredAt.Time
+	}
+	
+	return &tx, nil
+}
+
+// CancelPendingByUserAndCourse cancels existing pending transactions for a user and course
+func (r *TransactionRepository) CancelPendingByUserAndCourse(userID, courseID string) error {
+	query := `
+		UPDATE transactions 
+		SET status = 'cancelled', updated_at = NOW() 
+		WHERE user_id = $1 AND course_id = $2 AND status = 'pending'
+	`
+	_, err := r.db.Exec(query, userID, courseID)
 	return err
 }
 
@@ -155,6 +318,14 @@ func (r *TransactionRepository) ListByUser(userID string, limit, offset int) ([]
 	`
 	
 	return r.scanTransactions(query, userID, limit, offset)
+}
+
+// CountByUser returns total transaction count for a user
+func (r *TransactionRepository) CountByUser(userID string) (int, error) {
+	query := `SELECT COUNT(*) FROM transactions WHERE user_id = $1`
+	var count int
+	err := r.db.QueryRow(query, userID).Scan(&count)
+	return count, err
 }
 
 // ListByStatus retrieves transactions by status

@@ -210,7 +210,7 @@ func CheckEnrollment(c echo.Context) error {
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
 	}
 	
-	courseID := c.Param("courseId")
+	courseID := c.Param("id")
 	
 	enrollment, err := enrollmentRepo.GetByUserAndCourse(userID, courseID)
 	if err != nil {
