@@ -250,31 +250,29 @@ func DeleteTransaction(c echo.Context) error {
 func GetDashboardChartData(c echo.Context) error {
 	initAdminRepos()
 	
-	// Get last 6 months data
-	months := []string{}
-	revenueData := []float64{}
-	usersData := []int{}
+	tenantID := c.QueryParam("tenant_id")
+	if tenantID == "" {
+		tenantID = "default"
+	}
 	
-	now := time.Now()
-	for i := 5; i >= 0; i-- {
-		month := now.AddDate(0, -i, 0)
-		monthName := month.Format("Jan")
-		months = append(months, monthName)
-		
-		// For now, generate sample data based on existing counts
-		// In production, you'd query actual monthly data from DB
-		baseRevenue := 5000000.0 + float64(5-i)*2000000.0
-		baseUsers := 50 + (5-i)*20
-		
-		// Add some variance
-		revenueData = append(revenueData, baseRevenue+float64((5-i)*500000))
-		usersData = append(usersData, baseUsers+(5-i)*5)
+	// Get revenue data
+	revenue, months, err := transactionRepo.GetMonthlyRevenue(tenantID)
+	if err != nil {
+		log.Printf("[Dashboard] Error fetching revenue: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch revenue data"})
+	}
+	
+	// Get user growth data
+	users, _, err := userRepo.GetMonthlyGrowth(tenantID)
+	if err != nil {
+		log.Printf("[Dashboard] Error fetching user growth: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch user growth data"})
 	}
 	
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"labels":  months,
-		"revenue": revenueData,
-		"users":   usersData,
+		"revenue": revenue,
+		"users":   users,
 	})
 }
 

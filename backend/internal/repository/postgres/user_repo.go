@@ -306,4 +306,46 @@ func (r *UserRepository) UpdatePassword(userID, passwordHash string) error {
 	_, err := r.db.Exec(query, userID, passwordHash, time.Now())
 	return err
 }
-
+// GetMonthlyGrowth returns total new users for last 6 months
+func (r *UserRepository) GetMonthlyGrowth(tenantID string) ([]int, []string, error) {
+	// Query to get count of new users grouped by month
+	query := `
+		WITH months AS (
+			SELECT generate_series(
+				date_trunc('month', NOW()) - INTERVAL '5 months',
+				date_trunc('month', NOW()),
+				'1 month'::interval
+			) as month
+		)
+		SELECT 
+			m.month,
+			COUNT(u.id) as total
+		FROM months m
+		LEFT JOIN users u ON 
+			date_trunc('month', u.created_at) = m.month 
+			AND ($1 = '' OR $1 = 'default' OR u.tenant_id = $1 OR u.tenant_id IS NULL)
+		GROUP BY m.month
+		ORDER BY m.month ASC
+	`
+	
+	rows, err := r.db.Query(query, tenantID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+	
+	var users []int
+	var months []string
+	
+	for rows.Next() {
+		var month time.Time
+		var total int
+		if err := rows.Scan(&month, &total); err != nil {
+			return nil, nil, err
+		}
+		months = append(months, month.Format("Jan"))
+		users = append(users, total)
+	}
+	
+	return users, months, nil
+}

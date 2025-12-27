@@ -250,6 +250,51 @@ func (r *TransactionRepository) UpdateFromCallback(orderID string, status string
 	return err
 }
 
+// GetMonthlyRevenue returns total revenue for last 6 months
+func (r *TransactionRepository) GetMonthlyRevenue(tenantID string) ([]float64, []string, error) {
+	// Query to get sum of amount grouped by month for successful transactions
+	query := `
+		WITH months AS (
+			SELECT generate_series(
+				date_trunc('month', NOW()) - INTERVAL '5 months',
+				date_trunc('month', NOW()),
+				'1 month'::interval
+			) as month
+		)
+		SELECT 
+			m.month,
+			COALESCE(SUM(t.amount), 0) as total
+		FROM months m
+		LEFT JOIN transactions t ON 
+			date_trunc('month', t.created_at) = m.month 
+			AND t.status = 'success'
+			AND ($1 = '' OR $1 = 'default' OR t.tenant_id = $1 OR t.tenant_id IS NULL)
+		GROUP BY m.month
+		ORDER BY m.month ASC
+	`
+	
+	rows, err := r.db.Query(query, tenantID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+	
+	var revenue []float64
+	var months []string
+	
+	for rows.Next() {
+		var month time.Time
+		var total float64
+		if err := rows.Scan(&month, &total); err != nil {
+			return nil, nil, err
+		}
+		months = append(months, month.Format("Jan"))
+		revenue = append(revenue, total)
+	}
+	
+	return revenue, months, nil
+}
+
 // UpdateSnapToken updates the Midtrans snap token
 func (r *TransactionRepository) UpdateSnapToken(id, snapToken, paymentURL string, expiredAt time.Time) error {
 	query := `UPDATE transactions SET snap_token = $2, payment_url = $3, expired_at = $4, updated_at = $5 WHERE id = $1`
