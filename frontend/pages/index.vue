@@ -52,7 +52,6 @@
              </h1>
              
              <p class="text-lg text-neutral-600 mb-8 max-w-xl leading-relaxed">
-               Ribuan peserta telah berhasil melalui program Webinar Prakerja kami. 
                Belajar fleksibel, materi berkualitas, dan bersertifikat resmi.
              </p>
              
@@ -100,7 +99,7 @@
               <img src="/images/hero.webp" alt="Happy Student" class="w-full h-auto rounded-[2rem] shadow-2xl border-4 border-white relative z-10" />
               
               <!-- Floating Dynamic Card (Course Preview) -->
-              <div class="absolute -bottom-12 -left-4 md:-left-12 z-20 w-72 md:w-80">
+              <div class="relative -mt-12 mx-auto md:absolute md:mt-0 md:mx-0 md:-bottom-12 md:-left-12 z-20 w-72 md:w-80">
                 <div class="card-hover p-6 relative overflow-hidden bg-white shadow-soft-lg rounded-2xl border border-neutral-100">
                   <div class="absolute top-0 right-0 w-20 h-20 bg-primary-50 rounded-bl-full -mr-10 -mt-10 z-0"></div>
                   
