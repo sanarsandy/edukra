@@ -17,10 +17,9 @@
           <button v-if="unreadCount > 0" @click="markAllRead" class="text-xs text-primary-600 hover:text-primary-700">Tandai sudah dibaca</button>
         </div>
         
-        <!-- Notifications List -->
         <div class="max-h-80 overflow-y-auto">
           <template v-if="notifications.length > 0">
-            <div v-for="notif in notifications" :key="notif.id" class="px-4 py-3 hover:bg-neutral-50 cursor-pointer border-b border-neutral-50 last:border-0 transition-colors" :class="{ 'bg-primary-50/50': !notif.read }">
+            <div v-for="notif in notifications" :key="notif.id" class="px-4 py-3 hover:bg-neutral-50 cursor-pointer border-b border-neutral-50 last:border-0 transition-colors" :class="{ 'bg-primary-50/50': !notif.is_read }">
               <div class="flex gap-3">
                 <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0" :class="notifIconClass(notif.type)">
                   <svg v-if="notif.type === 'course'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +33,7 @@
                   </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm text-neutral-900" :class="{ 'font-medium': !notif.read }">{{ notif.title }}</p>
+                  <p class="text-sm text-neutral-900" :class="{ 'font-medium': !notif.is_read }">{{ notif.title }}</p>
                   <p class="text-xs text-neutral-500 mt-0.5">{{ notif.time }}</p>
                 </div>
               </div>
@@ -61,24 +60,37 @@
 
 <script setup lang="ts">
 interface Notification {
-  id: number
+  id: string
+  type: string
   title: string
+  message?: string
+  reference_id?: string
+  reference_type?: string
+  is_read: boolean
+  created_at: string
   time: string
-  type: 'course' | 'achievement' | 'info'
-  read: boolean
 }
 
+const api = useApi()
 const notifRef = ref<HTMLElement | null>(null)
 const open = ref(false)
 
-// Sample notifications - replace with actual data
-const notifications = ref<Notification[]>([
-  { id: 1, title: 'Kursus baru tersedia: Advanced React', time: '5 menit lalu', type: 'course', read: false },
-  { id: 2, title: 'Selamat! Anda mendapat sertifikat', time: '1 jam lalu', type: 'achievement', read: false },
-  { id: 3, title: 'Pengingat: Lanjutkan belajar Anda', time: '3 jam lalu', type: 'info', read: true },
-])
+// Notifications from API
+const notifications = ref<Notification[]>([])
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length)
+
+// Fetch notifications
+const fetchNotifications = async () => {
+  try {
+    const response = await api.fetch<{ notifications: Notification[], unread_count: number }>('/api/notifications')
+    if (response?.notifications) {
+      notifications.value = response.notifications
+    }
+  } catch (err) {
+    console.error('[Notifications] Error fetching:', err)
+  }
+}
 
 const notifIconClass = (type: string) => {
   switch (type) {
@@ -88,8 +100,13 @@ const notifIconClass = (type: string) => {
   }
 }
 
-const markAllRead = () => {
-  notifications.value.forEach(n => n.read = true)
+const markAllRead = async () => {
+  try {
+    await api.fetch('/api/notifications/read-all', { method: 'PUT' })
+    notifications.value.forEach(n => n.is_read = true)
+  } catch (err) {
+    console.error('[Notifications] Error marking all read:', err)
+  }
 }
 
 onMounted(() => {
@@ -98,5 +115,8 @@ onMounted(() => {
       open.value = false
     }
   })
+  
+  // Fetch notifications on mount
+  fetchNotifications()
 })
 </script>

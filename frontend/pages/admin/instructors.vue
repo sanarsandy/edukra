@@ -313,9 +313,11 @@ onMounted(async () => {
 })
 
 const averageRating = computed(() => {
-  if (instructors.value.length === 0) return 0
-  // Mock rating for now as backend doesn't have it
-  return 4.8
+  if (instructors.value.length === 0) return '0.0'
+  const ratingsWithData = instructors.value.filter((i: any) => i.rating && i.rating > 0)
+  if (ratingsWithData.length === 0) return '0.0'
+  const total = ratingsWithData.reduce((acc: number, i: any) => acc + (i.rating || 0), 0)
+  return (total / ratingsWithData.length).toFixed(1)
 })
 
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {

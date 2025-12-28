@@ -253,27 +253,55 @@ func (r *TransactionRepository) UpdateFromCallback(orderID string, status string
 // GetMonthlyRevenue returns total revenue for last 6 months
 func (r *TransactionRepository) GetMonthlyRevenue(tenantID string) ([]float64, []string, error) {
 	// Query to get sum of amount grouped by month for successful transactions
-	query := `
-		WITH months AS (
-			SELECT generate_series(
-				date_trunc('month', NOW()) - INTERVAL '5 months',
-				date_trunc('month', NOW()),
-				'1 month'::interval
-			) as month
-		)
-		SELECT 
-			m.month,
-			COALESCE(SUM(t.amount), 0) as total
-		FROM months m
-		LEFT JOIN transactions t ON 
-			date_trunc('month', t.created_at) = m.month 
-			AND t.status = 'success'
-			AND ($1 = '' OR $1 = 'default' OR t.tenant_id = $1 OR t.tenant_id IS NULL)
-		GROUP BY m.month
-		ORDER BY m.month ASC
-	`
+	// Query to get sum of amount grouped by month for successful transactions
+	var query string
+	var args []interface{}
+
+	if tenantID == "" || tenantID == "default" {
+		query = `
+			WITH months AS (
+				SELECT generate_series(
+					date_trunc('month', NOW()) - INTERVAL '5 months',
+					date_trunc('month', NOW()),
+					'1 month'::interval
+				) as month
+			)
+			SELECT 
+				m.month,
+				COALESCE(SUM(t.amount), 0) as total
+			FROM months m
+			LEFT JOIN transactions t ON 
+				date_trunc('month', t.created_at) = m.month 
+				AND t.status = 'success'
+				AND t.tenant_id IS NULL
+			GROUP BY m.month
+			ORDER BY m.month ASC
+		`
+		// No args for default tenant
+	} else {
+		query = `
+			WITH months AS (
+				SELECT generate_series(
+					date_trunc('month', NOW()) - INTERVAL '5 months',
+					date_trunc('month', NOW()),
+					'1 month'::interval
+				) as month
+			)
+			SELECT 
+				m.month,
+				COALESCE(SUM(t.amount), 0) as total
+			FROM months m
+			LEFT JOIN transactions t ON 
+				date_trunc('month', t.created_at) = m.month 
+				AND t.status = 'success'
+				AND (t.tenant_id = $1 OR t.tenant_id IS NULL)
+			GROUP BY m.month
+			ORDER BY m.month ASC
+		`
+		args = append(args, tenantID)
+	}
 	
-	rows, err := r.db.Query(query, tenantID)
+	rows, err := r.db.Query(query, args...)
 	if err != nil {
 		return nil, nil, err
 	}

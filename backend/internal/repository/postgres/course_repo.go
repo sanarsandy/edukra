@@ -268,6 +268,40 @@ func (r *CourseRepository) CountByTenant(tenantID string) (int, error) {
 	return count, err
 }
 
+// CountByInstructor returns total course count for an instructor
+func (r *CourseRepository) CountByInstructor(instructorID string) (int, error) {
+	query := `SELECT COUNT(*) FROM courses WHERE instructor_id = $1`
+	var count int
+	err := r.db.QueryRow(query, instructorID).Scan(&count)
+	return count, err
+}
+
+// GetStudentCountByInstructor returns total enrolled students across all courses of an instructor
+func (r *CourseRepository) GetStudentCountByInstructor(instructorID string) (int, error) {
+	query := `
+		SELECT COALESCE(COUNT(DISTINCT e.user_id), 0)
+		FROM enrollments e
+		JOIN courses c ON e.course_id = c.id
+		WHERE c.instructor_id = $1
+	`
+	var count int
+	err := r.db.QueryRow(query, instructorID).Scan(&count)
+	return count, err
+}
+
+// GetAverageRatingByInstructor returns average rating across all courses of an instructor
+func (r *CourseRepository) GetAverageRatingByInstructor(instructorID string) (float64, error) {
+	query := `
+		SELECT COALESCE(AVG(cr.rating), 0)
+		FROM course_ratings cr
+		JOIN courses c ON cr.course_id = c.id
+		WHERE c.instructor_id = $1
+	`
+	var rating float64
+	err := r.db.QueryRow(query, instructorID).Scan(&rating)
+	return rating, err
+}
+
 // Helper function to scan course rows with details
 func (r *CourseRepository) scanCoursesWithDetails(query string, args ...interface{}) ([]*domain.Course, error) {
 	rows, err := r.db.Query(query, args...)

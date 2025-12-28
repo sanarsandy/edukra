@@ -83,18 +83,53 @@
               <span class="text-neutral-600">Revenue</span>
             </div>
           </div>
-          <div class="flex items-end justify-between gap-2 h-40">
-            <div v-for="(value, index) in chartData.revenue" :key="'rev-'+index" class="flex-1 flex flex-col items-center gap-2">
-              <div 
-                class="w-full bg-primary-500 rounded-t-md transition-all duration-500 hover:bg-primary-600"
-                :style="{ height: getBarHeight(value, chartData.revenue) + '%' }"
-              ></div>
-              <span class="text-xs text-neutral-500">{{ chartData.labels[index] }}</span>
-            </div>
+          <!-- Line Chart -->
+          <div class="relative h-32">
+            <svg class="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="0" y1="25" x2="300" y2="25" stroke="#f3f4f6" stroke-width="1"/>
+              <line x1="0" y1="50" x2="300" y2="50" stroke="#f3f4f6" stroke-width="1"/>
+              <line x1="0" y1="75" x2="300" y2="75" stroke="#f3f4f6" stroke-width="1"/>
+              <!-- Area fill -->
+              <path 
+                :d="getAreaPath(chartData.revenue)" 
+                fill="url(#revenueGradient)" 
+                opacity="0.3"
+              />
+              <!-- Line -->
+              <path 
+                :d="getLinePath(chartData.revenue)" 
+                fill="none" 
+                stroke="#1E4976" 
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- Data points -->
+              <circle 
+                v-for="(point, index) in getChartPoints(chartData.revenue)" 
+                :key="'rev-point-'+index"
+                :cx="point.x" 
+                :cy="point.y" 
+                r="4" 
+                fill="#1E4976"
+                class="transition-all duration-300 hover:r-6"
+              />
+              <defs>
+                <linearGradient id="revenueGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#1E4976"/>
+                  <stop offset="100%" stop-color="#1E4976" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <!-- Labels -->
+          <div class="flex justify-between mt-2">
+            <span v-for="(label, index) in chartData.labels" :key="'label-rev-'+index" class="text-xs text-neutral-500">{{ label }}</span>
           </div>
           <div class="mt-4 pt-4 border-t border-neutral-100 flex justify-between text-sm">
             <span class="text-neutral-500">Total Periode</span>
-            <span class="font-semibold text-neutral-900">{{ formatCurrency(chartData.revenue.reduce((a, b) => a + b, 0)) }}</span>
+            <span class="font-semibold text-neutral-900">{{ formatCurrency(chartData.revenue.reduce((a: number, b: number) => a + b, 0)) }}</span>
           </div>
         </div>
         
@@ -110,18 +145,53 @@
               <span class="text-neutral-600">Users</span>
             </div>
           </div>
-          <div class="flex items-end justify-between gap-2 h-40">
-            <div v-for="(value, index) in chartData.users" :key="'usr-'+index" class="flex-1 flex flex-col items-center gap-2">
-              <div 
-                class="w-full bg-accent-500 rounded-t-md transition-all duration-500 hover:bg-accent-600"
-                :style="{ height: getBarHeight(value, chartData.users) + '%' }"
-              ></div>
-              <span class="text-xs text-neutral-500">{{ chartData.labels[index] }}</span>
-            </div>
+          <!-- Line Chart -->
+          <div class="relative h-32">
+            <svg class="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
+              <!-- Grid lines -->
+              <line x1="0" y1="25" x2="300" y2="25" stroke="#f3f4f6" stroke-width="1"/>
+              <line x1="0" y1="50" x2="300" y2="50" stroke="#f3f4f6" stroke-width="1"/>
+              <line x1="0" y1="75" x2="300" y2="75" stroke="#f3f4f6" stroke-width="1"/>
+              <!-- Area fill -->
+              <path 
+                :d="getAreaPath(chartData.users)" 
+                fill="url(#usersGradient)" 
+                opacity="0.3"
+              />
+              <!-- Line -->
+              <path 
+                :d="getLinePath(chartData.users)" 
+                fill="none" 
+                stroke="#7FA99B" 
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <!-- Data points -->
+              <circle 
+                v-for="(point, index) in getChartPoints(chartData.users)" 
+                :key="'usr-point-'+index"
+                :cx="point.x" 
+                :cy="point.y" 
+                r="4" 
+                fill="#7FA99B"
+                class="transition-all duration-300 hover:r-6"
+              />
+              <defs>
+                <linearGradient id="usersGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#7FA99B"/>
+                  <stop offset="100%" stop-color="#7FA99B" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <!-- Labels -->
+          <div class="flex justify-between mt-2">
+            <span v-for="(label, index) in chartData.labels" :key="'label-usr-'+index" class="text-xs text-neutral-500">{{ label }}</span>
           </div>
           <div class="mt-4 pt-4 border-t border-neutral-100 flex justify-between text-sm">
             <span class="text-neutral-500">Total Pengguna Baru</span>
-            <span class="font-semibold text-neutral-900">{{ chartData.users.reduce((a, b) => a + b, 0) }} user</span>
+            <span class="font-semibold text-neutral-900">{{ chartData.users.reduce((a: number, b: number) => a + b, 0) }} user</span>
           </div>
         </div>
       </div>
@@ -195,30 +265,37 @@
         </div>
         <div class="p-5">
           <div class="relative">
-            <!-- Timeline line -->
-            <div class="absolute left-5 top-0 bottom-0 w-px bg-neutral-200"></div>
+            <!-- Empty state -->
+            <div v-if="activityLog.length === 0" class="text-center py-8 text-neutral-500">
+              <p>Belum ada aktivitas terbaru</p>
+            </div>
             
-            <!-- Activity items -->
-            <div class="space-y-6">
-              <div v-for="activity in activityLog" :key="activity.id" class="relative flex gap-4">
-                <div 
-                  class="relative z-10 w-10 h-10 rounded-full flex items-center justify-center"
-                  :class="getActivityColor(activity.type)"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="getActivityIcon(activity.type)"/>
-                  </svg>
-                </div>
-                <div class="flex-1 min-w-0 pt-1.5">
-                  <p class="text-sm text-neutral-900">
-                    <span class="font-medium">{{ activity.user }}</span>
-                    <span class="text-neutral-500"> {{ activity.action }} </span>
-                    <span class="font-medium">{{ activity.target }}</span>
-                  </p>
-                  <p class="text-xs text-neutral-400 mt-0.5">{{ activity.time }}</p>
+            <template v-else>
+              <!-- Timeline line -->
+              <div class="absolute left-5 top-0 bottom-0 w-px bg-neutral-200"></div>
+              
+              <!-- Activity items -->
+              <div class="space-y-6">
+                <div v-for="activity in activityLog" :key="activity.id" class="relative flex gap-4">
+                  <div 
+                    class="relative z-10 w-10 h-10 rounded-full flex items-center justify-center"
+                    :class="getActivityColor(activity.type)"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" :d="getActivityIcon(activity.type)"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1 min-w-0 pt-1.5">
+                    <p class="text-sm text-neutral-900">
+                      <span class="font-medium">{{ activity.user }}</span>{{ ' ' }}
+                      <span class="text-neutral-500">{{ activity.action }}</span>{{ ' ' }}
+                      <span v-if="activity.target" class="font-medium">{{ activity.target }}</span>
+                    </p>
+                    <p class="text-xs text-neutral-400 mt-0.5">{{ activity.time }}</p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
           </div>
         </div>
       </div>
@@ -247,8 +324,15 @@ const {
   fetchAdminDashboard 
 } = useDashboard()
 
+// Chart data interface
+interface ChartData {
+  labels: string[]
+  revenue: number[]
+  users: number[]
+}
+
 // Chart data
-const chartData = ref({
+const chartData = ref<ChartData>({
   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
   revenue: [0, 0, 0, 0, 0, 0],
   users: [0, 0, 0, 0, 0, 0]
@@ -263,39 +347,104 @@ const fetchChartData = async () => {
       users: number[]
     }>('/api/admin/dashboard/charts')
     
-    if (response) {
-      chartData.value = response
+    console.log('[Dashboard] Chart data response:', response)
+    
+    if (response && response.labels && response.revenue && response.users) {
+      chartData.value = {
+        labels: response.labels,
+        revenue: response.revenue,
+        users: response.users
+      }
+      console.log('[Dashboard] Chart data updated:', chartData.value)
     }
   } catch (err) {
+    console.error('[Dashboard] Error fetching chart data:', err)
     // Use default sample data if API fails
   }
 }
 
-// Get bar height as percentage
-const getBarHeight = (value: number, data: number[]) => {
-  const max = Math.max(...data)
-  if (max === 0) return 10
-  return Math.max(10, (value / max) * 100)
+// Line chart helper functions
+const getChartPoints = (data: number[]) => {
+  const max = Math.max(...data, 1) // Ensure at least 1 to avoid division by zero
+  const width = 300
+  const height = 100
+  const padding = 10
+  
+  return data.map((value, index) => ({
+    x: padding + (index * (width - 2 * padding)) / (data.length - 1 || 1),
+    y: height - padding - ((value / max) * (height - 2 * padding))
+  }))
+}
+
+const getLinePath = (data: number[]) => {
+  const points = getChartPoints(data)
+  if (points.length === 0) return ''
+  
+  return points.map((point, index) => 
+    `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`
+  ).join(' ')
+}
+
+const getAreaPath = (data: number[]) => {
+  const points = getChartPoints(data)
+  if (points.length === 0) return ''
+  
+  const width = 300
+  const height = 100
+  const padding = 10
+  
+  // Start from bottom left
+  let path = `M ${padding} ${height - padding}`
+  
+  // Draw line to first point then through all points
+  points.forEach(point => {
+    path += ` L ${point.x} ${point.y}`
+  })
+  
+  // Close path to bottom right and back
+  path += ` L ${width - padding} ${height - padding} Z`
+  
+  return path
 }
 
 // Load dashboard data
 const loadDashboard = async () => {
   await fetchAdminDashboard()
   await fetchChartData()
+  await fetchActivityLog()
 }
 
 onMounted(() => {
   loadDashboard()
 })
 
-// Activity log - sample data (in production, fetch from API)
-const activityLog = ref([
-  { id: 1, type: 'user', user: 'Admin', action: 'menambahkan pengguna baru', target: 'john.doe@email.com', time: '5 menit lalu' },
-  { id: 2, type: 'course', user: 'Dr. Sarah', action: 'mempublikasikan kursus', target: 'Advanced React Patterns', time: '15 menit lalu' },
-  { id: 3, type: 'payment', user: 'System', action: 'menerima pembayaran dari', target: 'Jane Smith', time: '32 menit lalu' },
-  { id: 4, type: 'edit', user: 'Admin', action: 'mengupdate pengaturan', target: 'Payment Gateway', time: '1 jam lalu' },
-  { id: 5, type: 'delete', user: 'Admin', action: 'menghapus kategori', target: 'Outdated Category', time: '2 jam lalu' }
-])
+// Activity log types
+interface Activity {
+  id: string
+  type: string
+  user: string
+  action: string
+  target: string
+  time: string
+}
+
+// Activity log
+const activityLog = ref<Activity[]>([])
+
+// Fetch activity log from API
+const fetchActivityLog = async () => {
+  try {
+    const response = await api.fetch<Activity[]>('/api/admin/dashboard/activities?limit=5')
+    
+    if (response && Array.isArray(response)) {
+      activityLog.value = response
+    }
+  } catch (err) {
+    console.error('[Dashboard] Error fetching activity log:', err)
+    // Fallback to empty array
+    activityLog.value = []
+  }
+}
 
 const getActivityColor = (type: string) => {
   const colors: Record<string, string> = {

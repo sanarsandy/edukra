@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
@@ -315,4 +315,128 @@ func GetUserDashboard(c echo.Context) error {
 		},
 		"recent_courses": enriched,
 	})
+}
+
+// GetAdminRecentActivities returns recent activity logs for admin dashboard
+func GetAdminRecentActivities(c echo.Context) error {
+	initAdminRepos()
+	initProgressRepos()
+	
+	tenantID := c.QueryParam("tenant_id")
+	if tenantID == "" {
+		tenantID = "default"
+	}
+	
+	limit, _ := strconv.Atoi(c.QueryParam("limit"))
+	if limit <= 0 || limit > 20 {
+		limit = 10
+	}
+	
+	activities, err := activityRepo.ListRecentAll(tenantID, limit)
+	if err != nil {
+		log.Printf("[GetRecentActivities] Error: %v", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch activities"})
+	}
+	
+	// Transform activities to frontend format
+	type ActivityItem struct {
+		ID        string `json:"id"`
+		Type      string `json:"type"`
+		User      string `json:"user"`
+		Action    string `json:"action"`
+		Target    string `json:"target"`
+		Time      string `json:"time"`
+		CreatedAt string `json:"created_at"`
+	}
+	
+	var result []ActivityItem
+	for _, a := range activities {
+		// Map activity type to frontend type and generate clean action text
+		actType := "edit"
+		action := ""
+		target := ""
+		
+		switch a.ActivityType {
+		case "lesson_complete":
+			actType = "course"
+			action = "menyelesaikan materi"
+			if a.Metadata != nil {
+				if title, ok := a.Metadata["lesson_title"].(string); ok {
+					target = title
+				}
+			}
+		case "quiz_pass":
+			actType = "user"
+			action = "lulus kuis"
+			if a.Metadata != nil {
+				if title, ok := a.Metadata["quiz_title"].(string); ok {
+					target = title
+				}
+			}
+		case "quiz_fail":
+			actType = "user"
+			action = "mengerjakan kuis"
+			if a.Metadata != nil {
+				if title, ok := a.Metadata["quiz_title"].(string); ok {
+					target = title
+				}
+			}
+		case "course_complete":
+			actType = "course"
+			action = "menyelesaikan kursus"
+			if a.Metadata != nil {
+				if title, ok := a.Metadata["course_title"].(string); ok {
+					target = title
+				}
+			}
+		case "enroll":
+			actType = "payment"
+			action = "mendaftar kursus"
+			if a.Metadata != nil {
+				if title, ok := a.Metadata["course_title"].(string); ok {
+					target = title
+				}
+			}
+		default:
+			action = a.Description
+		}
+		
+		// Format time relative
+		timeStr := formatRelativeTime(a.CreatedAt)
+		
+		item := ActivityItem{
+			ID:        a.ID,
+			Type:      actType,
+			User:      a.UserName,
+			Action:    action,
+			Target:    target,
+			Time:      timeStr,
+			CreatedAt: a.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		}
+		
+		result = append(result, item)
+	}
+	
+	return c.JSON(http.StatusOK, result)
+}
+
+// formatRelativeTime formats a time as relative string like "5 menit lalu"
+func formatRelativeTime(t time.Time) string {
+	now := time.Now()
+	diff := now.Sub(t)
+	
+	if diff < time.Minute {
+		return "Baru saja"
+	} else if diff < time.Hour {
+		mins := int(diff.Minutes())
+		return strconv.Itoa(mins) + " menit lalu"
+	} else if diff < 24*time.Hour {
+		hours := int(diff.Hours())
+		return strconv.Itoa(hours) + " jam lalu"
+	} else if diff < 7*24*time.Hour {
+		days := int(diff.Hours() / 24)
+		return strconv.Itoa(days) + " hari lalu"
+	}
+	
+	return t.Format("2 Jan 2006")
 }

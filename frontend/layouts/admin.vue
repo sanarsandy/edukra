@@ -231,7 +231,7 @@
                     :key="notif.id" 
                     @click="handleNotificationClick(notif)"
                     class="p-4 hover:bg-neutral-50 border-b border-neutral-100 last:border-0 cursor-pointer transition-colors"
-                    :class="!notif.read ? 'bg-admin-50/50' : ''"
+                    :class="!notif.is_read ? 'bg-admin-50/50' : ''"
                   >
                     <div class="flex gap-3">
                       <div 
@@ -243,11 +243,11 @@
                         </svg>
                       </div>
                       <div class="flex-1 min-w-0">
-                        <p class="text-sm text-neutral-900" :class="!notif.read ? 'font-medium' : ''">{{ notif.title }}</p>
+                        <p class="text-sm text-neutral-900" :class="!notif.is_read ? 'font-medium' : ''">{{ notif.title }}</p>
                         <p class="text-xs text-neutral-500 mt-0.5 truncate">{{ notif.message }}</p>
-                        <p class="text-xs text-neutral-400 mt-1">{{ formatTimeAgo(notif.time) }}</p>
+                        <p class="text-xs text-neutral-400 mt-1">{{ notif.time }}</p>
                       </div>
-                      <div v-if="!notif.read" class="w-2 h-2 bg-admin-500 rounded-full flex-shrink-0 mt-2"></div>
+                      <div v-if="!notif.is_read" class="w-2 h-2 bg-admin-500 rounded-full flex-shrink-0 mt-2"></div>
                     </div>
                   </div>
                 </div>
@@ -355,15 +355,33 @@ const userDropdownRef = ref<HTMLElement | null>(null)
 const notificationOpen = ref(false)
 const notificationRef = ref<HTMLElement | null>(null)
 
-// Sample notifications - in production, fetch from API
-const notifications = ref([
-  { id: 1, type: 'user', title: 'Pengguna Baru', message: 'John Doe baru saja mendaftar', time: new Date(Date.now() - 5 * 60000), read: false },
-  { id: 2, type: 'payment', title: 'Pembayaran Berhasil', message: 'Transaksi Rp 499.000 dari Jane berhasil', time: new Date(Date.now() - 30 * 60000), read: false },
-  { id: 3, type: 'course', title: 'Kursus Baru', message: 'Kursus "React Advanced" telah dipublikasikan', time: new Date(Date.now() - 2 * 3600000), read: true },
-  { id: 4, type: 'alert', title: 'Sistem Update', message: 'Backup database selesai', time: new Date(Date.now() - 24 * 3600000), read: true }
-])
+// Notifications - fetched from API
+interface Notification {
+  id: string
+  type: string
+  title: string
+  message?: string
+  reference_id?: string
+  reference_type?: string
+  is_read: boolean
+  created_at: string
+  time: string
+}
+const notifications = ref<Notification[]>([])
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+const unreadCount = computed(() => notifications.value.filter(n => !n.is_read).length)
+
+// Fetch notifications from API
+const fetchNotifications = async () => {
+  try {
+    const response = await api.fetch<{ notifications: Notification[], unread_count: number }>('/api/notifications')
+    if (response?.notifications) {
+      notifications.value = response.notifications
+    }
+  } catch (err) {
+    console.error('[Admin] Error fetching notifications:', err)
+  }
+}
 
 const getNotificationColor = (type: string) => {
   const colors: Record<string, string> = {
@@ -393,12 +411,24 @@ const formatTimeAgo = (date: Date) => {
   return `${Math.floor(seconds / 86400)} hari lalu`
 }
 
-const markAllRead = () => {
-  notifications.value.forEach(n => n.read = true)
+const markAllRead = async () => {
+  try {
+    await api.fetch('/api/notifications/read-all', { method: 'PUT' })
+    notifications.value.forEach(n => n.is_read = true)
+  } catch (err) {
+    console.error('[Admin] Error marking all read:', err)
+  }
 }
 
-const handleNotificationClick = (notif: any) => {
-  notif.read = true
+const handleNotificationClick = async (notif: Notification) => {
+  if (!notif.is_read) {
+    try {
+      await api.fetch(`/api/notifications/${notif.id}/read`, { method: 'PUT' })
+      notif.is_read = true
+    } catch (err) {
+      console.error('[Admin] Error marking notification read:', err)
+    }
+  }
   notificationOpen.value = false
   // Navigate based on notification type
 }
@@ -457,6 +487,9 @@ onMounted(() => {
     
     // Fetch stats for sidebar badges
     fetchDashboardStats()
+    
+    // Fetch notifications
+    fetchNotifications()
   }
 })
 

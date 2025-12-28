@@ -323,7 +323,7 @@ func (r *UserRepository) GetMonthlyGrowth(tenantID string) ([]int, []string, err
 		FROM months m
 		LEFT JOIN users u ON 
 			date_trunc('month', u.created_at) = m.month 
-			AND ($1 = '' OR $1 = 'default' OR u.tenant_id = $1 OR u.tenant_id IS NULL)
+			AND ($1 = '' OR $1 = 'default' OR u.tenant_id::text = $1 OR u.tenant_id IS NULL)
 		GROUP BY m.month
 		ORDER BY m.month ASC
 	`

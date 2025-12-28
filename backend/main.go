@@ -145,6 +145,11 @@ func EchoServer() *echo.Echo {
 	api.GET("/courses/:id/chat/quota", handlers.GetChatQuota)
 	api.GET("/courses/:id/ai-status", handlers.GetAIStatus)
 
+	// Notifications (all authenticated users)
+	api.GET("/notifications", handlers.GetMyNotifications)
+	api.PUT("/notifications/:id/read", handlers.MarkNotificationAsRead)
+	api.PUT("/notifications/read-all", handlers.MarkAllNotificationsRead)
+
 	// Payment & Checkout
 	api.POST("/checkout", handlers.CreateCheckout)
 	api.GET("/checkout/config", handlers.GetCheckoutConfig)
@@ -167,6 +172,7 @@ func EchoServer() *echo.Echo {
 	// Admin Dashboard
 	admin.GET("/dashboard", handlers.GetAdminDashboard)
 	admin.GET("/dashboard/charts", handlers.GetDashboardChartData)
+	admin.GET("/dashboard/activities", handlers.GetAdminRecentActivities)
 	
 	// Admin User Management
 	admin.GET("/users", handlers.ListUsers)

@@ -94,6 +94,81 @@ func (r *ActivityLogRepository) ListByUser(userID string, limit int) ([]*domain.
 	return logs, nil
 }
 
+// ActivityLogWithUser represents an activity log with user info
+type ActivityLogWithUser struct {
+	domain.ActivityLog
+	UserName  string `json:"user_name"`
+	UserEmail string `json:"user_email"`
+}
+
+// ListRecentAll retrieves recent activities for all users (for admin dashboard)
+func (r *ActivityLogRepository) ListRecentAll(tenantID string, limit int) ([]*ActivityLogWithUser, error) {
+	if limit <= 0 || limit > 50 {
+		limit = 10
+	}
+
+	query := `
+		SELECT 
+			a.id, a.user_id, a.activity_type, a.reference_id, a.reference_type, 
+			a.description, a.metadata, a.created_at,
+			COALESCE(u.full_name, u.email) as user_name,
+			u.email as user_email
+		FROM activity_logs a
+		LEFT JOIN users u ON a.user_id::text = u.id::text
+		WHERE ($1 = '' OR $1 = 'default' OR u.tenant_id::text = $1 OR u.tenant_id IS NULL)
+		ORDER BY a.created_at DESC
+		LIMIT $2
+	`
+
+	rows, err := r.db.Query(query, tenantID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var logs []*ActivityLogWithUser
+	for rows.Next() {
+		var log ActivityLogWithUser
+		var metadata []byte
+		var refID, refType, userName, userEmail sql.NullString
+
+		if err := rows.Scan(
+			&log.ID,
+			&log.UserID,
+			&log.ActivityType,
+			&refID,
+			&refType,
+			&log.Description,
+			&metadata,
+			&log.CreatedAt,
+			&userName,
+			&userEmail,
+		); err != nil {
+			return nil, err
+		}
+
+		if refID.Valid {
+			log.ReferenceID = &refID.String
+		}
+		if refType.Valid {
+			log.ReferenceType = &refType.String
+		}
+		if len(metadata) > 0 {
+			json.Unmarshal(metadata, &log.Metadata)
+		}
+		if userName.Valid {
+			log.UserName = userName.String
+		}
+		if userEmail.Valid {
+			log.UserEmail = userEmail.String
+		}
+
+		logs = append(logs, &log)
+	}
+
+	return logs, nil
+}
+
 // LogLessonComplete logs a lesson completion activity
 func (r *ActivityLogRepository) LogLessonComplete(userID, lessonID, lessonTitle, courseName string) error {
 	log := &domain.ActivityLog{

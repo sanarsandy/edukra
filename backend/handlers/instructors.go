@@ -27,10 +27,12 @@ type InstructorResponse struct {
 	IsActive    bool    `json:"is_active"`
 	Specialty   string  `json:"specialty,omitempty"`
 	Bio         string  `json:"bio,omitempty"`
-	CourseCount int     `json:"course_count"` // TODO: calculate from courses table
+	CourseCount int     `json:"course_count"`
+	Students    int     `json:"students"`
+	Rating      float64 `json:"rating"`
 }
 
-func userToInstructor(user *domain.User) *InstructorResponse {
+func userToInstructor(user *domain.User, courseCount int, studentCount int, rating float64) *InstructorResponse {
 	specialty, _ := user.Metadata["specialty"].(string)
 	bio, _ := user.Metadata["bio"].(string)
 
@@ -42,13 +44,18 @@ func userToInstructor(user *domain.User) *InstructorResponse {
 		IsActive:    user.IsActive,
 		Specialty:   specialty,
 		Bio:         bio,
-		CourseCount: 0, // Would need to join with courses table
+		CourseCount: courseCount,
+		Students:    studentCount,
+		Rating:      rating,
 	}
 }
 
 // ListInstructors returns all users with role=instructor
 func ListInstructors(c echo.Context) error {
 	initInstructorRepos()
+	
+	// Initialize course repo for stats
+	courseRepo := postgres.NewCourseRepository(db.DB)
 	
 	tenantID := c.QueryParam("tenant_id")
 	if tenantID == "" {
@@ -72,11 +79,20 @@ func ListInstructors(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch instructors: " + err.Error()})
 	}
 	
-	// Filter instructors
+	// Filter instructors and calculate stats
 	var instructors []*InstructorResponse
 	for _, user := range users {
 		if user.Role == "instructor" && user.IsActive {
-			instructors = append(instructors, userToInstructor(user))
+			// Get course count for this instructor
+			courseCount, _ := courseRepo.CountByInstructor(user.ID)
+			
+			// Get student count for this instructor
+			studentCount, _ := courseRepo.GetStudentCountByInstructor(user.ID)
+			
+			// Get average rating for this instructor
+			rating, _ := courseRepo.GetAverageRatingByInstructor(user.ID)
+			
+			instructors = append(instructors, userToInstructor(user, courseCount, studentCount, rating))
 		}
 	}
 	
@@ -101,6 +117,9 @@ func ListInstructors(c echo.Context) error {
 func GetInstructor(c echo.Context) error {
 	initInstructorRepos()
 	
+	// Initialize course repo for stats
+	courseRepo := postgres.NewCourseRepository(db.DB)
+	
 	id := c.Param("id")
 	
 	user, err := instructorRepo.GetByID(id)
@@ -112,7 +131,12 @@ func GetInstructor(c echo.Context) error {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Instructor not found"})
 	}
 	
-	return c.JSON(http.StatusOK, userToInstructor(user))
+	// Get course count and student count
+	courseCount, _ := courseRepo.CountByInstructor(id)
+	studentCount, _ := courseRepo.GetStudentCountByInstructor(id)
+	rating, _ := courseRepo.GetAverageRatingByInstructor(id)
+	
+	return c.JSON(http.StatusOK, userToInstructor(user, courseCount, studentCount, rating))
 }
 
 // CreateInstructor creates a new user with role=instructor
@@ -172,7 +196,7 @@ func CreateInstructor(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create instructor: " + err.Error()})
 	}
 	
-	return c.JSON(http.StatusCreated, userToInstructor(user))
+	return c.JSON(http.StatusCreated, userToInstructor(user, 0, 0, 0.0))
 }
 
 // UpdateInstructor updates an instructor
@@ -229,7 +253,7 @@ func UpdateInstructor(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update instructor"})
 	}
 	
-	return c.JSON(http.StatusOK, userToInstructor(user))
+	return c.JSON(http.StatusOK, userToInstructor(user, 0, 0, 0.0))
 }
 
 // DeleteInstructor deletes an instructor (changes role or deactivates)
