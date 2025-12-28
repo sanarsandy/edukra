@@ -94,7 +94,17 @@
           
           <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
             <div>
-              <span class="text-lg font-bold text-neutral-900">{{ course.price > 0 ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) : 'Gratis' }}</span>
+              <!-- Discounted Price -->
+              <template v-if="course.discount_price && isDiscountActive(course)">
+                <span class="text-sm text-neutral-400 line-through mr-2">
+                  {{ formatPrice(course.price, course.currency) }}
+                </span>
+                <span class="text-lg font-bold text-red-600">
+                  {{ formatPrice(course.discount_price, course.currency) }}
+                </span>
+              </template>
+              <!-- Normal Price -->
+              <span v-else class="text-lg font-bold text-neutral-900">{{ formatPrice(course.price, course.currency) }}</span>
             </div>
             <NuxtLink :to="`/dashboard/courses/${course.id}`" class="px-4 py-2 text-sm font-medium text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
               {{ isEnrolled(course.id) ? 'Lanjutkan Belajar' : 'Lihat Detail' }}
@@ -217,7 +227,6 @@ const filteredCourses = computed(() => {
   })
 })
 
-// Get proper thumbnail URL - handle MinIO objects
 const getThumbnailUrl = (url: string | null | undefined): string => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
@@ -227,6 +236,23 @@ const getThumbnailUrl = (url: string | null | undefined): string => {
   }
   const config = useRuntimeConfig()
   return `${config.public.apiBase}/api/images/${url}`
+}
+
+// Helper: Check if discount is still active
+const isDiscountActive = (course: any): boolean => {
+  if (!course.discount_price) return false
+  if (!course.discount_valid_until) return true
+  return new Date(course.discount_valid_until) > new Date()
+}
+
+// Helper: Format price to IDR currency
+const formatPrice = (price: number, currency?: string): string => {
+  if (price === 0) return 'Gratis'
+  return new Intl.NumberFormat('id-ID', { 
+    style: 'currency', 
+    currency: currency || 'IDR', 
+    minimumFractionDigits: 0 
+  }).format(price)
 }
 </script>
 

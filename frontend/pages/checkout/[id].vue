@@ -184,14 +184,66 @@
             <h2 class="text-lg font-semibold text-neutral-900 mb-4">Ringkasan Pesanan</h2>
             
             <div class="space-y-3 mb-6">
+              <!-- Original Price -->
               <div class="flex justify-between text-sm">
                 <span class="text-neutral-600">Harga Kursus</span>
-                <span class="font-medium text-neutral-900">{{ formatPrice(course.price) }}</span>
+                <span class="font-medium" :class="hasActiveDiscount ? 'text-neutral-400 line-through' : 'text-neutral-900'">
+                  {{ formatPrice(course.price) }}
+                </span>
               </div>
+              
+              <!-- Course Discount (if active) -->
+              <div v-if="hasActiveDiscount" class="flex justify-between text-sm">
+                <span class="text-red-600 font-medium">🏷️ Harga Diskon</span>
+                <span class="font-medium text-red-600">{{ formatPrice(course.discount_price) }}</span>
+              </div>
+
+              <!-- Coupon Input -->
+              <div v-if="getEffectivePrice() > 0" class="border-t border-neutral-100 pt-3">
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Kode Kupon</label>
+                <div class="flex gap-2">
+                  <input 
+                    v-model="couponCode"
+                    type="text" 
+                    placeholder="Masukkan kode kupon"
+                    :disabled="couponApplied"
+                    class="flex-1 px-3 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm disabled:bg-neutral-50"
+                    @keyup.enter="applyCoupon"
+                  />
+                  <button 
+                    v-if="!couponApplied"
+                    @click="applyCoupon"
+                    :disabled="!couponCode || validatingCoupon"
+                    class="px-4 py-2 bg-admin-100 text-admin-700 text-sm font-medium rounded-lg hover:bg-admin-200 transition-colors disabled:opacity-50"
+                  >
+                    {{ validatingCoupon ? '...' : 'Pakai' }}
+                  </button>
+                  <button 
+                    v-else
+                    @click="removeCoupon"
+                    class="px-4 py-2 bg-red-100 text-red-600 text-sm font-medium rounded-lg hover:bg-red-200 transition-colors"
+                  >
+                    Hapus
+                  </button>
+                </div>
+                <!-- Coupon Error -->
+                <p v-if="couponError" class="text-xs text-red-500 mt-1">{{ couponError }}</p>
+                <!-- Coupon Success -->
+                <p v-if="couponApplied && appliedCoupon" class="text-xs text-green-600 mt-1">
+                  ✓ Kupon "{{ appliedCoupon.code }}" berhasil diterapkan
+                </p>
+              </div>
+
+              <!-- Coupon Discount (if applied) -->
+              <div v-if="couponApplied && couponDiscountAmount > 0" class="flex justify-between text-sm">
+                <span class="text-green-600 font-medium">🎟️ Diskon Kupon</span>
+                <span class="font-medium text-green-600">-{{ formatPrice(couponDiscountAmount) }}</span>
+              </div>
+
               <div class="border-t border-neutral-100 pt-3 flex justify-between">
                 <span class="font-semibold text-neutral-900">Total</span>
-                <span class="font-bold text-xl" :class="course.price === 0 ? 'text-accent-600' : 'text-admin-600'">
-                  {{ course.price === 0 ? 'GRATIS' : formatPrice(course.price) }}
+                <span class="font-bold text-xl" :class="getFinalPrice() === 0 ? 'text-accent-600' : 'text-admin-600'">
+                  {{ getFinalPrice() === 0 ? 'GRATIS' : formatPrice(getFinalPrice()) }}
                 </span>
               </div>
             </div>
@@ -398,6 +450,79 @@ const paymentMethods = ref<any[]>([])
 const selectedPaymentMethod = ref('')
 const loadingPaymentMethods = ref(false)
 
+// Coupon state
+const couponCode = ref('')
+const couponApplied = ref(false)
+const appliedCoupon = ref<any>(null)
+const couponError = ref('')
+const validatingCoupon = ref(false)
+const couponDiscountAmount = ref(0)
+
+// Computed: Check if course has active discount
+const hasActiveDiscount = computed(() => {
+  if (!course.value?.discount_price) return false
+  if (!course.value.discount_valid_until) return true
+  return new Date(course.value.discount_valid_until) > new Date()
+})
+
+// Helper: Get effective price (after course discount but before coupon)
+const getEffectivePrice = (): number => {
+  if (!course.value) return 0
+  if (hasActiveDiscount.value) {
+    return course.value.discount_price
+  }
+  return course.value.price
+}
+
+// Helper: Get final price (after all discounts)
+const getFinalPrice = (): number => {
+  const effectivePrice = getEffectivePrice()
+  return Math.max(0, effectivePrice - couponDiscountAmount.value)
+}
+
+// Apply coupon
+const applyCoupon = async () => {
+  if (!couponCode.value) return
+  
+  validatingCoupon.value = true
+  couponError.value = ''
+  
+  try {
+    const token = useCookie('token')
+    const response = await $fetch<any>(`${apiBase}/api/coupons/validate`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token.value}` },
+      body: {
+        code: couponCode.value,
+        course_id: courseId,
+        amount: getEffectivePrice()
+      }
+    })
+    
+    if (response.valid) {
+      appliedCoupon.value = response.coupon
+      couponDiscountAmount.value = response.discount_amount || 0
+      couponApplied.value = true
+      showToast('Kupon berhasil diterapkan!', 'success')
+    } else {
+      couponError.value = response.error || 'Kupon tidak valid'
+    }
+  } catch (err: any) {
+    couponError.value = err.data?.error || err.message || 'Gagal memvalidasi kupon'
+  } finally {
+    validatingCoupon.value = false
+  }
+}
+
+// Remove coupon
+const removeCoupon = () => {
+  couponCode.value = ''
+  couponApplied.value = false
+  appliedCoupon.value = null
+  couponDiscountAmount.value = 0
+  couponError.value = ''
+}
+
 // Computed display name for payment provider
 const providerDisplayName = computed(() => {
   if (!paymentConfig.value) return 'Payment Gateway'
@@ -528,7 +653,9 @@ const handleCheckout = async () => {
     const returnUrl = window.location.origin + `/dashboard/courses/${courseId}`
     // Pass selected payment method for Duitku
     const paymentMethod = paymentConfig.value?.provider === 'duitku' ? selectedPaymentMethod.value : undefined
-    const result = await createCheckout(courseId, returnUrl, paymentMethod)
+    // Pass coupon code if applied
+    const appliedCouponCode = couponApplied.value && appliedCoupon.value ? appliedCoupon.value.code : undefined
+    const result = await createCheckout(courseId, returnUrl, paymentMethod, appliedCouponCode)
 
     if (result.is_free) {
       showToast('Berhasil mendaftar kursus!')

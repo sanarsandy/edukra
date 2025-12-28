@@ -154,6 +154,7 @@ func EchoServer() *echo.Echo {
 	api.POST("/checkout", handlers.CreateCheckout)
 	api.GET("/checkout/config", handlers.GetCheckoutConfig)
 	api.GET("/checkout/payment-methods", handlers.GetPaymentMethods)
+	api.POST("/coupons/validate", handlers.ValidateCoupon) // Validate coupon at checkout
 	api.GET("/my/transactions", handlers.GetMyTransactions)
 	api.GET("/enrollments/check/:id", handlers.CheckEnrollment)
 	
@@ -267,6 +268,13 @@ func EchoServer() *echo.Echo {
 	admin.POST("/reviews/:id/publish", handlers.AdminPublishCourse)
 	admin.POST("/reviews/:id/unpublish", handlers.AdminUnpublishCourse)
 
+	// Admin Coupon Management
+	admin.GET("/coupons", handlers.ListCoupons)
+	admin.POST("/coupons", handlers.CreateCoupon)
+	admin.GET("/coupons/:id", handlers.GetCoupon)
+	admin.PUT("/coupons/:id", handlers.UpdateCoupon)
+	admin.DELETE("/coupons/:id", handlers.DeleteCoupon)
+
 	// ========================================
 	// INSTRUCTOR ROUTES
 	// ========================================
@@ -311,6 +319,10 @@ func EchoServer() *echo.Echo {
 
 	// Instructor Categories (read-only)
 	instructor.GET("/categories", handlers.ListCategories)
+
+	// Instructor Coupon Management
+	instructor.GET("/coupons", handlers.ListInstructorCoupons)
+	instructor.POST("/coupons", handlers.CreateInstructorCoupon)
 
 	// Instructor File Upload
 	instructor.POST("/upload", handlers.UploadFile)

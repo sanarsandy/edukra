@@ -23,7 +23,7 @@ export function usePayment() {
     }
 
     // Create checkout and get snap token
-    const createCheckout = async (courseId: string, returnUrl?: string, paymentMethod?: string) => {
+    const createCheckout = async (courseId: string, returnUrl?: string, paymentMethod?: string, couponCode?: string) => {
         const token = useCookie('token')
 
         if (!token.value) {
@@ -39,13 +39,17 @@ export function usePayment() {
             expired_at?: string
             is_free: boolean
             message?: string
+            original_amount?: number
+            discount_amount?: number
+            final_amount?: number
         }>(`${apiBase}/api/checkout`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token.value}` },
             body: {
                 course_id: courseId,
                 return_url: returnUrl || window.location.origin + '/dashboard/courses/' + courseId + '?payment=pending',
-                payment_method: paymentMethod // For Duitku payment method selection
+                payment_method: paymentMethod, // For Duitku payment method selection
+                coupon_code: couponCode // Coupon code for discount
             }
         })
 

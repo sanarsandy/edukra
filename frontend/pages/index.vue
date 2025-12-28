@@ -234,8 +234,18 @@
               
               <div class="flex items-center justify-between pt-4 border-t border-neutral-100">
                 <div>
-                  <span class="text-xl font-bold text-neutral-900">
-                    {{ course.price === 0 ? 'Gratis' : new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR', minimumFractionDigits: 0 }).format(course.price) }}
+                  <!-- Discounted Price -->
+                  <template v-if="course.discount_price && isDiscountActive(course)">
+                    <span class="text-sm text-neutral-400 line-through mr-2">
+                      {{ formatPrice(course.price, course.currency) }}
+                    </span>
+                    <span class="text-xl font-bold text-red-600">
+                      {{ formatPrice(course.discount_price, course.currency) }}
+                    </span>
+                  </template>
+                  <!-- Normal Price -->
+                  <span v-else class="text-xl font-bold text-neutral-900">
+                    {{ course.price === 0 ? 'Gratis' : formatPrice(course.price, course.currency) }}
                   </span>
                 </div>
                 <button class="px-4 py-2 text-sm font-semibold text-primary-600 bg-primary-50 rounded-lg hover:bg-primary-100 transition-colors">
@@ -793,6 +803,23 @@ const { data: popularCoursesData, pending: loadingCourses, error: errorCourses }
 const popularCourses = computed(() => {
   return popularCoursesData.value?.courses || []
 })
+
+// Helper: Check if discount is still active
+const isDiscountActive = (course: any): boolean => {
+  if (!course.discount_price) return false
+  if (!course.discount_valid_until) return true
+  return new Date(course.discount_valid_until) > new Date()
+}
+
+// Helper: Format price to IDR currency
+const formatPrice = (price: number, currency?: string): string => {
+  if (price === 0) return 'Gratis'
+  return new Intl.NumberFormat('id-ID', { 
+    style: 'currency', 
+    currency: currency || 'IDR', 
+    minimumFractionDigits: 0 
+  }).format(price)
+}
 
 // Map API data to UI format for hero featured courses
 const featuredCourses = computed(() => {

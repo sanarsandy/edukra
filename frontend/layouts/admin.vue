@@ -98,6 +98,23 @@
               </NuxtLink>
               
               <NuxtLink 
+                to="/admin/coupons" 
+                class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
+                :class="[
+                  isActive('/admin/coupons') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white',
+                  sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" :class="sidebarCollapsed ? '' : 'mr-3'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+                <span v-if="!sidebarCollapsed">Kupon</span>
+                <div v-if="sidebarCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-white text-neutral-900 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                  Kupon
+                </div>
+              </NuxtLink>
+              
+              <NuxtLink 
                 to="/admin/instructors" 
                 class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
                 :class="[

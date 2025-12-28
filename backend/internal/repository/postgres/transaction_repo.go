@@ -31,8 +31,12 @@ type Transaction struct {
 	SettlementTime    *time.Time      `json:"settlement_time,omitempty"`
 	ExpiredAt         *time.Time      `json:"expired_at,omitempty"`
 	Metadata          json.RawMessage `json:"metadata,omitempty"`
-	CreatedAt         time.Time       `json:"created_at"`
-	UpdatedAt         time.Time       `json:"updated_at"`
+	// Coupon/Discount fields
+	CouponID       *string  `json:"coupon_id,omitempty"`
+	OriginalAmount *float64 `json:"original_amount,omitempty"`
+	DiscountAmount *float64 `json:"discount_amount,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 // TransactionRepository handles transaction data access
@@ -98,8 +102,9 @@ func (r *TransactionRepository) Create(tx *Transaction) error {
 	query := `
 		INSERT INTO transactions (tenant_id, user_id, course_id, order_id, amount, currency, 
 		                          status, payment_gateway, payment_gateway_ref, 
-		                          payment_method, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		                          payment_method, metadata, coupon_id, original_amount, 
+		                          discount_amount, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 		RETURNING id
 	`
 	
@@ -133,7 +138,8 @@ func (r *TransactionRepository) Create(tx *Transaction) error {
 	return r.db.QueryRow(query,
 		tenantID, tx.UserID, tx.CourseID, tx.OrderID, tx.Amount, tx.Currency,
 		tx.Status, tx.PaymentGateway, tx.PaymentGatewayRef,
-		tx.PaymentMethod, metadata, tx.CreatedAt, tx.UpdatedAt,
+		tx.PaymentMethod, metadata, tx.CouponID, tx.OriginalAmount,
+		tx.DiscountAmount, tx.CreatedAt, tx.UpdatedAt,
 	).Scan(&tx.ID)
 }
 
@@ -164,13 +170,14 @@ func (r *TransactionRepository) GetByOrderID(orderID string) (*Transaction, erro
 		SELECT id, tenant_id, user_id, course_id, order_id, amount, gross_amount, currency, status,
 		       payment_gateway, payment_gateway_ref, payment_method, payment_type, snap_token,
 		       payment_url, fraud_status, transaction_time, settlement_time, expired_at,
-		       metadata, created_at, updated_at
+		       metadata, coupon_id, original_amount, discount_amount, created_at, updated_at
 		FROM transactions WHERE order_id = $1
 	`
 	
 	var tx Transaction
 	var tenantID, courseID, orderIDVal, gatewayRef, method, paymentType, snapToken, paymentURL, fraudStatus sql.NullString
-	var grossAmount sql.NullFloat64
+	var couponID sql.NullString
+	var grossAmount, originalAmount, discountAmount sql.NullFloat64
 	var transactionTime, settlementTime, expiredAt sql.NullTime
 	var metadata []byte
 	
@@ -178,7 +185,7 @@ func (r *TransactionRepository) GetByOrderID(orderID string) (*Transaction, erro
 		&tx.ID, &tenantID, &tx.UserID, &courseID, &orderIDVal, &tx.Amount, &grossAmount, &tx.Currency,
 		&tx.Status, &tx.PaymentGateway, &gatewayRef, &method, &paymentType, &snapToken,
 		&paymentURL, &fraudStatus, &transactionTime, &settlementTime, &expiredAt,
-		&metadata, &tx.CreatedAt, &tx.UpdatedAt,
+		&metadata, &couponID, &originalAmount, &discountAmount, &tx.CreatedAt, &tx.UpdatedAt,
 	)
 	
 	if err == sql.ErrNoRows {
@@ -228,6 +235,16 @@ func (r *TransactionRepository) GetByOrderID(orderID string) (*Transaction, erro
 	}
 	if expiredAt.Valid {
 		tx.ExpiredAt = &expiredAt.Time
+	}
+	// Coupon fields
+	if couponID.Valid {
+		tx.CouponID = &couponID.String
+	}
+	if originalAmount.Valid {
+		tx.OriginalAmount = &originalAmount.Float64
+	}
+	if discountAmount.Valid {
+		tx.DiscountAmount = &discountAmount.Float64
 	}
 	
 	return &tx, nil

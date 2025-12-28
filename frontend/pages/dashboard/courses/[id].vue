@@ -54,8 +54,18 @@
                 <div class="text-sm text-neutral-500">Selesai</div>
               </div>
               <div v-else class="text-center">
-                <div class="text-lg font-bold text-neutral-900 mb-2">{{ course.price > 0 ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: course.currency || 'IDR' }).format(course.price) : 'Gratis' }}</div>
-                <button @click="handleEnroll" class="btn-primary">{{ course.price > 0 ? 'Beli Sekarang' : 'Daftar Gratis' }}</button>
+                <!-- Discounted Price -->
+                <div v-if="course.discount_price && isDiscountActive(course)" class="mb-2">
+                  <span class="text-sm text-neutral-400 line-through mr-1">
+                    {{ formatPrice(course.price) }}
+                  </span>
+                  <span class="text-lg font-bold text-red-600">
+                    {{ formatPrice(course.discount_price) }}
+                  </span>
+                </div>
+                <!-- Normal Price -->
+                <div v-else class="text-lg font-bold text-neutral-900 mb-2">{{ formatPrice(course.price) }}</div>
+                <button @click="handleEnroll" class="btn-primary">{{ getEffectivePrice() > 0 ? 'Beli Sekarang' : 'Daftar Gratis' }}</button>
               </div>
             </div>
           </div>
@@ -559,6 +569,31 @@ const getThumbnailUrl = (url: string | null | undefined): string => {
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   if (url.startsWith('/uploads')) return `${apiBase}${url}`
   return `${apiBase}/api/images/${url}`
+}
+
+// Helper: Check if discount is still active
+const isDiscountActive = (courseData: any): boolean => {
+  if (!courseData?.discount_price) return false
+  if (!courseData.discount_valid_until) return true
+  return new Date(courseData.discount_valid_until) > new Date()
+}
+
+// Helper: Format price to IDR currency
+const formatPrice = (price: number): string => {
+  if (price === 0) return 'Gratis'
+  return new Intl.NumberFormat('id-ID', { 
+    style: 'currency', 
+    currency: 'IDR', 
+    minimumFractionDigits: 0 
+  }).format(price)
+}
+
+// Helper: Get the effective price (discounted or original)
+const getEffectivePrice = (): number => {
+  if (course.value && isDiscountActive(course.value)) {
+    return course.value.discount_price
+  }
+  return course.value?.price || 0
 }
 
 const { course, fetchCourse, loading: loadingCourse } = useCourses()

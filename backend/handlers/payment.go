@@ -93,20 +93,24 @@ func initDuitkuProvider() {
 // CheckoutRequest represents the checkout request body
 type CheckoutRequest struct {
 	CourseID      string `json:"course_id" validate:"required"`
+	CouponCode    string `json:"coupon_code,omitempty"` // Optional coupon code
 	ReturnURL     string `json:"return_url,omitempty"`
 	PaymentMethod string `json:"payment_method,omitempty"` // Duitku payment method code (e.g., "BC", "M2", "I1")
 }
 
 // CheckoutResponse represents the checkout response
 type CheckoutResponse struct {
-	TransactionID string     `json:"transaction_id"`
-	OrderID       string     `json:"order_id"`
-	SnapToken     string     `json:"snap_token,omitempty"`
-	PaymentURL    string     `json:"payment_url,omitempty"`
-	ClientKey     string     `json:"client_key,omitempty"`
-	ExpiredAt     *time.Time `json:"expired_at,omitempty"`
-	IsFree        bool       `json:"is_free"`
-	Message       string     `json:"message,omitempty"`
+	TransactionID  string     `json:"transaction_id"`
+	OrderID        string     `json:"order_id"`
+	SnapToken      string     `json:"snap_token,omitempty"`
+	PaymentURL     string     `json:"payment_url,omitempty"`
+	ClientKey      string     `json:"client_key,omitempty"`
+	ExpiredAt      *time.Time `json:"expired_at,omitempty"`
+	IsFree         bool       `json:"is_free"`
+	Message        string     `json:"message,omitempty"`
+	OriginalAmount float64    `json:"original_amount,omitempty"`
+	DiscountAmount float64    `json:"discount_amount,omitempty"`
+	FinalAmount    float64    `json:"final_amount,omitempty"`
 }
 
 // CreateCheckout creates a new payment checkout
@@ -178,6 +182,87 @@ func CreateCheckout(c echo.Context) error {
 		})
 	}
 
+	// === APPLY COURSE DISCOUNT FIRST ===
+	var appliedCoupon *domain.Coupon
+	var couponDiscountAmount float64 = 0
+	originalPrice := course.Price
+	
+	// Check if course has an active discount
+	priceAfterCourseDiscount := course.Price
+	if course.DiscountPrice != nil && *course.DiscountPrice > 0 {
+		// Check if discount is still valid
+		discountValid := true
+		if course.DiscountValidUntil != nil {
+			discountValid = course.DiscountValidUntil.After(time.Now())
+		}
+		if discountValid {
+			priceAfterCourseDiscount = *course.DiscountPrice
+			log.Printf("[Checkout] Course discount applied: Original=%.2f, Discounted=%.2f", 
+				originalPrice, priceAfterCourseDiscount)
+		}
+	}
+	
+	finalPrice := priceAfterCourseDiscount
+
+	// === COUPON VALIDATION ===
+	if req.CouponCode != "" {
+		initCouponRepo()
+		coupon, err := couponRepo.GetByCode(req.CouponCode)
+		if err != nil {
+			log.Printf("[Checkout] Failed to fetch coupon: %v", err)
+		} else if coupon != nil {
+			// Validate coupon for user and course
+			valid, message := couponRepo.ValidateCouponForUser(coupon.ID, userID, req.CourseID)
+			if !valid {
+				return c.JSON(http.StatusBadRequest, map[string]string{"error": message})
+			}
+			
+			// Calculate discount based on price AFTER course discount
+			appliedCoupon = coupon
+			couponDiscountAmount = coupon.CalculateDiscount(priceAfterCourseDiscount)
+			finalPrice = priceAfterCourseDiscount - couponDiscountAmount
+			
+			log.Printf("[Checkout] Coupon %s applied: PriceAfterCourseDiscount=%.2f, CouponDiscount=%.2f, Final=%.2f", 
+				coupon.Code, priceAfterCourseDiscount, couponDiscountAmount, finalPrice)
+		} else {
+			return c.JSON(http.StatusBadRequest, map[string]string{"error": "Kode kupon tidak ditemukan"})
+		}
+	}
+
+	// If discount makes it free, enroll directly
+	if finalPrice <= 0 {
+		// Record coupon usage first
+		if appliedCoupon != nil {
+			usage := &domain.CouponUsage{
+				CouponID:        appliedCoupon.ID,
+				UserID:          userID,
+				DiscountApplied: couponDiscountAmount,
+			}
+			if err := couponRepo.RecordUsage(usage); err != nil {
+				log.Printf("[Checkout] Failed to record coupon usage: %v", err)
+			}
+			couponRepo.IncrementUsage(appliedCoupon.ID)
+		}
+		
+		// Enroll directly
+		enrollment := &postgres.Enrollment{
+			UserID:   userID,
+			CourseID: req.CourseID,
+		}
+		if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to enroll"})
+		}
+
+		totalDiscount := originalPrice - finalPrice
+		return c.JSON(http.StatusOK, CheckoutResponse{
+			IsFree:         true,
+			Message:        "Diskon berhasil diterapkan. Anda terdaftar gratis!",
+			OriginalAmount: originalPrice,
+			DiscountAmount: totalDiscount,
+			FinalAmount:    0,
+		})
+	}
+
 	// Cancel existing pending transaction for this user and course to ensure fresh checkout
 	if err := paymentTxRepo.CancelPendingByUserAndCourse(userID, req.CourseID); err != nil {
 		log.Printf("[Checkout] Failed to cancel existing transactions: %v", err)
@@ -201,23 +286,32 @@ func CreateCheckout(c echo.Context) error {
 	tx := &postgres.Transaction{
 		UserID:         userID,
 		PaymentGateway: paymentProvider.GetName(),
-		Amount:         course.Price,
+		Amount:         finalPrice, // Use discounted price
 		Currency:       course.Currency,
 		Status:         "pending",
 	}
 	tx.CourseID = &req.CourseID
 	tx.OrderID = &orderID
+	// Store discount info in metadata (includes both course discount and coupon discount)
+	totalDiscount := originalPrice - finalPrice
+	if totalDiscount > 0 || appliedCoupon != nil {
+		tx.OriginalAmount = &originalPrice
+		tx.DiscountAmount = &totalDiscount
+		if appliedCoupon != nil {
+			tx.CouponID = &appliedCoupon.ID
+		}
+	}
 
 	if err := paymentTxRepo.Create(tx); err != nil {
 		log.Printf("[Checkout] Failed to create transaction: %v", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to create transaction"})
 	}
 
-	// Create payment via provider
+	// Create payment via provider - USE FINAL PRICE (after all discounts)
 	ctx := c.Request().Context()
 	paymentReq := &payment.CreateTransactionRequest{
 		OrderID:       orderID,
-		Amount:        course.Price,
+		Amount:        finalPrice, // FIXED: Use final price after all discounts
 		Currency:      course.Currency,
 		CustomerName:  user.FullName,
 		CustomerEmail: user.Email,
@@ -228,6 +322,9 @@ func CreateCheckout(c echo.Context) error {
 		ReturnURL:     req.ReturnURL,
 		CallbackURL:   fmt.Sprintf("%s://%s/api/webhooks/duitku", c.Scheme(), c.Request().Host),
 	}
+	
+	log.Printf("[Checkout] Creating payment: OrderID=%s, OriginalPrice=%.2f, FinalPrice=%.2f", 
+		orderID, originalPrice, finalPrice)
 
 	paymentResp, err := paymentProvider.CreateTransaction(ctx, paymentReq)
 	if err != nil {
@@ -322,7 +419,7 @@ func MidtransWebhook(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update transaction"})
 	}
 
-	// If payment successful, create enrollment
+	// If payment successful, create enrollment and record coupon usage
 	if result.IsSuccess && tx.CourseID != nil {
 		// Check if already enrolled (idempotency)
 		enrolled, _ := enrollmentRepoCheckout.IsEnrolled(tx.UserID, *tx.CourseID)
@@ -336,6 +433,23 @@ func MidtransWebhook(c echo.Context) error {
 				log.Printf("[Midtrans Webhook] Failed to create enrollment: %v", err)
 			} else {
 				log.Printf("[Midtrans Webhook] Enrollment created for user %s, course %s", tx.UserID, *tx.CourseID)
+			}
+		}
+		
+		// Record coupon usage if a coupon was applied
+		if tx.CouponID != nil && tx.DiscountAmount != nil {
+			initCouponRepo()
+			usage := &domain.CouponUsage{
+				CouponID:        *tx.CouponID,
+				UserID:          tx.UserID,
+				TransactionID:   &tx.ID,
+				DiscountApplied: *tx.DiscountAmount,
+			}
+			if err := couponRepo.RecordUsage(usage); err != nil {
+				log.Printf("[Midtrans Webhook] Failed to record coupon usage: %v", err)
+			} else {
+				couponRepo.IncrementUsage(*tx.CouponID)
+				log.Printf("[Midtrans Webhook] Coupon usage recorded for coupon %s", *tx.CouponID)
 			}
 		}
 	}
@@ -403,7 +517,7 @@ func DuitkuWebhook(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to update transaction")
 	}
 
-	// If payment successful, create enrollment
+	// If payment successful, create enrollment and record coupon usage
 	if result.IsSuccess && tx.CourseID != nil {
 		enrolled, _ := enrollmentRepoCheckout.IsEnrolled(tx.UserID, *tx.CourseID)
 		if !enrolled {
@@ -416,6 +530,23 @@ func DuitkuWebhook(c echo.Context) error {
 				log.Printf("[Duitku Webhook] Failed to create enrollment: %v", err)
 			} else {
 				log.Printf("[Duitku Webhook] Enrollment created for user %s, course %s", tx.UserID, *tx.CourseID)
+			}
+		}
+		
+		// Record coupon usage if a coupon was applied
+		if tx.CouponID != nil && tx.DiscountAmount != nil {
+			initCouponRepo()
+			usage := &domain.CouponUsage{
+				CouponID:        *tx.CouponID,
+				UserID:          tx.UserID,
+				TransactionID:   &tx.ID,
+				DiscountApplied: *tx.DiscountAmount,
+			}
+			if err := couponRepo.RecordUsage(usage); err != nil {
+				log.Printf("[Duitku Webhook] Failed to record coupon usage: %v", err)
+			} else {
+				couponRepo.IncrementUsage(*tx.CouponID)
+				log.Printf("[Duitku Webhook] Coupon usage recorded for coupon %s", *tx.CouponID)
 			}
 		}
 	}

@@ -23,17 +23,19 @@ func NewCourseRepository(db *sqlx.DB) *CourseRepository {
 func (r *CourseRepository) GetByID(id string) (*domain.Course, error) {
 	query := `
 		SELECT id, tenant_id, instructor_id, category_id, title, slug, description, thumbnail_url,
-		       price, currency, COALESCE(lessons_count, 0), COALESCE(duration, ''), is_published, is_featured, created_at, updated_at
+		       price, discount_price, discount_valid_until, currency, COALESCE(lessons_count, 0), COALESCE(duration, ''), is_published, is_featured, created_at, updated_at
 		FROM courses WHERE id = $1
 	`
 	
 	var course domain.Course
 	var tenantID, instructorID, categoryID, thumbnailURL sql.NullString
+	var discountPrice sql.NullFloat64
+	var discountValidUntil sql.NullTime
 	
 	err := r.db.QueryRow(query, id).Scan(
 		&course.ID, &tenantID, &instructorID, &categoryID, &course.Title, &course.Slug,
-		&course.Description, &thumbnailURL, &course.Price, &course.Currency,
-		&course.LessonsCount, &course.Duration, &course.IsPublished, &course.IsFeatured, &course.CreatedAt, &course.UpdatedAt,
+		&course.Description, &thumbnailURL, &course.Price, &discountPrice, &discountValidUntil,
+		&course.Currency, &course.LessonsCount, &course.Duration, &course.IsPublished, &course.IsFeatured, &course.CreatedAt, &course.UpdatedAt,
 	)
 	
 	if err == sql.ErrNoRows {
@@ -54,6 +56,12 @@ func (r *CourseRepository) GetByID(id string) (*domain.Course, error) {
 	}
 	if thumbnailURL.Valid {
 		course.ThumbnailURL = &thumbnailURL.String
+	}
+	if discountPrice.Valid {
+		course.DiscountPrice = &discountPrice.Float64
+	}
+	if discountValidUntil.Valid {
+		course.DiscountValidUntil = &discountValidUntil.Time
 	}
 	
 	return &course, nil
@@ -139,7 +147,8 @@ func (r *CourseRepository) Update(course *domain.Course) error {
 	query := `
 		UPDATE courses SET
 			title = $2, slug = $3, description = $4, thumbnail_url = $5,
-			price = $6, lessons_count = $7, duration = $8, is_published = $9, is_featured = $10, category_id = $11, updated_at = $12
+			price = $6, discount_price = $7, discount_valid_until = $8,
+			lessons_count = $9, duration = $10, is_published = $11, is_featured = $12, category_id = $13, updated_at = $14
 		WHERE id = $1
 	`
 	
@@ -147,7 +156,8 @@ func (r *CourseRepository) Update(course *domain.Course) error {
 	
 	_, err := r.db.Exec(query,
 		course.ID, course.Title, course.Slug, course.Description,
-		course.ThumbnailURL, course.Price, course.LessonsCount, course.Duration, course.IsPublished,
+		course.ThumbnailURL, course.Price, course.DiscountPrice, course.DiscountValidUntil,
+		course.LessonsCount, course.Duration, course.IsPublished,
 		course.IsFeatured, course.CategoryID, course.UpdatedAt,
 	)
 	return err
@@ -168,7 +178,7 @@ func (r *CourseRepository) ListByTenant(tenantID string, limit, offset int) ([]*
 	if tenantID == "" || tenantID == "default" {
 		query = `
 			SELECT c.id, c.tenant_id, c.instructor_id, c.category_id, c.title, c.slug, c.description, c.thumbnail_url,
-			       c.price, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
+			       c.price, c.discount_price, c.discount_valid_until, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
 				   u.full_name, cat.name
 			FROM courses c
 			LEFT JOIN users u ON c.instructor_id = u.id
@@ -181,7 +191,7 @@ func (r *CourseRepository) ListByTenant(tenantID string, limit, offset int) ([]*
 	} else {
 		query = `
 			SELECT c.id, c.tenant_id, c.instructor_id, c.category_id, c.title, c.slug, c.description, c.thumbnail_url,
-			       c.price, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
+			       c.price, c.discount_price, c.discount_valid_until, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
 				   u.full_name, cat.name
 			FROM courses c
 			LEFT JOIN users u ON c.instructor_id = u.id
@@ -200,7 +210,7 @@ func (r *CourseRepository) ListByTenant(tenantID string, limit, offset int) ([]*
 func (r *CourseRepository) ListByInstructor(instructorID string, limit, offset int) ([]*domain.Course, error) {
 	query := `
 		SELECT c.id, c.tenant_id, c.instructor_id, c.category_id, c.title, c.slug, c.description, c.thumbnail_url,
-		       c.price, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
+		       c.price, c.discount_price, c.discount_valid_until, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
 			   u.full_name, cat.name
 		FROM courses c
 		LEFT JOIN users u ON c.instructor_id = u.id
@@ -222,7 +232,7 @@ func (r *CourseRepository) ListPublished(tenantID string, limit, offset int) ([]
 	if tenantID == "" || tenantID == "default" {
 		query = `
 			SELECT c.id, c.tenant_id, c.instructor_id, c.category_id, c.title, c.slug, c.description, c.thumbnail_url,
-			       c.price, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
+			       c.price, c.discount_price, c.discount_valid_until, c.currency, COALESCE(c.lessons_count, 0), COALESCE(c.duration, ''), c.is_published, c.is_featured, c.created_at, c.updated_at,
 				   u.full_name, cat.name
 			FROM courses c
 			LEFT JOIN users u ON c.instructor_id = u.id
@@ -314,11 +324,13 @@ func (r *CourseRepository) scanCoursesWithDetails(query string, args ...interfac
 	for rows.Next() {
 		var course domain.Course
 		var tenantID, instructorID, categoryID, thumbnailURL, instructorName, categoryName sql.NullString
+		var discountPrice sql.NullFloat64
+		var discountValidUntil sql.NullTime
 		
 		err := rows.Scan(
 			&course.ID, &tenantID, &instructorID, &categoryID, &course.Title, &course.Slug,
-			&course.Description, &thumbnailURL, &course.Price, &course.Currency,
-			&course.LessonsCount, &course.Duration, &course.IsPublished, &course.IsFeatured, &course.CreatedAt, &course.UpdatedAt,
+			&course.Description, &thumbnailURL, &course.Price, &discountPrice, &discountValidUntil,
+			&course.Currency, &course.LessonsCount, &course.Duration, &course.IsPublished, &course.IsFeatured, &course.CreatedAt, &course.UpdatedAt,
 			&instructorName, &categoryName,
 		)
 		if err != nil {
@@ -336,6 +348,12 @@ func (r *CourseRepository) scanCoursesWithDetails(query string, args ...interfac
 		}
 		if thumbnailURL.Valid {
 			course.ThumbnailURL = &thumbnailURL.String
+		}
+		if discountPrice.Valid {
+			course.DiscountPrice = &discountPrice.Float64
+		}
+		if discountValidUntil.Valid {
+			course.DiscountValidUntil = &discountValidUntil.Time
 		}
 		
 		// Populate related objects

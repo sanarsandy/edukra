@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
@@ -205,6 +206,24 @@ func UpdateCourse(c echo.Context) error {
 	}
 	if req.Price != nil {
 		course.Price = *req.Price
+	}
+	// Handle discount fields
+	if req.DiscountPrice != nil {
+		if *req.DiscountPrice > 0 {
+			course.DiscountPrice = req.DiscountPrice
+		} else {
+			course.DiscountPrice = nil // Clear discount if zero or negative
+		}
+	}
+	if req.DiscountValidUntil != nil {
+		if *req.DiscountValidUntil != "" {
+			parsedTime, err := time.Parse(time.RFC3339, *req.DiscountValidUntil)
+			if err == nil {
+				course.DiscountValidUntil = &parsedTime
+			}
+		} else {
+			course.DiscountValidUntil = nil // Clear if empty
+		}
 	}
 	if req.LessonsCount != nil {
 		course.LessonsCount = *req.LessonsCount

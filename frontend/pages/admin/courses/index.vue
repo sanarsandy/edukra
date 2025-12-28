@@ -116,7 +116,13 @@
                 </div>
                 <span v-else class="text-sm text-neutral-400">-</span>
               </td>
-              <td class="px-6 py-4 text-sm text-neutral-900 font-medium">{{ formatCurrency(course.price) }}</td>
+              <td class="px-6 py-4">
+                <div v-if="course.discount_price && isDiscountActive(course)" class="flex flex-col">
+                  <span class="text-xs text-neutral-400 line-through">{{ formatCurrency(course.price) }}</span>
+                  <span class="text-sm font-bold text-red-600">{{ formatCurrency(course.discount_price) }}</span>
+                </div>
+                <span v-else class="text-sm text-neutral-900 font-medium">{{ formatCurrency(course.price) }}</span>
+              </td>
               <td class="px-6 py-4">
                 <button 
                   @click="handleToggleStatus(course)"
@@ -226,16 +232,37 @@
                 />
               </div>
             </div>
-            <div>
-              <label class="block text-sm font-medium text-neutral-700 mb-2">Harga (Rp) <span class="text-red-500">*</span></label>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Harga (Rp) <span class="text-red-500">*</span></label>
+                <input 
+                  v-model.number="form.price"
+                  type="number" 
+                  required
+                  min="0"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                  placeholder="Contoh: 499000"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Harga Diskon (Rp)</label>
+                <input 
+                  v-model.number="form.discount_price"
+                  type="number" 
+                  min="0"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-sm"
+                  placeholder="Kosongkan jika tidak ada"
+                />
+              </div>
+            </div>
+            <div v-if="form.discount_price">
+              <label class="block text-sm font-medium text-neutral-700 mb-2">Diskon Berakhir</label>
               <input 
-                v-model.number="form.price"
-                type="number" 
-                required
-                min="0"
+                v-model="form.discount_valid_until"
+                type="datetime-local"
                 class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
-                placeholder="Contoh: 499000"
               />
+              <p class="text-xs text-neutral-500 mt-1">Kosongkan jika diskon berlaku selamanya</p>
             </div>
             <div>
               <label class="block text-sm font-medium text-neutral-700 mb-2">Thumbnail Kursus</label>
@@ -510,6 +537,8 @@ const form = ref({
   title: '',
   description: '',
   price: 0,
+  discount_price: null as number | null,
+  discount_valid_until: '',
   status: 'draft' as 'draft' | 'published',
   instructor_id: '',
   category_id: '',
@@ -518,6 +547,13 @@ const form = ref({
   thumbnail_url: '',
   color: 'bg-primary-600'
 })
+
+// Helper to check if discount is active
+const isDiscountActive = (course: any): boolean => {
+  if (!course.discount_price) return false
+  if (!course.discount_valid_until) return true
+  return new Date(course.discount_valid_until) > new Date()
+}
 
 // Thumbnail handling
 const thumbnailInput = ref<HTMLInputElement | null>(null)
@@ -643,7 +679,9 @@ const openAddModal = () => {
   form.value = { 
     title: '', 
     description: '', 
-    price: 0, 
+    price: 0,
+    discount_price: null,
+    discount_valid_until: '',
     status: 'draft',
     instructor_id: '',
     category_id: '',
@@ -665,6 +703,8 @@ const openEditModal = (course: any) => {
     title: course.title,
     description: course.description || '',
     price: course.price,
+    discount_price: course.discount_price || null,
+    discount_valid_until: course.discount_valid_until ? new Date(course.discount_valid_until).toISOString().slice(0, 16) : '',
     status: course.is_published ? 'published' : 'draft',
     instructor_id: course.instructor_id || '',
     category_id: course.category_id || '',
@@ -741,6 +781,8 @@ const saveCourse = async () => {
       title: form.value.title,
       description: form.value.description,
       price: form.value.price,
+      discount_price: form.value.discount_price || null,
+      discount_valid_until: form.value.discount_valid_until ? new Date(form.value.discount_valid_until).toISOString() : null,
       is_published: form.value.status === 'published',
       instructor_id: form.value.instructor_id,
       category_id: form.value.category_id,
