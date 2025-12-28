@@ -35,142 +35,121 @@
     <section class="pt-32 md:pt-40 pb-16 md:pb-24 bg-neutral-50">
       <div class="container-custom">
         <div class="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          <!-- Hero Content -->
-          <div class="animate-fade-in relative z-10">
-            <!-- Geometric Float Background -->
-            <div class="absolute -left-48 top-0 w-[140%] h-[160%] -z-10 pointer-events-none overflow-visible">
-              <!-- Glass Cube -->
-              <div class="absolute top-32 -left-8 w-32 h-32 bg-gradient-to-br from-white/60 to-white/10 backdrop-blur-3xl border border-white/40 rounded-2xl shadow-2xl animate-float-cube z-10"></div>
-              
-              <!-- Glass Sphere -->
-              <div class="absolute top-64 left-24 w-24 h-24 bg-gradient-to-br from-primary-300/40 to-primary-600/10 backdrop-blur-2xl border border-white/20 rounded-full shadow-xl animate-float-sphere animation-delay-1000"></div>
-              
-              <!-- Glass Rounded Square -->
-              <div class="absolute top-40 left-40 w-20 h-20 bg-gradient-to-br from-accent-300/40 to-accent-600/10 backdrop-blur-xl border border-white/20 rounded-xl shadow-lg animate-float-prism animation-delay-2000"></div>
-              
-              <!-- Background Glow for depth -->
-              <div class="absolute top-32 -left-10 w-80 h-80 bg-primary-400/20 rounded-full blur-3xl -z-20"></div>
-            </div>
-
-            <!-- Constellation Network Canvas (Top Right) REMOVED -->
-
-            <div class="inline-flex items-center px-4 py-2 bg-success-50 rounded-full mb-6 animate-fade-in">
-              <span class="w-2 h-2 bg-success-400 rounded-full mr-2 animate-pulse"></span>
-              <span class="text-sm font-medium text-success-600">The Engine of Learning</span>
-            </div>
-            
-            <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold leading-snug mb-6 animate-fade-in">
-              <div class="text-secondary-600 whitespace-nowrap">Belajar Tanpa Batas,</div>
-              <div class="text-accent-600 whitespace-nowrap">Berkembang Tanpa Henti</div>
-            </h1>
-            
-            <p class="text-lg md:text-xl text-neutral-600 mb-8 max-w-xl leading-relaxed">
-              EDUKRA platform pembelajaran Anda. Akses <span class="font-semibold text-neutral-900">ribuan kursus berkualitas</span> dan 
-              tingkatkan skill bersama <span class="font-semibold text-neutral-900">pengajar terbaik</span> di Indonesia.
-            </p>
-            
-            <div class="flex flex-col sm:flex-row gap-4 mb-12">
-              <NuxtLink to="/register" class="inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all text-center">
-                Mulai Belajar Gratis
-                <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </NuxtLink>
-              <button class="btn-outline group">
-                <svg class="w-5 h-5 mr-2 text-secondary-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-                Lihat Demo
-              </button>
-            </div>
-            
-            <!-- Stats -->
-            <div class="flex items-center space-x-8 pt-8 border-t border-neutral-200">
-              <div>
-                <div class="text-3xl font-bold text-neutral-900">10K+</div>
-                <div class="text-sm text-neutral-500">Siswa Aktif</div>
-              </div>
-              <div class="w-px h-12 bg-neutral-200"></div>
-              <div>
-                <div class="text-3xl font-bold text-neutral-900">500+</div>
-                <div class="text-sm text-neutral-500">Kursus</div>
-              </div>
-              <div class="w-px h-12 bg-neutral-200"></div>
-              <div>
-                <div class="text-3xl font-bold text-neutral-900">98%</div>
-                <div class="text-sm text-neutral-500">Kepuasan</div>
-              </div>
-            </div>
-          </div>
+            <!-- Hero Content -->
+           <div class="animate-fade-in relative z-10 order-2 lg:order-1">
+             <div class="inline-flex items-center px-4 py-2 bg-primary-50 rounded-full mb-6 animate-fade-in border border-primary-100">
+               <span class="w-2 h-2 bg-warm-500 rounded-full mr-2 animate-pulse"></span>
+               <span class="text-sm font-medium text-primary-700">Platform Belajar Terpercaya</span>
+             </div>
+             
+             <h1 class="text-3xl md:text-4xl lg:text-5xl font-display font-bold leading-tight mb-6 animate-fade-in text-neutral-900">
+               Tingkatkan Skill, Buka <br/>
+               <span class="text-primary-600 relative">
+                 Peluang Karir Baru
+                 <svg class="absolute -bottom-2 left-0 w-full h-3 text-warm-400 opacity-60" viewBox="0 0 200 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.00025 6.99997C25.7958 2.00003 103.653 -2.25704 197.904 2.87265" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+               </span><br/>
+               Bersama Mentor Ahli
+             </h1>
+             
+             <p class="text-lg text-neutral-600 mb-8 max-w-xl leading-relaxed">
+               Ribuan peserta telah berhasil melalui program Webinar Prakerja kami. 
+               Belajar fleksibel, materi berkualitas, dan bersertifikat resmi.
+             </p>
+             
+             <div class="flex flex-col sm:flex-row gap-4 mb-12">
+               <NuxtLink to="/register" class="inline-flex items-center justify-center px-8 py-3.5 text-base font-bold text-white bg-warm-500 rounded-xl hover:bg-warm-600 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300">
+                 Jelajahi Program
+                 <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                 </svg>
+               </NuxtLink>
+               <NuxtLink to="/about" class="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-neutral-700 bg-white border border-neutral-200 rounded-xl hover:bg-neutral-50 hover:border-neutral-300 transition-all">
+                 Tentang Kami
+               </NuxtLink>
+             </div>
+             
+             <!-- Stats with Modern Icons -->
+             <div class="flex items-center space-x-8 pt-8 border-t border-neutral-100">
+               <div class="flex items-center gap-3">
+                 <div class="w-10 h-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                 </div>
+                 <div>
+                   <div class="text-2xl font-bold text-neutral-900 font-display">10K+</div>
+                   <div class="text-xs text-neutral-500 font-medium uppercase tracking-wide">Siswa Aktif</div>
+                 </div>
+               </div>
+               <div class="w-px h-10 bg-neutral-200"></div>
+               <div class="flex items-center gap-3">
+                 <div class="w-10 h-10 rounded-full bg-warm-50 flex items-center justify-center text-warm-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                 </div>
+                 <div>
+                   <div class="text-2xl font-bold text-neutral-900 font-display">95%</div>
+                   <div class="text-xs text-neutral-500 font-medium uppercase tracking-wide">Lulus Sertifikasi</div>
+                 </div>
+               </div>
+             </div>
+           </div>
           
-          <!-- Hero Card -->
-          <div class="relative animate-slide-up">
-            <div class="card-hover p-8 relative overflow-hidden min-h-[300px] flex flex-col justify-center">
-              <div v-if="pendingHero" class="flex justify-center items-center h-48">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              </div>
-              <div v-else-if="errorHero" class="text-center text-red-500">
-                <p>Gagal memuat data kursus.</p>
-              </div>
-              <Transition v-else name="fade" mode="out-in">
-                <div v-if="featuredCourses && featuredCourses.length > 0" :key="currentCourseIndex" class="w-full">
-                  <div class="flex items-center space-x-4 mb-6">
-                    <div class="w-12 h-12 rounded-xl flex items-center justify-center transition-colors duration-300" :class="featuredCourses[currentCourseIndex].iconBg">
-                      <component :is="featuredCourses[currentCourseIndex].icon" class="w-6 h-6" :class="featuredCourses[currentCourseIndex].iconColor" />
-                    </div>
-                    <div>
-                      <h3 class="font-semibold text-neutral-900">{{ featuredCourses[currentCourseIndex].title }}</h3>
-                      <p class="text-sm text-neutral-500">{{ featuredCourses[currentCourseIndex].modules }} Modul • {{ featuredCourses[currentCourseIndex].duration }}</p>
-                    </div>
-                  </div>
+          <!-- Hero Visual (Image + Floating Card) -->
+          <div class="relative animate-slide-up order-1 lg:order-2 flex justify-center lg:justify-end">
+            <!-- Hero Image -->
+            <div class="relative z-10 w-full max-w-md lg:max-w-full">
+              <div class="absolute inset-0 bg-gradient-to-tr from-warm-500/20 to-primary-500/20 rounded-[2rem] transform rotate-3 blur-2xl -z-10"></div>
+              <img src="/images/hero.webp" alt="Happy Student" class="w-full h-auto rounded-[2rem] shadow-2xl border-4 border-white relative z-10" />
+              
+              <!-- Floating Dynamic Card (Course Preview) -->
+              <div class="absolute -bottom-12 -left-4 md:-left-12 z-20 w-72 md:w-80">
+                <div class="card-hover p-6 relative overflow-hidden bg-white shadow-soft-lg rounded-2xl border border-neutral-100">
+                  <div class="absolute top-0 right-0 w-20 h-20 bg-primary-50 rounded-bl-full -mr-10 -mt-10 z-0"></div>
                   
-                  <!-- Course Stats -->
-                  <div class="mb-4 space-y-3">
-                    <div class="flex justify-between text-sm">
-                      <span class="text-neutral-600">Level</span>
-                      <span class="font-medium" :class="featuredCourses[currentCourseIndex].levelColor">{{ featuredCourses[currentCourseIndex].level }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                      <span class="text-neutral-600">Rating</span>
-                      <div class="flex items-center space-x-1">
-                        <svg class="w-4 h-4 text-warning-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                        </svg>
-                        <span class="font-medium text-neutral-900">{{ featuredCourses[currentCourseIndex].rating }}</span>
+                  <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-4">
+                      <span class="text-xs font-bold text-primary-600 bg-primary-50 px-2 py-1 rounded-md uppercase tracking-wide">Sedang Populer</span>
+                      <div class="flex space-x-1">
+                        <span class="w-2 h-2 rounded-full bg-red-400 animate-pulse"></span>
+                        <span class="text-[10px] text-neutral-400">Live</span>
                       </div>
                     </div>
+                    
+                    <div v-if="pendingHero" class="flex justify-center items-center h-32">
+                      <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                    </div>
+                    <div v-else-if="errorHero" class="text-center text-red-500 text-sm">
+                      <p>Gagal memuat.</p>
+                    </div>
+                    <Transition v-else name="fade" mode="out-in">
+                      <div v-if="featuredCourses && featuredCourses.length > 0" :key="currentCourseIndex">
+                        <h3 class="font-bold text-neutral-900 text-lg mb-1 leading-snug line-clamp-2">{{ featuredCourses[currentCourseIndex].title }}</h3>
+                        <p class="text-xs text-neutral-500 mb-3">{{ featuredCourses[currentCourseIndex].category }}</p>
+                        
+                        <div class="flex items-center justify-between text-xs text-neutral-600 mb-4">
+                          <div class="flex items-center">
+                            <svg class="w-4 h-4 text-warning-400 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            <span class="font-bold">{{ featuredCourses[currentCourseIndex].rating }}</span>
+                          </div>
+                          <span>{{ featuredCourses[currentCourseIndex].modules }} Modul</span>
+                        </div>
+                        
+                        <NuxtLink to="/register" class="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-bold text-white bg-primary-600 rounded-lg hover:bg-primary-700 transition-all">
+                          Gabung Kelas
+                        </NuxtLink>
+                      </div>
+                    </Transition>
                   </div>
-                  
-                  <NuxtLink to="/register" class="w-full inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition-all mt-4">
-                    Lihat Detail Kursus
-                  </NuxtLink>
-                </div>
-              </Transition>
-            </div>
-            
-            <!-- Floating Cards -->
-            <div class="absolute -top-4 -right-4 card p-4">
-              <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-success-100 rounded-full flex items-center justify-center">
-                  <svg class="w-5 h-5 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                  </svg>
-                </div>
-                <div>
-                  <p class="font-medium text-neutral-900">Sertifikat</p>
-                  <p class="text-xs text-neutral-500">Diakui industri</p>
                 </div>
               </div>
-            </div>
-            
-            <div class="absolute -bottom-4 -left-4 card p-4">
-              <div class="flex items-center space-x-2">
-                <div class="flex -space-x-2">
-                  <div class="w-8 h-8 rounded-full bg-primary-200 border-2 border-white"></div>
-                  <div class="w-8 h-8 rounded-full bg-accent-200 border-2 border-white"></div>
-                  <div class="w-8 h-8 rounded-full bg-warm-200 border-2 border-white"></div>
-                </div>
-                <span class="text-sm font-medium text-neutral-700">+2.5K bergabung</span>
+              
+              <!-- Small Badge -->
+              <div class="absolute top-8 -right-4 bg-white p-3 rounded-xl shadow-lg z-20 animate-float-delayed flex items-center gap-3">
+                 <div class="bg-green-100 p-2 rounded-full text-green-600">
+                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                 </div>
+                 <div>
+                   <p class="font-bold text-xs text-gray-800">Terverifikasi</p>
+                   <p class="text-[10px] text-gray-500">Resmi Kemnaker</p>
+                 </div>
               </div>
             </div>
           </div>
@@ -356,78 +335,197 @@
     </section>
 
     <!-- Features Section -->
-    <section id="features" class="section-padding bg-white">
+    <section id="features" class="section-padding bg-white relative overflow-hidden">
+      <!-- Background Texture (Asset 3 Substitution) -->
+      <div class="absolute inset-0 bg-gradient-to-b from-white via-primary-50/30 to-white -z-10"></div>
+      
       <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-16">
-          <span class="badge-accent mb-4">Fitur Unggulan</span>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">
-            Semua yang Anda Butuhkan untuk Belajar
+          <span class="px-4 py-1.5 rounded-full bg-accent-50 text-accent-600 font-semibold text-sm mb-6 inline-block tracking-wide uppercase">Fitur Unggulan</span>
+          <h2 class="text-3xl md:text-4xl font-display font-bold mb-4 text-neutral-900 leading-tight">
+            Semua yang Anda Butuhkan
           </h2>
-          <p class="text-lg text-neutral-600">
-            Platform kami dilengkapi dengan fitur-fitur terbaik untuk membuat pengalaman belajar Anda lebih efektif.
+          <p class="text-lg text-neutral-600 leading-relaxed">
+            Platform kami dilengkapi dengan fitur-fitur terbaik untuk memastikan pengalaman belajar Anda efektif dan menyenangkan.
           </p>
         </div>
         
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Feature Cards -->
-          <div class="card-hover group">
-            <div class="w-14 h-14 bg-primary-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-primary-100 transition-colors">
+          <!-- Feature Cards with Cleaner Design -->
+          <div class="group bg-white rounded-2xl p-8 border border-neutral-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-primary-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary-100 transition-colors">
               <svg class="w-7 h-7 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Video HD Berkualitas</h3>
-            <p class="text-neutral-600">Materi video dengan kualitas tinggi yang dilindungi dan mudah diakses.</p>
+            <h3 class="text-xl font-bold mb-3 text-neutral-900">Video HD Berkualitas</h3>
+            <p class="text-neutral-600 mb-6 leading-relaxed">Materi video dengan kualitas tinggi yang dilindungi dan mudah diakses dari perangkat apapun.</p>
+            <div class="pt-6 border-t border-neutral-50 group-hover:border-neutral-100 transition-colors">
+              <span class="text-primary-600 font-semibold text-sm flex items-center">
+                Pelajari Lebih Lanjut
+                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
           </div>
           
-          <div class="card-hover group">
-            <div class="w-14 h-14 bg-accent-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-accent-100 transition-colors">
+          <div class="group bg-white rounded-2xl p-8 border border-neutral-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-accent-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-accent-100 transition-colors">
               <svg class="w-7 h-7 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Kuis Interaktif</h3>
-            <p class="text-neutral-600">Uji pemahaman Anda dengan kuis di setiap modul dan dapatkan feedback.</p>
+            <h3 class="text-xl font-bold mb-3 text-neutral-900">Kuis Interaktif</h3>
+            <p class="text-neutral-600 mb-6 leading-relaxed">Uji pemahaman Anda dengan kuis di setiap modul dan dapatkan feedback instan.</p>
+            <div class="pt-6 border-t border-neutral-50 group-hover:border-neutral-100 transition-colors">
+              <span class="text-accent-600 font-semibold text-sm flex items-center">
+                Pelajari Lebih Lanjut
+                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
           </div>
           
-          <div class="card-hover group">
-            <div class="w-14 h-14 bg-warm-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-warm-100 transition-colors">
+          <div class="group bg-white rounded-2xl p-8 border border-neutral-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-warm-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-warm-100 transition-colors">
               <svg class="w-7 h-7 text-warm-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Sertifikat Resmi</h3>
-            <p class="text-neutral-600">Dapatkan sertifikat yang diakui industri setelah menyelesaikan kursus.</p>
+            <h3 class="text-xl font-bold mb-3 text-neutral-900">Sertifikat Resmi</h3>
+            <p class="text-neutral-600 mb-6 leading-relaxed">Dapatkan sertifikat yang diakui industri setelah menyelesaikan kursus untuk portofolio Anda.</p>
+            <div class="pt-6 border-t border-neutral-50 group-hover:border-neutral-100 transition-colors">
+              <span class="text-warm-600 font-semibold text-sm flex items-center">
+                Pelajari Lebih Lanjut
+                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
           </div>
           
-          <div class="card-hover group">
-            <div class="w-14 h-14 bg-rose-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-rose-100 transition-colors">
+          <div class="group bg-white rounded-2xl p-8 border border-neutral-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-rose-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-rose-100 transition-colors">
               <svg class="w-7 h-7 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Komunitas Aktif</h3>
-            <p class="text-neutral-600">Bergabung dengan komunitas learner dan diskusi dengan sesama siswa.</p>
+            <h3 class="text-xl font-bold mb-3 text-neutral-900">Komunitas Aktif</h3>
+            <p class="text-neutral-600 mb-6 leading-relaxed">Bergabung dengan komunitas learner dan diskusi dengan sesama siswa dan mentor.</p>
+            <div class="pt-6 border-t border-neutral-50 group-hover:border-neutral-100 transition-colors">
+              <span class="text-rose-600 font-semibold text-sm flex items-center">
+                Pelajari Lebih Lanjut
+                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
           </div>
           
-          <div class="card-hover group">
-            <div class="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-sky-100 transition-colors">
+          <div class="group bg-white rounded-2xl p-8 border border-neutral-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-sky-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-sky-100 transition-colors">
               <svg class="w-7 h-7 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Akses Seumur Hidup</h3>
-            <p class="text-neutral-600">Sekali beli, akses selamanya. Belajar kapan saja sesuai jadwal Anda.</p>
+            <h3 class="text-xl font-bold mb-3 text-neutral-900">Akses Seumur Hidup</h3>
+            <p class="text-neutral-600 mb-6 leading-relaxed">Sekali beli, akses selamanya. Belajar kapan saja sesuai jadwal Anda sendiri.</p>
+            <div class="pt-6 border-t border-neutral-50 group-hover:border-neutral-100 transition-colors">
+              <span class="text-sky-600 font-semibold text-sm flex items-center">
+                Pelajari Lebih Lanjut
+                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
           </div>
           
-          <div class="card-hover group">
-            <div class="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-cyan-100 transition-colors">
+          <div class="group bg-white rounded-2xl p-8 border border-neutral-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+            <div class="w-14 h-14 bg-cyan-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-cyan-100 transition-colors">
               <svg class="w-7 h-7 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
               </svg>
             </div>
-            <h3 class="text-xl font-semibold mb-3">Mobile Friendly</h3>
-            <p class="text-neutral-600">Belajar dari mana saja dengan tampilan optimal di semua perangkat.</p>
+            <h3 class="text-xl font-bold mb-3 text-neutral-900">Mobile Friendly</h3>
+            <p class="text-neutral-600 mb-6 leading-relaxed">Belajar dari mana saja dengan tampilan optimal di semua perangkat smartphone.</p>
+            <div class="pt-6 border-t border-neutral-50 group-hover:border-neutral-100 transition-colors">
+              <span class="text-cyan-600 font-semibold text-sm flex items-center">
+                Pelajari Lebih Lanjut
+                <svg class="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mentor Section (New Humanized Section) -->
+    <section class="section-padding bg-neutral-50 overflow-hidden relative">
+      <div class="container-custom">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <!-- Image Content -->
+          <div class="relative animate-fade-in order-2 lg:order-1">
+            <div class="relative rounded-3xl overflow-hidden shadow-2xl border-4 border-white transform rotate-2 hover:rotate-0 transition-transform duration-500">
+               <div class="absolute inset-0 bg-primary-900/10 hover:bg-transparent transition-colors z-10"></div>
+               <img src="/images/mentor.webp" alt="Mentoring Session" class="w-full h-auto object-cover transform scale-105 hover:scale-110 transition-transform duration-700" />
+            </div>
+            
+            <!-- Floating Badge -->
+            <div class="absolute -bottom-4 -left-4 card p-4 bg-white/90 backdrop-blur shadow-soft rounded-2xl animate-float">
+              <div class="flex items-center space-x-2">
+                <div class="flex -space-x-3">
+                  <img src="/images/avatar-budi.webp" alt="Student" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+                  <img src="/images/avatar-dewi.webp" alt="Student" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+                  <img src="/images/avatar-ahmad.webp" alt="Student" class="w-8 h-8 rounded-full border-2 border-white object-cover" />
+                </div>
+                <span class="text-sm font-medium text-neutral-700 ml-2">+2.5K bergabung</span>
+              </div>
+            </div>
+            
+            <!-- Pattern -->
+            <div class="absolute -top-12 -left-12 w-64 h-64 bg-accent-100 rounded-full blur-3xl -z-10 opacity-60"></div>
+          </div>
+          
+          <!-- Text Content -->
+          <div class="order-1 lg:order-2">
+            <div class="inline-flex items-center px-4 py-2 bg-warm-50 rounded-full mb-6 animate-fade-in border border-warm-100">
+               <span class="w-2 h-2 bg-warm-500 rounded-full mr-2"></span>
+               <span class="text-sm font-medium text-warm-700">Bimbingan Eksklusif</span>
+             </div>
+            <h2 class="text-3xl md:text-4xl font-display font-bold mb-6 text-neutral-900 leading-tight">
+              Belajar Tidak Sendiri, <br/>
+              <span class="text-primary-600">Ada Mentor yang Menemani</span>
+            </h2>
+            <p class="text-lg text-neutral-600 mb-8 leading-relaxed">
+              Kami memadukan teknologi dengan sentuhan manusia. Anda tidak hanya menonton video, tapi juga bisa berdiskusi, bertanya, dan mendapatkan feedback langsung dari praktisi ahli.
+            </p>
+            
+            <ul class="space-y-4 mb-8">
+              <li class="flex items-start">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-success-100 flex items-center justify-center mt-1 mr-4">
+                  <svg class="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                  <h4 class="font-bold text-neutral-900">Sesi Tanya Jawab Langsung</h4>
+                  <p class="text-sm text-neutral-500">Jadwal rutin webinar dan diskusi grup.</p>
+                </div>
+              </li>
+              <li class="flex items-start">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-success-100 flex items-center justify-center mt-1 mr-4">
+                  <svg class="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                  <h4 class="font-bold text-neutral-900">Review Portofolio</h4>
+                  <p class="text-sm text-neutral-500">Dapatkan masukan konstruktif untuk karya Anda.</p>
+                </div>
+              </li>
+              <li class="flex items-start">
+                <div class="flex-shrink-0 w-6 h-6 rounded-full bg-success-100 flex items-center justify-center mt-1 mr-4">
+                  <svg class="w-4 h-4 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <div>
+                  <h4 class="font-bold text-neutral-900">Komunitas Suportif</h4>
+                  <p class="text-sm text-neutral-500">Jaringan dengan ribuan pembelajar lainnya.</p>
+                </div>
+              </li>
+            </ul>
+            
+            <div class="inline-flex items-center text-primary-600 font-bold hover:text-primary-700 transition-colors group cursor-pointer">
+              Kenalan dengan Mentor
+              <svg class="w-5 h-5 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </div>
           </div>
         </div>
       </div>
@@ -437,83 +535,71 @@
     <section id="testimonials" class="section-padding bg-neutral-50">
       <div class="container-custom">
         <div class="text-center max-w-3xl mx-auto mb-16">
-          <span class="badge-warm mb-4">Testimoni</span>
-          <h2 class="text-3xl md:text-4xl font-bold mb-4">Apa Kata Mereka?</h2>
-          <p class="text-lg text-neutral-600">Ribuan siswa telah merasakan manfaat belajar di platform kami.</p>
+          <span class="px-4 py-1.5 rounded-full bg-warm-50 text-warm-600 font-semibold text-sm mb-6 inline-block tracking-wide uppercase">Kata Alumni</span>
+          <h2 class="text-3xl md:text-4xl font-display font-bold mb-4 text-neutral-900 leading-tight">Apa Kata Mereka?</h2>
+          <p class="text-lg text-neutral-600 leading-relaxed">Ribuan siswa telah merasakan manfaat belajar di platform kami.</p>
         </div>
         
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           <!-- Testimonial 1 -->
-          <div class="card-hover group relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-primary-100 rounded-full -mr-16 -mt-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-            <div class="relative">
-              <div class="flex items-center space-x-1 mb-4">
-                <template v-for="i in 5" :key="i">
-                  <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                </template>
-              </div>
-              <p class="text-neutral-700 mb-6 leading-relaxed">
-                "Platform ini benar-benar mengubah cara saya belajar. Materi yang terstruktur dan kualitas video yang sangat baik membuat proses belajar menjadi lebih menyenangkan!"
-              </p>
-              <div class="flex items-center space-x-4 pt-4 border-t border-neutral-100">
-                <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">BP</div>
-                <div class="flex-1">
-                  <p class="font-semibold text-neutral-900">B. Pandega</p>
-                  <p class="text-sm text-neutral-500">Software Developer</p>
-                  <p class="text-xs text-neutral-400 mt-1">3 kursus selesai</p>
-                </div>
+          <div class="bg-white p-8 rounded-2xl shadow-soft hover:shadow-soft-lg transition-all duration-300 border border-neutral-100 flex flex-col">
+            <div class="flex items-center space-x-1 mb-6">
+              <template v-for="i in 5" :key="i">
+                <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              </template>
+            </div>
+            <p class="text-neutral-700 mb-8 leading-relaxed italic flex-grow">
+              "Platform ini benar-benar mengubah cara saya belajar. Materi yang terstruktur dan kualitas video yang sangat baik membuat proses belajar menjadi lebih menyenangkan!"
+            </p>
+            <div class="flex items-center space-x-4 pt-6 border-t border-neutral-50">
+              <img src="/images/avatar-budi.webp" alt="Budi Santoso" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-50" />
+              <div>
+                <p class="font-bold text-neutral-900 text-sm">B Pandega</p>
+                <p class="text-xs text-neutral-500 font-medium">Software Engineer</p>
               </div>
             </div>
           </div>
           
           <!-- Testimonial 2 -->
-          <div class="card-hover group relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-accent-100 rounded-full -mr-16 -mt-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-            <div class="relative">
-              <div class="flex items-center space-x-1 mb-4">
-                <template v-for="i in 5" :key="i">
-                  <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                </template>
-              </div>
-              <p class="text-neutral-700 mb-6 leading-relaxed">
-                "Sertifikatnya diakui perusahaan tempat saya bekerja. Investasi terbaik untuk karir saya! Dalam 6 bulan saya berhasil naik jabatan."
-              </p>
-              <div class="flex items-center space-x-4 pt-4 border-t border-neutral-100">
-                <div class="w-14 h-14 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">IH</div>
-                <div class="flex-1">
-                  <p class="font-semibold text-neutral-900">Indra Hura</p>
-                  <p class="text-sm text-neutral-500">System Analyst</p>
-                  <p class="text-xs text-neutral-400 mt-1">5 kursus selesai</p>
-                </div>
+          <div class="bg-white p-8 rounded-2xl shadow-soft hover:shadow-soft-lg transition-all duration-300 border border-neutral-100 flex flex-col">
+            <div class="flex items-center space-x-1 mb-6">
+              <template v-for="i in 5" :key="i">
+                <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              </template>
+            </div>
+            <p class="text-neutral-700 mb-8 leading-relaxed italic flex-grow">
+              "Sertifikatnya diakui perusahaan tempat saya bekerja. Investasi terbaik untuk karir saya! Dalam 6 bulan saya berhasil naik jabatan."
+            </p>
+            <div class="flex items-center space-x-4 pt-6 border-t border-neutral-50">
+              <img src="/images/avatar-dewi.webp" alt="Dewi Sartika" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-50" />
+              <div>
+                <p class="font-bold text-neutral-900 text-sm">Indra Hura</p>
+                <p class="text-xs text-neutral-500 font-medium">Data Analyst</p>
               </div>
             </div>
           </div>
           
           <!-- Testimonial 3 -->
-          <div class="card-hover group relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-success-100 rounded-full -mr-16 -mt-16 opacity-20 group-hover:opacity-30 transition-opacity"></div>
-            <div class="relative">
-              <div class="flex items-center space-x-1 mb-4">
-                <template v-for="i in 5" :key="i">
-                  <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                  </svg>
-                </template>
-              </div>
-              <p class="text-neutral-700 mb-6 leading-relaxed">
-                "Dari nol sampai bisa landing job sebagai developer. Semua berkat kursus di platform ini. Sekarang saya bekerja di startup teknologi terkemuka!"
-              </p>
-              <div class="flex items-center space-x-4 pt-4 border-t border-neutral-100">
-                <div class="w-14 h-14 bg-gradient-to-br from-success-500 to-success-600 rounded-full flex items-center justify-center text-white font-semibold text-lg shadow-lg">SW</div>
-                <div class="flex-1">
-                  <p class="font-semibold text-neutral-900">Sugeng Widodo</p>
-                  <p class="text-sm text-neutral-500">Full Stack Developer</p>
-                  <p class="text-xs text-neutral-400 mt-1">8 kursus selesai</p>
-                </div>
+          <div class="bg-white p-8 rounded-2xl shadow-soft hover:shadow-soft-lg transition-all duration-300 border border-neutral-100 flex flex-col">
+            <div class="flex items-center space-x-1 mb-6">
+              <template v-for="i in 5" :key="i">
+                <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                </svg>
+              </template>
+            </div>
+            <p class="text-neutral-700 mb-8 leading-relaxed italic flex-grow">
+              "Dari nol sampai bisa landing job sebagai developer. Semua berkat kursus di platform ini. Sekarang saya bekerja di startup teknologi terkemuka!"
+            </p>
+            <div class="flex items-center space-x-4 pt-6 border-t border-neutral-50">
+              <img src="/images/avatar-ahmad.webp" alt="Ahmad Dhani" class="w-12 h-12 rounded-full object-cover ring-2 ring-primary-50" />
+              <div>
+                <p class="font-bold text-neutral-900 text-sm">Sugeng Widodo</p>
+                <p class="text-xs text-neutral-500 font-medium">Full Stack Developer</p>
               </div>
             </div>
           </div>
@@ -522,7 +608,7 @@
     </section>
 
     <!-- CTA Section -->
-    <section class="section-padding bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 relative overflow-hidden">
+    <section class="section-padding bg-primary-600 relative overflow-hidden">
       <!-- Background Pattern -->
       <div class="absolute inset-0 opacity-10">
         <div class="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
@@ -530,43 +616,43 @@
       </div>
       
       <div class="container-custom text-center relative z-10">
-        <h2 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-4">
+        <h2 class="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white mb-6">
           Siap Memulai Perjalanan Belajar Anda?
         </h2>
         <p class="text-lg md:text-xl text-primary-100 mb-10 max-w-2xl mx-auto leading-relaxed">
           Bergabung dengan <span class="font-semibold text-white">10,000+ siswa</span> yang sudah mengembangkan skill mereka dan mencapai tujuan karir bersama kami.
         </p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <NuxtLink to="/register" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-primary-600 bg-white rounded-xl hover:bg-neutral-50 hover:scale-105 transition-all shadow-xl">
+          <NuxtLink to="/register" class="inline-flex items-center justify-center px-8 py-4 text-base font-bold text-white bg-warm-500 rounded-xl hover:bg-warm-400 hover:scale-105 transition-all shadow-xl shadow-warm-900/20">
             Daftar Sekarang - Gratis
             <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
           </NuxtLink>
-          <NuxtLink to="/dashboard/explore" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white border-2 border-white/40 rounded-xl hover:bg-white/10 hover:border-white/60 transition-all backdrop-blur-sm">
+          <NuxtLink to="/dashboard/explore" class="inline-flex items-center justify-center px-8 py-4 text-base font-semibold text-white border-2 border-white/30 rounded-xl hover:bg-white/10 hover:border-white/50 transition-all backdrop-blur-sm">
             Lihat Semua Kursus
           </NuxtLink>
         </div>
         
         <!-- Trust Indicators -->
-        <div class="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8 border-t border-white/20">
-          <div class="flex items-center space-x-2 text-white/80">
-            <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
+        <div class="flex flex-wrap items-center justify-center gap-8 mt-12 pt-8 border-t border-white/10">
+          <div class="flex items-center space-x-2 text-white/90">
+            <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-sm">Tidak Perlu Kartu Kredit</span>
+            <span class="text-sm font-medium">Tidak Perlu Kartu Kredit</span>
           </div>
-          <div class="flex items-center space-x-2 text-white/80">
-            <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex items-center space-x-2 text-white/90">
+            <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-sm">Akses Selamanya</span>
+            <span class="text-sm font-medium">Akses Selamanya</span>
           </div>
-          <div class="flex items-center space-x-2 text-white/80">
-            <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex items-center space-x-2 text-white/90">
+            <svg class="w-5 h-5 text-warm-400" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
             </svg>
-            <span class="text-sm">Sertifikat Diakui</span>
+            <span class="text-sm font-medium">Sertifikat Diakui</span>
           </div>
         </div>
       </div>
