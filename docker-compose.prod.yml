@@ -50,6 +50,9 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
       MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
       MINIO_BUCKET_CONTENT: ${MINIO_BUCKET_CONTENT:-course-content}
+      # WhatsApp Gateway
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL}
+      WA_GATEWAY_API_KEY: ${WA_GATEWAY_API_KEY}
     mem_limit: 1g         # Container memory limit
     memswap_limit: 2g     # Allow swap for burst workloads
     depends_on:
