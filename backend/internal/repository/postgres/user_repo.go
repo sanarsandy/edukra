@@ -165,8 +165,8 @@ func (r *UserRepository) GetByGoogleID(googleID string) (*domain.User, error) {
 func (r *UserRepository) Create(user *domain.User) error {
 	query := `
 		INSERT INTO users (tenant_id, email, password_hash, role, full_name, avatar_url,
-		                   google_id, auth_provider, is_active, metadata, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		                   bio, phone, google_id, auth_provider, is_active, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
 		RETURNING id
 	`
 	
@@ -182,8 +182,8 @@ func (r *UserRepository) Create(user *domain.User) error {
 
 	return r.db.QueryRow(query,
 		user.TenantID, user.Email, user.PasswordHash, user.Role, user.FullName,
-		user.AvatarURL, user.GoogleID, user.AuthProvider, user.IsActive, metadata,
-		user.CreatedAt, user.UpdatedAt,
+		user.AvatarURL, user.Bio, user.Phone, user.GoogleID, user.AuthProvider, 
+		user.IsActive, metadata, user.CreatedAt, user.UpdatedAt,
 	).Scan(&user.ID)
 }
 
