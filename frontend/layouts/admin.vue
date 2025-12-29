@@ -335,38 +335,86 @@
             </button>
           </div>
           <nav class="flex-1 px-4 py-6 overflow-y-auto">
-            <div class="space-y-1">
-              <NuxtLink to="/admin" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg bg-admin-600 text-white">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
-                </svg>
-                Dashboard
-              </NuxtLink>
-              <NuxtLink to="/admin/users" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                </svg>
-                Pengguna
-              </NuxtLink>
-              <NuxtLink to="/admin/courses" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                </svg>
-                Kursus
-              </NuxtLink>
-              <NuxtLink to="/admin/instructors" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                Instruktur
-              </NuxtLink>
-              <NuxtLink to="/admin/settings" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white">
-                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                Pengaturan
-              </NuxtLink>
+            <!-- Overview -->
+            <div class="mb-6">
+              <p class="px-3 mb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Overview</p>
+              <div class="space-y-1">
+                <NuxtLink to="/admin" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin', true) ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                  </svg>
+                  Dashboard
+                </NuxtLink>
+              </div>
+            </div>
+            
+            <!-- Manajemen -->
+            <div class="mb-6">
+              <p class="px-3 mb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Manajemen</p>
+              <div class="space-y-1">
+                <NuxtLink to="/admin/users" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/users') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                  Pengguna
+                </NuxtLink>
+                <NuxtLink to="/admin/courses" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/courses') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                  </svg>
+                  Kursus
+                </NuxtLink>
+                <NuxtLink to="/admin/transactions" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/transactions') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                  </svg>
+                  Transaksi
+                </NuxtLink>
+                <NuxtLink to="/admin/coupons" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/coupons') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  Kupon
+                </NuxtLink>
+                <NuxtLink to="/admin/campaigns" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/campaigns') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                  </svg>
+                  Campaigns
+                </NuxtLink>
+                <NuxtLink to="/admin/instructors" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/instructors') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  Instruktur
+                </NuxtLink>
+                <NuxtLink to="/admin/categories" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/categories') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  Kategori
+                </NuxtLink>
+              </div>
+            </div>
+            
+            <!-- Sistem -->
+            <div>
+              <p class="px-3 mb-2 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Sistem</p>
+              <div class="space-y-1">
+                <NuxtLink to="/admin/settings" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/settings') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  Pengaturan
+                </NuxtLink>
+                <NuxtLink to="/admin/ai-processing" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/ai-processing') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 15.3m14.8 0l.21 1.847a1.5 1.5 0 01-1.48 1.71H5.47a1.5 1.5 0 01-1.48-1.71L5 15.3"/>
+                  </svg>
+                  AI Processing
+                </NuxtLink>
+              </div>
             </div>
           </nav>
         </div>

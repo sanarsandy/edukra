@@ -50,7 +50,7 @@
           <div class="w-24 h-24 rounded-lg bg-neutral-100 overflow-hidden flex-shrink-0">
             <img 
               v-if="campaign.course?.thumbnail_url" 
-              :src="campaign.course.thumbnail_url" 
+              :src="getThumbnailUrl(campaign.course.thumbnail_url)" 
               class="w-full h-full object-cover"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-neutral-400">
@@ -224,4 +224,19 @@ const deleteCampaign = async () => {
 onMounted(() => {
   fetchCampaigns()
 })
+
+// Get full thumbnail URL (handles MinIO object keys)
+const getThumbnailUrl = (url: string | null | undefined): string => {
+  if (!url) return ''
+  // Full URL - return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Legacy /uploads path - prepend apiBase
+  if (url.startsWith('/uploads')) {
+    const config = useRuntimeConfig()
+    return `${config.public.apiBase}${url}`
+  }
+  // MinIO object key - use public images endpoint
+  const config = useRuntimeConfig()
+  return `${config.public.apiBase}/api/images/${url}`
+}
 </script>
