@@ -22,8 +22,34 @@ func isValidEmail(email string) bool {
 	return re.MatchString(email)
 }
 
-func isValidPassword(password string) bool {
-	return len(password) >= 6
+// isValidPassword checks password strength
+// Requirements: min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
+func isValidPassword(password string) (bool, string) {
+	if len(password) < 8 {
+		return false, "Password minimal 8 karakter"
+	}
+	
+	var (
+		hasUpper   = regexp.MustCompile(`[A-Z]`).MatchString(password)
+		hasLower   = regexp.MustCompile(`[a-z]`).MatchString(password)
+		hasNumber  = regexp.MustCompile(`[0-9]`).MatchString(password)
+		hasSpecial = regexp.MustCompile(`[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\;'/~]`).MatchString(password)
+	)
+	
+	if !hasUpper {
+		return false, "Password harus mengandung huruf besar (A-Z)"
+	}
+	if !hasLower {
+		return false, "Password harus mengandung huruf kecil (a-z)"
+	}
+	if !hasNumber {
+		return false, "Password harus mengandung angka (0-9)"
+	}
+	if !hasSpecial {
+		return false, "Password harus mengandung karakter spesial (!@#$%^&*)"
+	}
+	
+	return true, ""
 }
 
 // Register handles user registration
@@ -42,9 +68,9 @@ func Register(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Format email tidak valid"})
 	}
 
-	// Validate password
-	if !isValidPassword(req.Password) {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Password minimal 6 karakter"})
+	// Validate password strength
+	if valid, errMsg := isValidPassword(req.Password); !valid {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errMsg})
 	}
 
 	// Validate full name
@@ -281,7 +307,7 @@ func generateInstructorToken(userID, email, role string) (string, error) {
 		"role":          role,
 		"is_instructor": true,
 		"permissions":   customMiddleware.GetPermissionsForRole(role),
-		"exp":           time.Now().Add(time.Hour * 12).Unix(), // 12 hours for instructor
+		"exp":           time.Now().Add(time.Hour * 4).Unix(), // 4 hours
 		"iat":           time.Now().Unix(),
 	}
 
@@ -301,7 +327,7 @@ func generateToken(userID, email, role string) (string, error) {
 		"email":       email,
 		"role":        role,
 		"permissions": customMiddleware.GetPermissionsForRole(role),
-		"exp":         time.Now().Add(time.Hour * 24).Unix(), // 24 hours
+		"exp":         time.Now().Add(time.Hour * 4).Unix(), // 4 hours
 		"iat":         time.Now().Unix(),
 	}
 
@@ -322,7 +348,7 @@ func generateAdminToken(userID, email, role string) (string, error) {
 		"role":        role,
 		"is_admin":    true,
 		"permissions": customMiddleware.GetPermissionsForRole(role),
-		"exp":         time.Now().Add(time.Hour * 8).Unix(), // 8 hours for admin
+		"exp":         time.Now().Add(time.Hour * 4).Unix(), // 4 hours
 		"iat":         time.Now().Unix(),
 	}
 
