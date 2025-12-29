@@ -120,9 +120,11 @@ func findOrCreateGuestUser(email, phone, fullName string) (*domain.User, bool, e
 		if phone != "" {
 			normalizedPhone := normalizePhone(phone)
 			
-			// Update if current phone is empty or different
-			if existingUser.Phone == nil || *existingUser.Phone == "" || *existingUser.Phone != normalizedPhone {
-				log.Printf("[CampaignCheckout] Updating phone for user %s: old=%v, new=%s", existingUser.ID, existingUser.Phone, normalizedPhone)
+			// Update only if current phone is empty
+			// SECURITY: Do NOT overwrite existing phone number from a guest checkout
+			// to prevent unauthorized profile modification.
+			if existingUser.Phone == nil || *existingUser.Phone == "" {
+				log.Printf("[CampaignCheckout] Updating empty phone for user %s: new=%s", existingUser.ID, normalizedPhone)
 				
 				phoneVal := normalizedPhone
 				existingUser.Phone = &phoneVal
@@ -133,6 +135,11 @@ func findOrCreateGuestUser(email, phone, fullName string) (*domain.User, bool, e
 				} else {
 					log.Printf("[CampaignCheckout] User phone updated successfully")
 				}
+			} else if *existingUser.Phone != normalizedPhone {
+				log.Printf("[CampaignCheckout] SECURITY: Skipping phone update for user %s. Existing: %s, Input: %s", existingUser.ID, *existingUser.Phone, normalizedPhone)
+				// We do not update the profile, but we should ideally use the input phone for this specific transaction notification
+				// However, current architecture pulls from user profile. 
+				// For now, security takes precedence: prevent overwrite.
 			}
 		}
 		return existingUser, false, nil

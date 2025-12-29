@@ -74,19 +74,19 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 func (r *UserRepository) GetByEmail(tenantID, email string) (*domain.User, error) {
 	query := `
 		SELECT id, tenant_id, email, password_hash, role, full_name, avatar_url,
-		       google_id, auth_provider, is_active, metadata, created_at, updated_at
+		       bio, phone, google_id, auth_provider, is_active, metadata, created_at, updated_at
 		FROM users 
 		WHERE email = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
 	`
 	
 	var user domain.User
-	var tid, avatarURL, googleID sql.NullString
+	var tid, avatarURL, bio, phone, googleID sql.NullString
 	
 	var metadata []byte
 	
 	err := r.db.QueryRow(query, email, tenantID).Scan(
 		&user.ID, &tid, &user.Email, &user.PasswordHash, &user.Role,
-		&user.FullName, &avatarURL, &googleID, &user.AuthProvider,
+		&user.FullName, &avatarURL, &bio, &phone, &googleID, &user.AuthProvider,
 		&user.IsActive, &metadata, &user.CreatedAt, &user.UpdatedAt,
 	)
 	
@@ -102,6 +102,12 @@ func (r *UserRepository) GetByEmail(tenantID, email string) (*domain.User, error
 	}
 	if avatarURL.Valid {
 		user.AvatarURL = &avatarURL.String
+	}
+	if bio.Valid {
+		user.Bio = &bio.String
+	}
+	if phone.Valid {
+		user.Phone = &phone.String
 	}
 	if googleID.Valid {
 		user.GoogleID = &googleID.String
