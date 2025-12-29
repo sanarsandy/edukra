@@ -572,6 +572,13 @@ func handlePaymentSuccessNotification(userID, courseID string) {
 		log.Printf("[Notification] Failed to get user %s: %v", userID, err)
 		return
 	}
+	
+	log.Printf("[Notification] Processing for user %s (%s), Phone: %v", user.ID, user.FullName, user.Phone)
+	if user.Phone != nil {
+		log.Printf("[Notification] Phone value: '%s'", *user.Phone)
+	} else {
+		log.Printf("[Notification] Phone is NIL")
+	}
 
 	// Get LMS URL
 	lmsURL := getSettingValue("frontend_url", "")
@@ -587,6 +594,7 @@ func handlePaymentSuccessNotification(userID, courseID string) {
 	if err != nil {
 		log.Printf("[Notification] Failed to check webinars for course %s: %v", courseID, err)
 	}
+	log.Printf("[Notification] Found %d upcoming webinars for course %s", len(webinars), courseID)
 
 	// CASE A: Webinar Course (Has upcoming webinars)
 	if len(webinars) > 0 {
