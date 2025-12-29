@@ -3,7 +3,7 @@
     <!-- Top Banner Announcement -->
     <div 
       v-if="settings?.banner_enabled && settings?.banner_text" 
-      class="px-4 py-3 relative z-[60]"
+      class="fixed top-0 left-0 right-0 px-4 py-3 z-[60]"
       :style="{ 
         backgroundColor: settings.banner_bg_color || '#1E3A5F', 
         color: settings.banner_text_color || '#FFFFFF' 
@@ -22,7 +22,7 @@
     </div>
 
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-neutral-100" :class="{'mt-[44px]': settings?.banner_enabled && settings?.banner_text}">
+    <nav class="fixed left-0 right-0 z-50 bg-white border-b border-neutral-100" :class="settings?.banner_enabled && settings?.banner_text ? 'top-[44px]' : 'top-0'">
       <div class="container-custom">
         <div class="flex items-center justify-between h-16 md:h-18">
           <!-- Logo -->
