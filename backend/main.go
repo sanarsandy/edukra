@@ -79,6 +79,16 @@ func EchoServer() *echo.Echo {
 	e.GET("/api/courses", handlers.ListCourses)
 	e.GET("/api/courses/:id", handlers.GetCourse)
 	e.GET("/api/categories", handlers.ListCategories)
+	
+	// Public Campaign Routes (landing pages)
+	e.GET("/api/c/:slug", handlers.GetCampaignBySlug)
+	e.POST("/api/c/:id/click", handlers.TrackCampaignClick)
+
+	// Public Campaign Checkout (guest checkout - no auth)
+	e.POST("/api/campaign-checkout", handlers.CampaignCheckout)
+	e.GET("/api/transaction-status/:order_id", handlers.GetTransactionStatus)
+	e.GET("/api/public/payment-methods", handlers.GetPaymentMethods) // Public for campaign checkout
+	e.GET("/api/settings", handlers.GetSettings) // Public settings (banner, site info)
 
 	// Protected Routes
 	api := e.Group("/api")
@@ -247,6 +257,15 @@ func EchoServer() *echo.Echo {
 	admin.GET("/ratings/stats", handlers.AdminGetRatingStats)
 	admin.GET("/courses/:courseId/ratings", handlers.AdminGetCourseRatings)
 	admin.DELETE("/ratings/:id", handlers.AdminDeleteRating)
+
+
+	// Admin Campaign Management
+	admin.GET("/campaigns", handlers.ListCampaigns)
+	admin.POST("/campaigns", handlers.CreateCampaign)
+	admin.GET("/campaigns/:id", handlers.GetCampaign)
+	admin.PUT("/campaigns/:id", handlers.UpdateCampaign)
+	admin.DELETE("/campaigns/:id", handlers.DeleteCampaign)
+	admin.GET("/campaigns/:id/analytics", handlers.GetCampaignAnalytics)
 
 	// Admin Quiz Management
 	admin.POST("/lessons/:lessonId/quiz", handlers.CreateQuiz)

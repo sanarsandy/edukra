@@ -1,7 +1,28 @@
 <template>
   <div class="min-h-screen bg-white">
+    <!-- Top Banner Announcement -->
+    <div 
+      v-if="settings?.banner_enabled && settings?.banner_text" 
+      class="px-4 py-3 relative z-[60]"
+      :style="{ 
+        backgroundColor: settings.banner_bg_color || '#1E3A5F', 
+        color: settings.banner_text_color || '#FFFFFF' 
+      }"
+    >
+      <div class="container-custom flex items-center justify-center text-sm font-medium text-center">
+        <span>{{ settings.banner_text }}</span>
+        <a 
+          v-if="settings.banner_link" 
+          :href="settings.banner_link" 
+          class="ml-3 underline opacity-80 hover:opacity-100 transition-colors flex items-center"
+        >
+          Lihat Detail <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+      </div>
+    </div>
+
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-neutral-100">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-neutral-100" :class="{'mt-[44px]': settings?.banner_enabled && settings?.banner_text}">
       <div class="container-custom">
         <div class="flex items-center justify-between h-16 md:h-18">
           <!-- Logo -->
@@ -746,6 +767,13 @@ useHead({
 
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase || 'http://localhost:8080'
+
+// Fetch global settings for Top Banner
+const { settings, fetchSettings } = useSettings()
+
+onMounted(() => {
+  fetchSettings()
+})
 
 // Get proper thumbnail URL - handle MinIO objects
 const getThumbnailUrl = (url: string | null | undefined): string => {

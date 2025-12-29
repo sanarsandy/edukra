@@ -7,6 +7,11 @@ export interface Settings {
     language: string
     logo_url?: string
     theme: string
+    banner_enabled?: boolean
+    banner_text?: string
+    banner_link?: string
+    banner_bg_color?: string
+    banner_text_color?: string
 }
 
 export const useSettings = () => {
@@ -21,7 +26,7 @@ export const useSettings = () => {
         error.value = null
 
         try {
-            const response = await api.fetch<Settings>('/api/admin/settings')
+            const response = await api.fetch<Settings>('/api/settings')
             settings.value = response
         } catch (err: any) {
             error.value = err.message || 'Failed to fetch settings'

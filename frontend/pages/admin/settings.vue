@@ -172,6 +172,95 @@
           </div>
         </div>
         
+        <!-- Announcement Settings -->
+        <div v-if="activeTab === 'announcement'" class="bg-white rounded-xl border border-neutral-200 p-6">
+          <h3 class="font-semibold text-neutral-900 mb-6">Banner Pengumuman</h3>
+          <p class="text-sm text-neutral-500 mb-6">Tampilkan informasi penting atau promo di bagian atas halaman utama.</p>
+          
+          <div class="space-y-6">
+            <div class="flex items-center justify-between py-3 border-b border-neutral-100">
+              <div>
+                <p class="text-sm font-medium text-neutral-900">Aktifkan Banner</p>
+                <p class="text-xs text-neutral-500">Banner akan muncul di halaman landing page</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" v-model="bannerSettings.enabled" class="sr-only peer">
+                <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-admin-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-admin-600"></div>
+              </label>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium text-neutral-700 mb-2">Teks Pengumuman</label>
+              <input 
+                v-model="bannerSettings.text"
+                type="text" 
+                placeholder="Contoh: Diskon Flash Sale 50% Akhir Tahun! Gunakan kode: FLASH50"
+                class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-neutral-700 mb-2">Link Tujuan (Opsional)</label>
+              <input 
+                v-model="bannerSettings.link"
+                type="text" 
+                placeholder="https://example.com/promo atau /register"
+                class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+              />
+            </div>
+            
+            <!-- Color Settings -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Warna Latar Belakang</label>
+                <div class="flex items-center gap-2">
+                  <input 
+                    v-model="bannerSettings.bgColor"
+                    type="color" 
+                    class="w-12 h-10 rounded border border-neutral-200 cursor-pointer"
+                  />
+                  <input 
+                    v-model="bannerSettings.bgColor"
+                    type="text" 
+                    class="flex-1 px-3 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Warna Teks</label>
+                <div class="flex items-center gap-2">
+                  <input 
+                    v-model="bannerSettings.textColor"
+                    type="color" 
+                    class="w-12 h-10 rounded border border-neutral-200 cursor-pointer"
+                  />
+                  <input 
+                    v-model="bannerSettings.textColor"
+                    type="text" 
+                    class="flex-1 px-3 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <!-- Preview -->
+            <div class="mt-8 p-4 bg-neutral-50 rounded-xl border border-neutral-200">
+              <p class="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Preview</p>
+              <div v-if="bannerSettings.enabled" class="w-full px-4 py-3 text-sm font-medium text-center rounded-lg shadow-sm" :style="{ backgroundColor: bannerSettings.bgColor, color: bannerSettings.textColor }">
+                 {{ bannerSettings.text || 'Teks pengumuman akan muncul di sini' }}
+                 <span v-if="bannerSettings.link" class="ml-2 underline opacity-80 cursor-pointer">Cek Sekarang &rarr;</span>
+              </div>
+              <div v-else class="text-center text-neutral-400 text-sm py-2">
+                Banner tidak aktif
+              </div>
+            </div>
+
+            <div class="pt-4">
+              <button type="button" @click="saveBannerSettings" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Pengaturan' }}</button>
+            </div>
+          </div>
+        </div>
+        
         <!-- Payment Settings -->
         <div v-if="activeTab === 'payment'" class="space-y-6">
           <!-- Loading Payment -->
@@ -562,7 +651,8 @@ const tabs = [
   { id: 'payment', name: 'Pembayaran', description: 'Gateway pembayaran', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'ai', name: 'AI Tutor', description: 'Konfigurasi AI', icon: 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611l-.932.156a2.25 2.25 0 01-2.585-2.586l.156-.931a2.25 2.25 0 00.598-1.652' },
   { id: 'features', name: 'Fitur', description: 'Toggle fitur', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
-  { id: 'security', name: 'Keamanan', description: 'Pengaturan keamanan', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' }
+  { id: 'security', name: 'Keamanan', description: 'Pengaturan keamanan', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+  { id: 'announcement', name: 'Pengumuman', description: 'Banner informasi', icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z' }
 ]
 
 // Local form state (syncs from API)
@@ -593,6 +683,60 @@ const paymentSettings = ref({
   duitku_merchant_key: '',
   duitku_is_production: false
 })
+
+// Banner settings state
+const bannerSettings = ref({
+  enabled: false,
+  text: '',
+  link: '',
+  bgColor: '#1E3A5F',
+  textColor: '#FFFFFF'
+})
+
+// Fetch banner settings
+const fetchBannerSettings = async () => {
+    // Sync from global settings if available
+    if (settings.value) {
+        bannerSettings.value = {
+            enabled: settings.value.banner_enabled || false,
+            text: settings.value.banner_text || '',
+            link: settings.value.banner_link || '',
+            bgColor: settings.value.banner_bg_color || '#1E3A5F',
+            textColor: settings.value.banner_text_color || '#FFFFFF'
+        }
+    }
+}
+
+// Watch global settings to update banner local state
+watch(settings, (newSettings: any) => {
+    if (newSettings) {
+        bannerSettings.value = {
+            enabled: newSettings.banner_enabled || false,
+            text: newSettings.banner_text || '',
+            link: newSettings.banner_link || '',
+            bgColor: newSettings.banner_bg_color || '#1E3A5F',
+            textColor: newSettings.banner_text_color || '#FFFFFF'
+        }
+    }
+}, { immediate: true })
+
+const saveBannerSettings = async () => {
+  saving.value = true
+  const result = await updateSettings({
+    banner_enabled: bannerSettings.value.enabled,
+    banner_text: bannerSettings.value.text,
+    banner_link: bannerSettings.value.link,
+    banner_bg_color: bannerSettings.value.bgColor,
+    banner_text_color: bannerSettings.value.textColor
+  })
+  saving.value = false
+  
+  if (result) {
+    showToast('Pengumuman berhasil disimpan')
+  } else {
+    showToast('Gagal menyimpan pengumuman', 'error')
+  }
+}
 
 // Fetch payment settings
 const fetchPaymentSettings = async () => {
