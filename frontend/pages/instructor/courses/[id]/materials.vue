@@ -111,7 +111,7 @@
             <!-- Content Type (only for non-container) -->
             <div v-if="!form.is_container">
               <label class="block text-sm font-medium text-neutral-700 mb-2">Tipe Konten <span class="text-red-500">*</span></label>
-              <div class="grid grid-cols-4 gap-2">
+              <div class="grid grid-cols-5 gap-2">
                 <button 
                   v-for="type in contentTypes" 
                   :key="type.value"
@@ -128,10 +128,10 @@
               </div>
             </div>
 
-            <!-- Video URL or File Upload -->
-            <div v-if="!form.is_container && (form.content_type === 'video' || form.content_type === 'pdf')">
+            <!-- Video, PDF or Document Upload -->
+            <div v-if="!form.is_container && (form.content_type === 'video' || form.content_type === 'pdf' || form.content_type === 'document')">
               <label class="block text-sm font-medium text-neutral-700 mb-2">
-                {{ form.content_type === 'video' ? 'Video' : 'Dokumen' }}
+                {{ form.content_type === 'video' ? 'Video' : form.content_type === 'pdf' ? 'PDF' : 'Dokumen (PPT/Word/Excel)' }}
               </label>
               
               <!-- Tab: URL or Upload -->
@@ -199,7 +199,7 @@
                     ref="fileInputRef"
                     type="file" 
                     class="hidden" 
-                    :accept="form.content_type === 'video' ? 'video/*' : '.pdf,.doc,.docx,.ppt,.pptx'"
+                    :accept="form.content_type === 'video' ? 'video/*' : '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx'"
                     @change="handleFileSelect"
                   />
                   <div v-if="uploading" class="flex flex-col items-center">
@@ -219,7 +219,7 @@
                     </svg>
                     <p class="text-sm text-neutral-600">Klik atau drag file ke sini</p>
                     <p class="text-xs text-neutral-500 mt-1">
-                      {{ form.content_type === 'video' ? 'MP4, WebM, MOV (Maks. 500MB)' : 'PDF, DOC, DOCX, PPT (Maks. 50MB)' }}
+                      {{ form.content_type === 'video' ? 'MP4, WebM, MOV (Maks. 500MB)' : form.content_type === 'pdf' ? 'PDF (Maks. 50MB)' : 'PPT, Word, Excel (Maks. 50MB)' }}
                     </p>
                   </div>
                 </div>
@@ -733,7 +733,9 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const contentTypes = [
   { value: 'video', label: 'Video', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { value: 'pdf', label: 'PDF', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
-  { value: 'text', label: 'Teks', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
+  { value: 'document', label: 'Dokumen', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2zM14 3v4a2 2 0 002 2h4' },
+  { value: 'link', label: 'Link', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
+  { value: 'text', label: 'Teks', icon: 'M4 6h16M4 12h16M4 18h7' }
 ]
 
 const form = ref({

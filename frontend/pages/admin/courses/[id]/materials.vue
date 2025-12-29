@@ -110,7 +110,7 @@
 
             <div>
               <label class="block text-sm font-medium text-neutral-700 mb-2">Tipe Konten <span class="text-red-500">*</span></label>
-              <div class="grid grid-cols-4 gap-2">
+              <div class="grid grid-cols-5 gap-2">
                 <button 
                   v-for="type in contentTypes" 
                   :key="type.value"
@@ -127,10 +127,10 @@
               </div>
             </div>
 
-            <!-- Video URL or File Upload -->
-            <div v-if="form.content_type === 'video' || form.content_type === 'pdf'">
+            <!-- Video, PDF or Document Upload -->
+            <div v-if="form.content_type === 'video' || form.content_type === 'pdf' || form.content_type === 'document'">
               <label class="block text-sm font-medium text-neutral-700 mb-2">
-                {{ form.content_type === 'video' ? 'Video' : 'Dokumen' }}
+                {{ form.content_type === 'video' ? 'Video' : form.content_type === 'pdf' ? 'PDF' : 'Dokumen (PPT/Word/Excel)' }}
               </label>
               
               <!-- Tab: URL or Upload -->
@@ -198,7 +198,7 @@
                     ref="fileInputRef"
                     type="file" 
                     class="hidden" 
-                    :accept="form.content_type === 'video' ? 'video/*' : '.pdf,.doc,.docx,.ppt,.pptx'"
+                    :accept="form.content_type === 'video' ? 'video/*' : '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx'"
                     @change="handleFileSelect"
                   />
                   <div v-if="uploading" class="flex flex-col items-center">
@@ -218,9 +218,32 @@
                     </svg>
                     <p class="text-sm text-neutral-600">Klik atau drag file ke sini</p>
                     <p class="text-xs text-neutral-500 mt-1">
-                      {{ form.content_type === 'video' ? 'MP4, WebM, MOV (Maks. 500MB)' : 'PDF, DOC, DOCX, PPT (Maks. 50MB)' }}
+                      {{ form.content_type === 'video' ? 'MP4, WebM, MOV (Maks. 500MB)' : form.content_type === 'pdf' ? 'PDF (Maks. 50MB)' : 'PPT, Word, Excel (Maks. 50MB)' }}
                     </p>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- External Link Input -->
+            <div v-if="form.content_type === 'link'">
+              <label class="block text-sm font-medium text-neutral-700 mb-2">URL Eksternal</label>
+              <input 
+                v-model="form.video_url"
+                type="url"
+                required
+                class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                placeholder="https://docs.google.com/document/d/..."
+              />
+              <div class="mt-2 p-3 bg-neutral-50 rounded-lg">
+                <p class="text-xs font-medium text-neutral-600 mb-2">Contoh link yang didukung:</p>
+                <div class="flex flex-wrap gap-1">
+                  <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Google Docs</span>
+                  <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">Google Sheets</span>
+                  <span class="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded text-xs">Google Slides</span>
+                  <span class="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">OneDrive</span>
+                  <span class="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">Notion</span>
+                  <span class="px-2 py-0.5 bg-neutral-100 text-neutral-700 rounded text-xs">Link Lainnya</span>
                 </div>
               </div>
             </div>
@@ -423,6 +446,65 @@
             <div v-else-if="viewLesson?.content_type === 'text'" class="prose prose-neutral max-w-none">
               <div v-if="viewLesson?.content" class="p-4 bg-neutral-50 rounded-lg" v-html="viewLesson.content"></div>
               <p v-else class="text-neutral-500 text-center py-8">Tidak ada konten teks</p>
+            </div>
+
+            <!-- Document Content (PPT/Word/Excel) -->
+            <div v-else-if="viewLesson?.content_type === 'document'" class="space-y-4">
+              <div v-if="viewLesson?.video_url">
+                <div class="flex items-center gap-3 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+                  <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <div class="flex-1">
+                    <p class="font-medium text-neutral-900">{{ getFilename(viewLesson.video_url) }}</p>
+                    <p class="text-sm text-neutral-500">{{ getFileExtension(viewLesson.video_url).toUpperCase() }} Document</p>
+                  </div>
+                  <a :href="getFullUrl(viewLesson.video_url)" target="_blank" download class="px-4 py-2 bg-admin-500 text-white rounded-lg hover:bg-admin-600 transition-colors text-sm font-medium flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download
+                  </a>
+                </div>
+                <p class="text-xs text-neutral-500 mt-2 truncate">{{ viewLesson.video_url }}</p>
+              </div>
+              <div v-else class="text-neutral-500 text-center py-8">
+                <svg class="w-12 h-12 mx-auto mb-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p>Tidak ada dokumen</p>
+              </div>
+            </div>
+
+            <!-- External Link Content -->
+            <div v-else-if="viewLesson?.content_type === 'link'" class="space-y-4">
+              <div v-if="viewLesson?.video_url">
+                <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                  <svg class="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                  </svg>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-neutral-900">Link Eksternal</p>
+                    <p class="text-sm text-blue-600 truncate">{{ viewLesson.video_url }}</p>
+                  </div>
+                  <a :href="viewLesson.video_url" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Buka Link
+                  </a>
+                </div>
+                <!-- Preview for embeddable links -->
+                <div v-if="isGoogleEmbed(viewLesson.video_url)" class="mt-4 rounded-lg border border-neutral-200 overflow-hidden">
+                  <iframe :src="getGoogleEmbedUrl(viewLesson.video_url)" class="w-full h-[400px]" frameborder="0"></iframe>
+                </div>
+              </div>
+              <div v-else class="text-neutral-500 text-center py-8">
+                <svg class="w-12 h-12 mx-auto mb-2 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                <p>Tidak ada link</p>
+              </div>
             </div>
 
             <!-- Quiz placeholder -->
@@ -737,7 +819,9 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const contentTypes = [
   { value: 'video', label: 'Video', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { value: 'pdf', label: 'PDF', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
-  { value: 'text', label: 'Teks', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
+  { value: 'document', label: 'Dokumen', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2zM14 3v4a2 2 0 002 2h4' },
+  { value: 'link', label: 'Link', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
+  { value: 'text', label: 'Teks', icon: 'M4 6h16M4 12h16M4 18h7' }
 ]
 
 const form = ref({
@@ -1187,6 +1271,8 @@ const getContentTypeBadgeClass = (type: string) => {
   const classes: Record<string, string> = {
     video: 'bg-primary-100 text-primary-700',
     pdf: 'bg-red-100 text-red-700',
+    document: 'bg-blue-100 text-blue-700',
+    link: 'bg-purple-100 text-purple-700',
     quiz: 'bg-accent-100 text-accent-700',
     text: 'bg-neutral-100 text-neutral-700'
   }
@@ -1196,11 +1282,48 @@ const getContentTypeBadgeClass = (type: string) => {
 const getContentTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
     video: 'Video',
-    pdf: 'Dokumen',
+    pdf: 'PDF',
+    document: 'Dokumen',
+    link: 'Link',
     quiz: 'Kuis',
     text: 'Teks'
   }
   return labels[type] || type
+}
+
+// File helpers for document type
+const getFilename = (url: string) => {
+  if (!url) return 'Unknown'
+  const parts = url.split('/')
+  return parts[parts.length - 1] || 'Document'
+}
+
+const getFileExtension = (url: string) => {
+  if (!url) return ''
+  const parts = url.split('.')
+  return parts[parts.length - 1] || ''
+}
+
+// Google embed helpers for link type
+const isGoogleEmbed = (url: string) => {
+  if (!url) return false
+  return url.includes('docs.google.com') || url.includes('sheets.google.com') || url.includes('slides.google.com')
+}
+
+const getGoogleEmbedUrl = (url: string) => {
+  if (!url) return ''
+  // Convert Google Docs/Sheets/Slides view URLs to embed URLs
+  if (url.includes('/edit')) {
+    return url.replace('/edit', '/preview')
+  }
+  if (url.includes('/view')) {
+    return url.replace('/view', '/preview')
+  }
+  // Add /preview if not present
+  if (!url.includes('/preview')) {
+    return url + (url.endsWith('/') ? 'preview' : '/preview')
+  }
+  return url
 }
 
 // Upload functions
