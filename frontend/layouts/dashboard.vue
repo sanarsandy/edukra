@@ -74,6 +74,23 @@
                   Jelajahi Kursus
                 </div>
               </NuxtLink>
+
+              <NuxtLink 
+                to="/dashboard/webinars" 
+                class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
+                :class="[
+                  isActive('/dashboard/webinars') ? 'bg-primary-50 text-primary-700' : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900',
+                  sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" :class="sidebarCollapsed ? '' : 'mr-3'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                <span v-if="!sidebarCollapsed">Webinar</span>
+                <div v-if="sidebarCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-neutral-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                  Webinar
+                </div>
+              </NuxtLink>
             </div>
           </div>
           

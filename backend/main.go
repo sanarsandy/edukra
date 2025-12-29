@@ -10,6 +10,8 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/handlers"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/scheduler"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/service"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/storage"
 	customMiddleware "github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/middleware"
 )
@@ -23,6 +25,14 @@ func main() {
 		log.Printf("Warning: Failed to initialize MinIO storage: %v", err)
 		log.Println("File uploads will not work without MinIO configuration")
 	}
+
+	// Initialize WhatsApp Service
+	service.InitWhatsAppService()
+
+	// Initialize and start reminder scheduler
+	scheduler.InitScheduler(db.DB)
+	scheduler.StartScheduler()
+	defer scheduler.StopScheduler()
 
 	e := EchoServer()
 
@@ -80,15 +90,20 @@ func EchoServer() *echo.Echo {
 	e.GET("/api/courses/:id", handlers.GetCourse)
 	e.GET("/api/categories", handlers.ListCategories)
 	
-	// Public Campaign Routes (landing pages)
-	e.GET("/api/c/:slug", handlers.GetCampaignBySlug)
-	e.POST("/api/c/:id/click", handlers.TrackCampaignClick)
+	// Public Campaign Routes (landing pages) - with rate limiting
+	e.GET("/api/c/:slug", handlers.GetCampaignBySlug, customMiddleware.PublicAPIRateLimiter.Middleware())
+	e.POST("/api/c/:id/click", handlers.TrackCampaignClick, customMiddleware.TrackingRateLimiter.Middleware())
+	e.POST("/api/c/:id/track", handlers.TrackCampaignClick, customMiddleware.TrackingRateLimiter.Middleware())
 
-	// Public Campaign Checkout (guest checkout - no auth)
-	e.POST("/api/campaign-checkout", handlers.CampaignCheckout)
+	// Public Campaign Checkout (guest checkout - with strict rate limiting)
+	e.POST("/api/campaign-checkout", handlers.CampaignCheckout, customMiddleware.CheckoutRateLimiter.Middleware())
 	e.GET("/api/transaction-status/:order_id", handlers.GetTransactionStatus)
 	e.GET("/api/public/payment-methods", handlers.GetPaymentMethods) // Public for campaign checkout
 	e.GET("/api/settings", handlers.GetSettings) // Public settings (banner, site info)
+
+	// Public Webinar Routes
+	e.GET("/api/webinars/:id", handlers.GetPublicWebinar)
+	e.GET("/api/courses/:id/webinars", handlers.GetCourseWebinars)
 
 	// Protected Routes
 	api := e.Group("/api")
@@ -159,6 +174,9 @@ func EchoServer() *echo.Echo {
 	api.GET("/notifications", handlers.GetMyNotifications)
 	api.PUT("/notifications/:id/read", handlers.MarkNotificationAsRead)
 	api.PUT("/notifications/read-all", handlers.MarkAllNotificationsRead)
+
+	// Student Webinars
+	api.GET("/my/webinars", handlers.GetMyWebinars)
 
 	// Payment & Checkout
 	api.POST("/checkout", handlers.CreateCheckout)
@@ -293,6 +311,16 @@ func EchoServer() *echo.Echo {
 	admin.GET("/coupons/:id", handlers.GetCoupon)
 	admin.PUT("/coupons/:id", handlers.UpdateCoupon)
 	admin.DELETE("/coupons/:id", handlers.DeleteCoupon)
+
+	// Admin Webinar Management
+	admin.GET("/webinars", handlers.ListWebinars)
+	admin.POST("/webinars", handlers.CreateWebinar)
+	admin.GET("/webinars/:id", handlers.GetWebinar)
+	admin.PUT("/webinars/:id", handlers.UpdateWebinar)
+	admin.DELETE("/webinars/:id", handlers.DeleteWebinar)
+	admin.GET("/webinars/:id/registrations", handlers.GetWebinarRegistrations)
+	admin.POST("/webinars/:id/attendance/:user_id", handlers.MarkWebinarAttendance)
+	admin.GET("/courses/:id/webinars", handlers.GetWebinarsByCourse)
 
 	// ========================================
 	// INSTRUCTOR ROUTES
