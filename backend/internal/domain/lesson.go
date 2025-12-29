@@ -8,12 +8,10 @@ import (
 type ContentType string
 
 const (
-	ContentVideo    ContentType = "video"
-	ContentPDF      ContentType = "pdf"
-	ContentQuiz     ContentType = "quiz"
-	ContentText     ContentType = "text"
-	ContentDocument ContentType = "document" // PPT, Word, Excel files
-	ContentLink     ContentType = "link"     // External links (GDocs, GSheets, etc)
+	ContentVideo ContentType = "video"
+	ContentPDF   ContentType = "pdf"
+	ContentQuiz  ContentType = "quiz"
+	ContentText  ContentType = "text"
 )
 
 // SecurityLevel represents the content protection level
