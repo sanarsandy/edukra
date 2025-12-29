@@ -115,11 +115,25 @@ func findOrCreateGuestUser(email, phone, fullName string) (*domain.User, bool, e
 	// Try to find existing user (use empty tenant for now)
 	existingUser, err := userRepo.GetByEmail("", email)
 	if err == nil && existingUser != nil {
-		// Update phone if not set
-		if existingUser.Phone == nil || *existingUser.Phone == "" {
+		// Update phone if not set OR if input phone is provided
+		// We trust the latest input from checkout for guest users
+		if phone != "" {
 			normalizedPhone := normalizePhone(phone)
-			existingUser.Phone = &normalizedPhone
-			userRepo.Update(existingUser)
+			
+			// Update if current phone is empty or different
+			if existingUser.Phone == nil || *existingUser.Phone == "" || *existingUser.Phone != normalizedPhone {
+				log.Printf("[CampaignCheckout] Updating phone for user %s: old=%v, new=%s", existingUser.ID, existingUser.Phone, normalizedPhone)
+				
+				phoneVal := normalizedPhone
+				existingUser.Phone = &phoneVal
+				
+				if err := userRepo.Update(existingUser); err != nil {
+					log.Printf("[CampaignCheckout] Failed to update user phone: %v", err)
+					// Continue anyway, don't block checkout
+				} else {
+					log.Printf("[CampaignCheckout] User phone updated successfully")
+				}
+			}
 		}
 		return existingUser, false, nil
 	}
