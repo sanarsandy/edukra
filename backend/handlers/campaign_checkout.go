@@ -305,7 +305,7 @@ func CampaignCheckout(c echo.Context) error {
 		}
 
 		// Register to webinar if exists (for free courses)
-		go handleWebinarRegistration(user.ID, *campaign.CourseID)
+		go handlePaymentSuccessNotification(user.ID, *campaign.CourseID)
 
 		return c.JSON(http.StatusOK, CampaignCheckoutResponse{
 			IsFree:         true,
@@ -327,9 +327,10 @@ func CampaignCheckout(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to enroll"})
 		}
 
-		// Register to webinar if exists
-		go handleWebinarRegistration(user.ID, *campaign.CourseID)
-
+		// Send payment success notification and handle webinar registration
+		if user != nil {
+			go handlePaymentSuccessNotification(user.ID, *campaign.CourseID)
+		}
 		return c.JSON(http.StatusOK, CampaignCheckoutResponse{
 			IsFree:    true,
 			Message:   "Selamat! Anda berhasil terdaftar di kursus gratis ini.",

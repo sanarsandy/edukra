@@ -533,9 +533,8 @@ func DuitkuWebhook(c echo.Context) error {
 			} else {
 				log.Printf("[Duitku Webhook] Enrollment created for user %s, course %s", tx.UserID, *tx.CourseID)
 				
-				// === WEBINAR INTEGRATION ===
-				// Check if course has upcoming webinars and register user
-				go handleWebinarRegistration(tx.UserID, *tx.CourseID)
+				// Send payment success notification and handle webinar registration
+				go handlePaymentSuccessNotification(tx.UserID, *tx.CourseID)
 			}
 		}
 		
@@ -561,77 +560,87 @@ func DuitkuWebhook(c echo.Context) error {
 	return c.String(http.StatusOK, "SUCCESS")
 }
 
-// handleWebinarRegistration registers user to webinars and sends WA notification
-func handleWebinarRegistration(userID, courseID string) {
+// handlePaymentSuccessNotification handles post-payment notifications (Webinar or General)
+func handlePaymentSuccessNotification(userID, courseID string) {
 	webinarRepo := postgres.NewWebinarRepository(db.DB)
 	userRepo := postgres.NewUserRepository(db.DB)
-	
-	// Get upcoming webinars for this course
-	webinars, err := webinarRepo.GetUpcomingByCourse(courseID)
-	if err != nil {
-		log.Printf("[Webinar] Failed to get webinars for course %s: %v", courseID, err)
-		return
-	}
-	
-	if len(webinars) == 0 {
-		log.Printf("[Webinar] No upcoming webinars for course %s", courseID)
-		return
-	}
-	
+	courseRepo := postgres.NewCourseRepository(db.DB)
+
 	// Get user info
 	user, err := userRepo.GetByID(userID)
 	if err != nil || user == nil {
-		log.Printf("[Webinar] Failed to get user %s: %v", userID, err)
+		log.Printf("[Notification] Failed to get user %s: %v", userID, err)
 		return
 	}
-	
-	// Register user to each webinar and create reminders
-	for _, webinar := range webinars {
-		// Register to webinar
-		if err := webinarRepo.RegisterUser(webinar.ID, userID, "purchase"); err != nil {
-			log.Printf("[Webinar] Failed to register user %s to webinar %s: %v", userID, webinar.ID, err)
-			continue
-		}
-		log.Printf("[Webinar] User %s registered to webinar %s", userID, webinar.ID)
-		
-		// Create reminder schedules
-		webinarRepo.CreateReminders(webinar.ID, userID, webinar.ScheduledAt)
+
+	// Get LMS URL
+	lmsURL := getSettingValue("frontend_url", "")
+	if lmsURL == "" {
+		lmsURL = os.Getenv("FRONTEND_URL")
 	}
-	
-	// Send WhatsApp confirmation for the first webinar
+	if lmsURL == "" {
+		lmsURL = "https://lms.edukra.com"
+	}
+
+	// 1. Check for upcoming webinars
+	webinars, err := webinarRepo.GetUpcomingByCourse(courseID)
+	if err != nil {
+		log.Printf("[Notification] Failed to check webinars for course %s: %v", courseID, err)
+	}
+
+	// CASE A: Webinar Course (Has upcoming webinars)
+	if len(webinars) > 0 {
+		// Register user to each webinar and create reminders
+		for _, webinar := range webinars {
+			if err := webinarRepo.RegisterUser(webinar.ID, userID, "purchase"); err != nil {
+				log.Printf("[Webinar] Failed to register user %s to webinar %s: %v", userID, webinar.ID, err)
+				continue
+			}
+			log.Printf("[Webinar] User %s registered to webinar %s", userID, webinar.ID)
+			webinarRepo.CreateReminders(webinar.ID, userID, webinar.ScheduledAt)
+		}
+
+		// Send Webinar Confirmation WA (includes meeting details)
+		if user.Phone != nil && *user.Phone != "" {
+			webinar := webinars[0]
+			data := service.WebinarConfirmationData{
+				UserName:        user.FullName,
+				UserEmail:       user.Email,
+				WebinarTitle:    webinar.Title,
+				WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
+				WebinarTime:     webinar.ScheduledAt.Format("15:04"),
+				DurationMinutes: webinar.DurationMinutes,
+				LMSUrl:          lmsURL,
+			}
+			
+			if webinar.MeetingURL != nil {
+				data.MeetingURL = *webinar.MeetingURL
+			}
+			if webinar.MeetingPassword != nil {
+				data.MeetingPassword = *webinar.MeetingPassword
+			}
+			
+			service.SendWebinarConfirmationAsync(*user.Phone, data)
+			log.Printf("[Notification] Webinar confirmation sent to %s", *user.Phone)
+		}
+		return
+	}
+
+	// CASE B: Regular Course (No webinars) -> Send General Payment Success
 	if user.Phone != nil && *user.Phone != "" {
-		webinar := webinars[0]
-		
-		// Get LMS URL from settings or env
-		lmsURL := getSettingValue("frontend_url", "")
-		if lmsURL == "" {
-			lmsURL = os.Getenv("FRONTEND_URL")
+		course, err := courseRepo.GetByID(courseID)
+		if err != nil || course == nil {
+			log.Printf("[Notification] Failed to get course %s: %v", courseID, err)
+			return
 		}
-		if lmsURL == "" {
-			lmsURL = "https://lms.edukra.com"
-		}
-		
-		// Build confirmation data
-		data := service.WebinarConfirmationData{
-			UserName:        user.FullName,
-			UserEmail:       user.Email,
-			WebinarTitle:    webinar.Title,
-			WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
-			WebinarTime:     webinar.ScheduledAt.Format("15:04"),
-			DurationMinutes: webinar.DurationMinutes,
-			LMSUrl:          lmsURL,
-		}
-		
-		if webinar.MeetingURL != nil {
-			data.MeetingURL = *webinar.MeetingURL
-		}
-		if webinar.MeetingPassword != nil {
-			data.MeetingPassword = *webinar.MeetingPassword
-		}
-		
-		// Send async
-		service.SendWebinarConfirmationAsync(*user.Phone, data)
-		log.Printf("[Webinar] WA confirmation sent to %s for webinar %s", *user.Phone, webinar.ID)
+
+		go func() {
+			if err := service.GetWhatsAppService().SendPaymentSuccess(*user.Phone, user.FullName, course.Title, lmsURL); err != nil {
+				log.Printf("[Notification] Failed to send payment success WA to %s: %v", *user.Phone, err)
+			} else {
+				log.Printf("[Notification] General payment success WA sent to %s", *user.Phone)
+			}
+		}()
 	}
 }
 
