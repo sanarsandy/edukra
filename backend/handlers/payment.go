@@ -454,6 +454,9 @@ func MidtransWebhook(c echo.Context) error {
 				log.Printf("[Midtrans Webhook] Coupon usage recorded for coupon %s", *tx.CouponID)
 			}
 		}
+		
+		// Send WhatsApp notification (async)
+		go handlePaymentSuccessNotification(tx.UserID, *tx.CourseID)
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})

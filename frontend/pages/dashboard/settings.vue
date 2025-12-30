@@ -317,14 +317,16 @@ const saveProfile = async () => {
     })
     
     if (result) {
-      // Update user cookie so header updates immediately
+      // Update user cookie so header and other components update immediately
       const userCookie = useCookie('user')
       if (userCookie.value) {
         const currentUser = typeof userCookie.value === 'string' 
           ? JSON.parse(userCookie.value) 
           : userCookie.value
         currentUser.full_name = profile.value.name
-        userCookie.value = JSON.stringify(currentUser)
+        currentUser.phone = profile.value.phone || null
+        currentUser.bio = profile.value.bio || null
+        userCookie.value = currentUser
       }
       showToast('Profil berhasil disimpan')
     } else {

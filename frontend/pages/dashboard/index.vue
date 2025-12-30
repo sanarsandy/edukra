@@ -5,6 +5,24 @@
       <h1 class="text-2xl font-bold text-neutral-900">Selamat Datang, {{ user?.full_name || 'Student' }}! 👋</h1>
       <p class="text-neutral-500 mt-1">Lanjutkan perjalanan belajar Anda hari ini.</p>
     </div>
+
+    <!-- Phone Reminder Banner -->
+    <div v-if="showPhoneReminder" class="mb-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-xl p-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-amber-800">Lengkapi Nomor WhatsApp Anda</p>
+          <p class="text-xs text-amber-600">Untuk menerima notifikasi pembayaran dan info webinar</p>
+        </div>
+      </div>
+      <NuxtLink to="/dashboard/settings" class="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 transition-colors flex-shrink-0">
+        Update Sekarang
+      </NuxtLink>
+    </div>
     
     <!-- Stats Grid -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -156,6 +174,11 @@
 const { user } = useAuth()
 const { stats, recentCourses, fetchUserDashboard, loading } = useDashboard()
 const { activities, fetchActivities, formatTimeAgo, getActivityIcon, loading: loadingActivities } = useLearningActivities()
+
+// Show phone reminder if user has no phone number
+const showPhoneReminder = computed(() => {
+  return user.value && !user.value.phone
+})
 
 definePageMeta({
   layout: 'dashboard',
