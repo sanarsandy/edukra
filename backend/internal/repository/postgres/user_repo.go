@@ -70,21 +70,38 @@ func (r *UserRepository) GetByID(id string) (*domain.User, error) {
 	return &user, nil
 }
 
-// GetByEmail retrieves a user by tenant and email
+// GetByEmail retrieves a user by tenant and email (case-insensitive)
+// If tenantID is empty, searches users with NULL tenant_id only
 func (r *UserRepository) GetByEmail(tenantID, email string) (*domain.User, error) {
-	query := `
-		SELECT id, tenant_id, email, password_hash, role, full_name, avatar_url,
-		       bio, phone, google_id, auth_provider, is_active, metadata, created_at, updated_at
-		FROM users 
-		WHERE email = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
-	`
+	var query string
+	var args []interface{}
+	
+	if tenantID == "" {
+		// No tenant specified - find user with NULL tenant_id
+		query = `
+			SELECT id, tenant_id, email, password_hash, role, full_name, avatar_url,
+			       bio, phone, google_id, auth_provider, is_active, metadata, created_at, updated_at
+			FROM users 
+			WHERE LOWER(email) = LOWER($1) AND tenant_id IS NULL
+		`
+		args = []interface{}{email}
+	} else {
+		// Specific tenant - find user with matching tenant_id or NULL
+		query = `
+			SELECT id, tenant_id, email, password_hash, role, full_name, avatar_url,
+			       bio, phone, google_id, auth_provider, is_active, metadata, created_at, updated_at
+			FROM users 
+			WHERE LOWER(email) = LOWER($1) AND (tenant_id = $2 OR tenant_id IS NULL)
+		`
+		args = []interface{}{email, tenantID}
+	}
 	
 	var user domain.User
 	var tid, avatarURL, bio, phone, googleID sql.NullString
 	
 	var metadata []byte
 	
-	err := r.db.QueryRow(query, email, tenantID).Scan(
+	err := r.db.QueryRow(query, args...).Scan(
 		&user.ID, &tid, &user.Email, &user.PasswordHash, &user.Role,
 		&user.FullName, &avatarURL, &bio, &phone, &googleID, &user.AuthProvider,
 		&user.IsActive, &metadata, &user.CreatedAt, &user.UpdatedAt,
