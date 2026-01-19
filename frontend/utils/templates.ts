@@ -29,6 +29,7 @@ export interface CampaignTemplate {
     description: string
     category: 'bio' | 'webinar' | 'ecourse' | 'product' | 'service'
     thumbnail: string
+    isRigid?: boolean // If true, user cannot add/remove blocks or change detailed styles
     styles: TemplateStyle
     blocks: Block[]
 }
@@ -102,6 +103,342 @@ export const CAMPAIGN_THEMES: { id: string, name: string, styles: TemplateStyle 
 ]
 
 export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
+    // 0. NEW: Gen Z Webinar (Custom Lovable Design)
+    {
+        id: 'webinar_gen_z',
+        name: 'Webinar Gen Z (Lovable Style)',
+        description: 'Style modern & playful dengan elemen 3D floating, gradient, dan glassmorphism.',
+        category: 'webinar',
+        thumbnail: '🚀',
+        isRigid: true,
+        styles: {
+            primaryColor: '#D946EF', // Fuchsia 500
+            accentColor: '#F97316', // Orange 500
+            backgroundColor: '#050505', // Deep Dark
+            buttonColor: '#D946EF',
+            textPrimaryColor: '#FFFFFF',
+            textSecondaryColor: '#A3A3A3',
+            buttonStyle: 'gradient',
+            borderRadius: 'rounded',
+            hasGradient: true,
+            fontFamily: 'Outfit' as any
+        },
+        blocks: [
+            {
+                id: 'hero_gz',
+                type: 'hero_gen_z',
+                enabled: true,
+                order: 1,
+                data: {
+                    headline: 'BELAJAR KEPABEANAN & CUKAI',
+                    subheadline: 'Kupas Tuntas Aturan, Prosedur, dan Strategi Ekspor-Impor Langsung dari Ahlinya.',
+                    promo_text: 'Promo Berakhir Dalam:',
+                    badge: 'WEBINAR EXCLUSIVE 2024'
+                }
+            },
+            {
+                id: 'features_gz',
+                type: 'features_gen_z',
+                enabled: true,
+                order: 2,
+                data: {
+                    title: 'Yang Bakal Kamu DAPETIN'
+                }
+            },
+            {
+                id: 'cta_gz',
+                type: 'cta_gen_z',
+                enabled: true,
+                order: 3,
+                data: {
+                    headline: 'AMANKAN KUOTA',
+                    subheadline: 'SEBELUM HABIS!',
+                    cta_text: 'DAFTAR SEKARANG'
+                }
+            }
+        ]
+    },
+    // NEW: TikTok Shop Style (Clean Minimalist)
+    {
+        id: 'webinar_tiktok',
+        name: 'Webinar TikTok Style (Clean)',
+        description: 'Tampilan bersih & minimalis ala TikTok Shop. Fokus konversi tinggi.',
+        category: 'webinar',
+        thumbnail: '🎵',
+        isRigid: true,
+        styles: {
+            primaryColor: '#F472B6', // Pink 400
+            accentColor: '#38BDF8', // Light Blue
+            backgroundColor: '#FFFFFF', // White
+            buttonColor: '#F472B6',
+            textPrimaryColor: '#000000',
+            textSecondaryColor: '#6B7280',
+            buttonStyle: 'gradient',
+            borderRadius: 'rounded',
+            hasGradient: true,
+            fontFamily: 'Inter' as any
+        },
+        blocks: [
+            {
+                id: 'hero_clean',
+                type: 'hero_clean',
+                enabled: true,
+                order: 1,
+                data: {
+                    headline: 'Rahasia Laris di TikTok Shop!',
+                    subheadline: 'Pelajari strategi jualan yang terbukti meningkatkan penjualan 10x lipat di platform TikTok Shop',
+                    badge: 'WEBINAR GRATIS'
+                }
+            },
+            {
+                id: 'speaker_clean',
+                type: 'speaker_clean',
+                enabled: true,
+                order: 2,
+                data: {
+                    name: 'Budi Santoso',
+                    title: 'TikTok Shop Specialist & Digital Marketing Expert',
+                    bio: 'Budi telah membantu lebih dari 200+ UMKM meningkatkan penjualan mereka melalui platform TikTok Shop. Dengan pengalaman 5+ tahun di bidang e-commerce dan sosial media marketing.',
+                    stats: [
+                        { icon: '👥', label: '200+ UMKM' },
+                        { icon: '🏆', label: '5+ Tahun Pengalaman' }
+                    ]
+                }
+            },
+            {
+                id: 'features_clean',
+                type: 'features_clean',
+                enabled: true,
+                order: 3,
+                data: {
+                    title: 'Apa Yang Akan Anda Dapatkan?',
+                    items: [
+                        { title: 'Strategi Algoritma TikTok', text: 'Pelajari cara memanfaatkan algoritma TikTok untuk meningkatkan visibilitas.', icon: '📈' },
+                        { title: 'Optimasi Toko Online', text: 'Tips mengoptimalkan tampilan toko dan deskripsi produk.', icon: '🛍️' },
+                        { title: 'Teknik Konten Viral', text: 'Formula membuat video pendek yang menarik dan berpotensi viral.', icon: '🎬' },
+                        { title: 'Strategi Pricing', text: 'Cara menentukan harga yang kompetitif namun tetap menguntungkan.', icon: '💲' }
+                    ]
+                }
+            },
+            {
+                id: 'cta_clean',
+                type: 'cta_clean',
+                enabled: true,
+                order: 4,
+                data: {
+                    headline: 'Daftar Sekarang',
+                    subheadline: 'Isi formulir di bawah ini untuk mendapatkan akses ke webinar eksklusif ini'
+                    // Form fields are intrinsic to the component
+                }
+            },
+            {
+                id: 'faq_clean',
+                type: 'faq', // Reuse generic FAQ/Clean variant if possible, or new component. Let's reuse FAQ with 'clean' variant style if possible, but user wants 'persis'. For now, reuse standard FAQ but maybe we need a clean variant.
+                // Actually the screenshots show a specific FAQ style. Let's stick to standard FAQ but styled via theme for now to save time, unless it's very specific.
+                // Screenshot FAQ looks standard clear text.
+                enabled: true,
+                order: 5,
+                data: {
+                    title: 'Pertanyaan Umum',
+                    items: [
+                        { question: 'Apakah webinar ini benar-benar gratis?', answer: 'Ya, webinar ini sepenuhnya gratis.' },
+                        { question: 'Apakah saya akan mendapatkan rekaman?', answer: 'Ya, semua peserta akan mendapatkan akses rekaman.' },
+                        { question: 'Apakah saya bisa mengajukan pertanyaan?', answer: 'Tentu saja! Akan ada sesi tanya jawab.' }
+                    ]
+                }
+            }
+        ]
+
+    },
+    // NEW: Gen Z Customs Webinar (User Request)
+    {
+        id: 'webinar_gen_z_customs',
+        name: 'Webinar Bea Cukai (Gen Z)',
+        description: 'Template modern & fun khusus anak muda dengan gaya visual Gen Z.',
+        category: 'webinar',
+        thumbnail: '🚀',
+        isRigid: true,
+        styles: {
+            primaryColor: '#d946ef', // Fuchsia 500
+            accentColor: '#f97316', // Orange 500
+            backgroundColor: '#050505',
+            buttonColor: 'linear-gradient(to right, #ec4899, #f97316)',
+            textPrimaryColor: '#FFFFFF',
+            textSecondaryColor: '#a3a3a3',
+            buttonStyle: 'gradient',
+            borderRadius: 'rounded',
+            hasGradient: true,
+            fontFamily: 'Outfit' as any
+        },
+        blocks: [
+            {
+                id: 'hero_gz',
+                type: 'hero_gen_z',
+                enabled: true,
+                order: 1,
+                data: {
+                    headline: 'Bea & Cukai Itu Gampang!',
+                    subheadline: 'Webinar Gratis: Ngomongin impor–ekspor, pajak barang, dan belanja dari luar negeri tanpa ribet.',
+                    badge: 'WEBINAR GRATIS',
+                    promo_text: 'JANGAN SAMPAI KETINGGALAN',
+                    end_date: '2026-02-15T19:00:00+07:00'
+                }
+            },
+            {
+                id: 'features_gz',
+                type: 'features_gen_z',
+                enabled: true,
+                order: 2,
+                data: {
+                    title: 'Apa Aja Yang Bakal',
+                    items: [
+                        { title: 'Bea Cukai 101', desc: 'Apa itu Bea dan Cukai (versi paling gampang) & kenapa barang impor kena pajak.', icon: '🧠', color: 'text-[#e879f9]', bg_gradient: 'from-purple-900/20 to-neutral-900', icon_gradient: 'from-[#e879f9] to-[#a855f7]' },
+                        { title: 'Studi Kasus Nyata', desc: 'Contoh kasus belanja online, kirim barang, dan kesalahan umum biar kamu nggak boncos.', icon: '📦', color: 'text-[#f472b6]', bg_gradient: 'from-pink-900/20 to-neutral-900', icon_gradient: 'from-[#f472b6] to-[#ec4899]' },
+                        { title: 'Anti Salah Langkah', desc: 'Tips praktis & trik biar nggak kaget saat kena bea masuk. Wajib tau!', icon: '💡', color: 'text-[#60a5fa]', bg_gradient: 'from-blue-900/20 to-neutral-900', icon_gradient: 'from-[#60a5fa] to-[#3b82f6]' },
+                        { title: 'Tanya Sepuasnya', desc: 'Sesi Q&A langsung bareng narasumber ahli. Tanyain apa aja seputar custom!', icon: '💬', color: 'text-[#fbbf24]', bg_gradient: 'from-orange-900/20 to-neutral-900', icon_gradient: 'from-[#fbbf24] to-[#f59e0b]' }
+                    ]
+                }
+            },
+            {
+                id: 'speaker_gz',
+                type: 'speaker_gen_z',
+                enabled: true,
+                order: 3,
+                data: {
+                    name: 'Joni',
+                    title: 'Ex Auditor Bea & Cukai',
+                    bio: 'Bongkar fakta, mitos, dan kesalahan umum soal Bea & Cukai langsung dari orang dalam. Disampaikan dengan bahasa awam dan santai.',
+                    image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
+                    stats: [
+                        { icon: '🕵️‍♂️', label: '10th+ Pengalaman' },
+                        { icon: '📚', label: 'Praktisi Cukai' }
+                    ]
+                }
+            },
+            {
+                id: 'faq_c',
+                type: 'faq',
+                enabled: true,
+                order: 4,
+                data: {
+                    title: 'FAQ Singkat',
+                    items: [
+                        { question: 'Apakah webinar ini benar-benar gratis?', answer: 'Ya, 100% gratis tanpa biaya apa pun.' },
+                        { question: 'Apakah pemula boleh ikut?', answer: 'Sangat boleh! Ini memang dibuat untuk pemula.' },
+                        { question: 'Apakah dapat sertifikat?', answer: 'Ya, peserta akan mendapatkan e-sertifikat.' }
+                    ]
+                }
+            },
+            {
+                id: 'cta_gz',
+                type: 'cta_gen_z',
+                enabled: true,
+                order: 5,
+                data: {
+                    headline: 'Siap Ikutan? 🚀',
+                    subheadline: 'Daftar sekarang, kuota terbatas! Amankan tempatmu sekarang.',
+                    button_text: 'Daftar Webinar Gratis'
+                }
+            }
+        ]
+    },
+    // Professional Minimalist Customs Webinar
+    {
+        id: 'webinar_pro_customs',
+        name: 'Webinar Bea Cukai (Professional)',
+        description: 'Template profesional & minimalis dengan warna navy-amber yang elegan.',
+        category: 'webinar',
+        thumbnail: '🛃',
+        isRigid: true,
+        styles: {
+            primaryColor: '#1e3a8a', // Blue 900
+            accentColor: '#f59e0b', // Amber 500
+            backgroundColor: '#FFFFFF',
+            buttonColor: '#1e3a8a',
+            textPrimaryColor: '#1e293b',
+            textSecondaryColor: '#64748b',
+            buttonStyle: 'solid',
+            borderRadius: 'rounded',
+            hasGradient: false,
+            fontFamily: 'Inter' as any
+        },
+        blocks: [
+            {
+                id: 'hero_pro',
+                type: 'hero_pro',
+                enabled: true,
+                order: 1,
+                data: {
+                    headline: 'Webinar Gratis: Bea & Cukai Itu Gampang!',
+                    subheadline: 'Pahami regulasi impor-ekspor dengan bahasa sederhana. Cocok untuk pemula yang ingin belajar kepabeanan tanpa pusing!',
+                    badge: 'WEBINAR GRATIS',
+                    button_text: 'Daftar Sekarang — Gratis',
+                    end_date: '2026-02-15T19:00:00+07:00',
+                    speaker_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+                    speaker_name: 'Indra Pratama',
+                    speaker_title: 'Ex Auditor Bea & Cukai'
+                }
+            },
+            {
+                id: 'features_pro',
+                type: 'features_pro',
+                enabled: true,
+                order: 2,
+                data: {
+                    title: 'Apa yang Akan Kamu Pelajari?',
+                    subtitle: 'Materi disusun khusus untuk pemula dengan bahasa yang mudah dipahami',
+                    items: [
+                        { title: 'Dasar Kepabeanan', text: 'Memahami Bea dan Cukai dengan bahasa sederhana dan contoh nyata.', icon: '📘', image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&q=80&w=400' },
+                        { title: 'Prosedur Impor', text: 'Langkah-langkah impor barang dan dokumen yang diperlukan.', icon: '📦', image: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&q=80&w=400' },
+                        { title: 'Perhitungan Pajak', text: 'Cara menghitung bea masuk, PPN, dan PPh impor dengan benar.', icon: '💰', image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&q=80&w=400' },
+                        { title: 'Studi Kasus Nyata', text: 'Contoh kasus belanja online dan tips agar tidak kena masalah.', icon: '✅', image: 'https://images.unsplash.com/photo-1553413077-190dd305871c?auto=format&fit=crop&q=80&w=400' }
+                    ]
+                }
+            },
+            {
+                id: 'speaker_pro',
+                type: 'speaker_pro',
+                enabled: true,
+                order: 3,
+                data: {
+                    name: 'Indra Pratama',
+                    title: 'Ex Auditor Bea & Cukai',
+                    bio: 'Berpengalaman lebih dari 10 tahun di bidang kepabeanan. Akan membagikan insight praktis dan tips agar kamu tidak salah langkah saat berurusan dengan Bea & Cukai.',
+                    image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+                    stats: [
+                        { icon: '🕵️', label: '10+ Tahun Pengalaman' },
+                        { icon: '📚', label: 'Praktisi Kepabeanan' }
+                    ]
+                }
+            },
+            {
+                id: 'faq_pro',
+                type: 'faq',
+                enabled: true,
+                order: 4,
+                data: {
+                    title: 'Pertanyaan Umum',
+                    items: [
+                        { question: 'Apakah webinar ini benar-benar gratis?', answer: 'Ya, 100% gratis tanpa biaya apa pun.' },
+                        { question: 'Apakah pemula boleh ikut?', answer: 'Sangat boleh! Webinar ini memang dirancang untuk pemula.' },
+                        { question: 'Apakah dapat sertifikat?', answer: 'Ya, semua peserta akan mendapatkan e-sertifikat.' },
+                        { question: 'Bagaimana cara bergabung?', answer: 'Setelah mendaftar, link Zoom akan dikirim via WhatsApp.' }
+                    ]
+                }
+            },
+            {
+                id: 'cta_pro',
+                type: 'cta_pro',
+                enabled: true,
+                order: 5,
+                data: {
+                    headline: 'Amankan Tempatmu Sekarang!',
+                    subheadline: 'Kuota terbatas! Daftar gratis dan dapatkan akses penuh ke webinar beserta e-sertifikat.',
+                    button_text: 'Daftar Webinar Gratis'
+                }
+            }
+        ]
+    },
     // 1. Bio Link (Personal Brand) - Minimalist & Clean
     {
         id: 'bio_minimal',

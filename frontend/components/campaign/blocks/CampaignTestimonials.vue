@@ -42,11 +42,11 @@ const isGrid = computed(() => props.block.variant === 'grid')
     <div :class="containerClass">
       <h2 
         class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3" 
-        :style="{color: styles.textPrimaryColor, fontFamily: styles.fontFamilyHeading}"
+        :style="{color: block.data.titleColor || styles.textPrimaryColor, fontFamily: styles.fontFamilyHeading}"
       >
         {{ block.data.title || 'Apa Kata Mereka?' }}
       </h2>
-      <p class="text-center mb-8 sm:mb-12" :style="{color: styles.textSecondaryColor}">
+      <p class="text-center mb-8 sm:mb-12" :style="{color: block.data.textColor || styles.textSecondaryColor}">
         Kisah sukses alumni kami
       </p>
       

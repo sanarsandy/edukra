@@ -57,9 +57,9 @@ const credentials = computed(() => {
     <div :class="containerClass">
       <h2 
         class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-8 sm:mb-12" 
-        :style="{color: styles.textPrimaryColor, fontFamily: styles.fontFamilyHeading}"
+        :style="{color: block.data.titleColor || styles.textPrimaryColor, fontFamily: styles.fontFamilyHeading}"
       >
-        {{ block.data.title || '👨‍🏫 Tentang Instruktur' }}
+        {{ block.data.title || 'Tentang Instruktur' }}
       </h2>
       
       <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
@@ -77,9 +77,11 @@ const credentials = computed(() => {
           </div>
           <div 
             v-else 
-            class="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-neutral-200 flex items-center justify-center text-5xl"
+            class="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-neutral-100 flex items-center justify-center text-neutral-400"
           >
-            👨‍🏫
+            <svg class="w-16 h-16 sm:w-20 sm:h-20" fill="currentColor" viewBox="0 0 24 24">
+              <path fill-rule="evenodd" d="M12 2a5 5 0 100 10 5 5 0 000-10zM6 14a6 6 0 016-6h.06a6 6 0 015.94 6v.203a6.002 6.002 0 01-5.308 5.966L12 20.203l-.693-.035A6.002 6.002 0 016 14.204V14z" clip-rule="evenodd" />
+            </svg>
           </div>
         </div>
         
@@ -87,7 +89,7 @@ const credentials = computed(() => {
         <div class="flex-1 text-center md:text-left">
           <h3 
             class="text-xl sm:text-2xl font-bold mb-3" 
-            :style="{color: styles.textPrimaryColor}"
+            :style="{color: block.data.titleColor || styles.textPrimaryColor}"
           >
             {{ instructorName }}
           </h3>
@@ -98,7 +100,7 @@ const credentials = computed(() => {
               v-for="(cred, idx) in credentials" 
               :key="idx"
               class="px-3 py-1 text-xs font-medium rounded-full"
-              :style="{backgroundColor: styles.primaryColor + '15', color: styles.primaryColor}"
+              :style="{backgroundColor: (block.data.accentColor || styles.primaryColor) + '15', color: block.data.accentColor || styles.primaryColor}"
             >
               {{ cred }}
             </span>
@@ -107,7 +109,7 @@ const credentials = computed(() => {
           <!-- Bio -->
           <p 
             class="text-sm sm:text-base leading-relaxed whitespace-pre-line" 
-            :style="{color: styles.textSecondaryColor}"
+            :style="{color: block.data.textColor || styles.textSecondaryColor}"
           >
             {{ instructorBio }}
           </p>

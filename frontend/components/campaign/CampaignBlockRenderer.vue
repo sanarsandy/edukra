@@ -18,6 +18,18 @@ import CampaignBonus from './blocks/CampaignBonus.vue'
 import CampaignCurriculum from './blocks/CampaignCurriculum.vue'
 import CampaignGallery from './blocks/CampaignGallery.vue'
 import CampaignComparison from './blocks/CampaignComparison.vue'
+import CampaignHeroGenZ from './blocks/CampaignHeroGenZ.vue'
+import CampaignFeaturesGenZ from './blocks/CampaignFeaturesGenZ.vue'
+import CampaignCtaGenZ from './blocks/CampaignCtaGenZ.vue'
+import CampaignSpeakerGenZ from './blocks/CampaignSpeakerGenZ.vue'
+import CampaignHeroClean from './blocks/CampaignHeroClean.vue'
+import CampaignSpeakerClean from './blocks/CampaignSpeakerClean.vue'
+import CampaignFeaturesClean from './blocks/CampaignFeaturesClean.vue'
+import CampaignCtaClean from './blocks/CampaignCtaClean.vue'
+import CampaignHeroPro from './blocks/CampaignHeroPro.vue'
+import CampaignSpeakerPro from './blocks/CampaignSpeakerPro.vue'
+import CampaignFeaturesPro from './blocks/CampaignFeaturesPro.vue'
+import CampaignCtaPro from './blocks/CampaignCtaPro.vue'
 
 interface Props {
   block: Block
@@ -33,6 +45,8 @@ interface Props {
   courseCurriculum?: any[]
   courseImages?: string[]
   preview?: boolean
+  campaignId?: string
+  endDate?: string | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -244,6 +258,91 @@ const handleScrollTo = (target: string) => {
       :styles="styles"
       :is-mobile-layout="isMobileLayout"
       :animation-delay="animationDelay"
+    />
+
+    <!-- Gen Z Blocks -->
+    <CampaignHeroGenZ
+      v-else-if="block.type === 'hero_gen_z'"
+      :block="block"
+      :styles="styles"
+      :countdown="countdown"
+      :global-end-date="endDate"
+      :animation-delay="animationDelay"
+    />
+
+    <CampaignFeaturesGenZ
+      v-else-if="block.type === 'features_gen_z'"
+      :block="block"
+      :styles="styles"
+      :animation-delay="animationDelay"
+    />
+
+    <CampaignSpeakerGenZ
+      v-else-if="block.type === 'speaker_gen_z'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignCtaGenZ
+      v-else-if="block.type === 'cta_gen_z'"
+      :block="block"
+      :styles="styles"
+      :campaign-id="campaignId"
+      :animation-delay="animationDelay"
+    />
+
+     <!-- TikTok/Clean Blocks -->
+    <CampaignHeroClean
+      v-else-if="block.type === 'hero_clean'"
+      :block="block"
+      :styles="styles"
+      :global-end-date="endDate"
+    />
+
+    <CampaignSpeakerClean
+      v-else-if="block.type === 'speaker_clean'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignFeaturesClean
+      v-else-if="block.type === 'features_clean'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignCtaClean
+      v-else-if="block.type === 'cta_clean'"
+      :block="block"
+      :styles="styles"
+      :campaign-id="campaignId"
+    />
+
+    <!-- Pro Blocks (Professional Minimalist) -->
+    <CampaignHeroPro
+      v-else-if="block.type === 'hero_pro'"
+      :block="block"
+      :styles="styles"
+      :global-end-date="endDate"
+    />
+
+    <CampaignSpeakerPro
+      v-else-if="block.type === 'speaker_pro'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignFeaturesPro
+      v-else-if="block.type === 'features_pro'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignCtaPro
+      v-else-if="block.type === 'cta_pro'"
+      :block="block"
+      :styles="styles"
+      :campaign-id="campaignId"
     />
     
     <!-- Fallback for unknown block types -->

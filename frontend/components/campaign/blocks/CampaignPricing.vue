@@ -76,10 +76,10 @@ const handleBuy = () => {
     }"
   >
     <div :class="containerClass">
-      <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2" :style="{fontFamily: styles.fontFamilyHeading}">
+      <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2" :style="{color: block.data.titleColor || '#ffffff', fontFamily: styles.fontFamilyHeading}">
         🎁 Penawaran Spesial
       </h2>
-      <p class="text-center text-white/70 mb-8">Khusus untuk Anda yang serius ingin berkembang</p>
+      <p class="text-center mb-8" :style="{color: block.data.textColor || 'rgba(255,255,255,0.7)'}">Khusus untuk Anda yang serius ingin berkembang</p>
       
       <!-- Variant: Highlight (Card) - Default -->
       <div v-if="block.variant !== 'minimal'" class="bg-white/10 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-white/20 relative overflow-hidden animate-scale-in">
@@ -92,7 +92,7 @@ const handleBuy = () => {
         </div>
         
         <!-- Course/Webinar Name -->
-        <h3 class="text-xl sm:text-2xl font-bold text-center mb-4">{{ block.data.product_name || 'Paket Lengkap' }}</h3>
+        <h3 class="text-xl sm:text-2xl font-bold text-center mb-4" :style="{color: block.data.titleColor || '#ffffff'}">{{ block.data.product_name || 'Paket Lengkap' }}</h3>
         
         <!-- Price Section -->
         <div class="text-center my-6">
@@ -100,7 +100,7 @@ const handleBuy = () => {
             Rp {{ formatPrice(coursePrice) }}
           </div>
           <div class="flex items-baseline justify-center gap-2">
-            <span class="text-4xl sm:text-5xl font-black" :style="{color: styles.primaryColor}">
+            <span class="text-4xl sm:text-5xl font-black" :style="{color: block.data.accentColor || styles.primaryColor}">
               Rp {{ formatPrice(displayPrice || 0) }}
             </span>
             <span v-if="!isFree" class="text-white/60 text-sm">/sekali bayar</span>
@@ -113,10 +113,10 @@ const handleBuy = () => {
         <!-- Features -->
         <ul class="space-y-3 mb-8">
           <li v-for="(feature, idx) in features" :key="idx" class="flex items-center gap-3 text-white/90">
-            <svg class="w-5 h-5 flex-shrink-0" :style="{color: styles.primaryColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 flex-shrink-0" :style="{color: block.data.accentColor || styles.primaryColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
             </svg>
-            <span class="text-sm sm:text-base">{{ feature }}</span>
+            <span class="text-sm sm:text-base" :style="{color: block.data.textColor || 'rgba(255,255,255,0.9)'}">{{ feature }}</span>
           </li>
         </ul>
         
@@ -130,11 +130,11 @@ const handleBuy = () => {
         </button>
         
         <!-- Trust Badge -->
-        <p class="text-center text-white/60 text-sm mt-4 flex items-center justify-center gap-2">
+        <p v-if="block.data.trust_text !== undefined ? block.data.trust_text : true" class="text-center text-white/60 text-sm mt-4 flex items-center justify-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
-          Garansi 30 Hari Uang Kembali
+          {{ block.data.trust_text || 'Garansi 30 Hari Uang Kembali' }}
         </p>
       </div>
       
@@ -143,7 +143,7 @@ const handleBuy = () => {
         <div v-if="coursePrice && coursePrice > (displayPrice || 0)" class="text-white/50 line-through text-xl mb-2">
           Rp {{ formatPrice(coursePrice) }}
         </div>
-        <div class="text-5xl sm:text-6xl font-black mb-6" :style="{color: styles.primaryColor}">
+        <div class="text-5xl sm:text-6xl font-black mb-6" :style="{color: block.data.accentColor || styles.primaryColor}">
           Rp {{ formatPrice(displayPrice || 0) }}
         </div>
         <button 

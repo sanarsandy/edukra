@@ -109,7 +109,7 @@ const scrollTo = (target: string) => {
         class="bg-red-500 text-white px-4 py-2 rounded-full text-sm font-bold animate-pulse-glow flex items-center gap-2 shadow-lg hover:scale-105 transition-transform cursor-pointer" 
         @click="scrollTo('#pricing')"
       >
-        <span>🔥</span> Promo Berakhir dalam {{ countdown.days }}h {{ countdown.hours }}m
+        <span>🔥</span> {{ block.data.promo_text || 'Promo Berakhir dalam' }} {{ countdown.days }}h {{ countdown.hours }}m
       </div>
     </div>
     

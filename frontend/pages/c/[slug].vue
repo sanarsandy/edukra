@@ -47,6 +47,8 @@
             :is-free="isFree"
             :is-mobile-layout="isMobileLayout"
             :instructor-data="instructorData"
+            :campaign-id="campaign?.id"
+            :end-date="campaign?.end_date"
             @buy="handleBuy"
             @scroll-to="scrollTo"
           />
@@ -174,7 +176,14 @@ interface Campaign {
   }
 }
 
-definePageMeta({ layout: false })
+definePageMeta({ 
+  layout: false,
+  validate: async (route) => {
+    // Explicitly exclude static pages within this directory to prevent conflict
+    if (route.params.slug === 'kelas-kepabeanan') return false
+    return true
+  }
+})
 
 const route = useRoute()
 const router = useRouter()

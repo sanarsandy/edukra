@@ -59,6 +59,7 @@
             @click="activeTab = 'appearance'"
             class="flex-1 py-4 text-sm font-semibold border-b-2 transition-all flex items-center justify-center gap-2"
             :class="activeTab === 'appearance' ? 'border-primary-600 text-primary-700 bg-white' : 'border-transparent text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100'"
+            v-if="!isRigidTemplate"
           >
             <span class="text-lg">🎨</span> Appearance
           </button>
@@ -140,7 +141,7 @@
           <hr class="border-neutral-200">
 
           <!-- Style Customization -->
-          <div class="space-y-4">
+          <div v-if="!isRigidTemplate" class="space-y-4">
             <h2 class="font-semibold text-neutral-900">🎨 Kustomisasi Warna</h2>
             
             <div class="grid grid-cols-2 gap-3">
@@ -271,7 +272,7 @@
                     <label class="flex items-center">
                       <input type="checkbox" v-model="block.enabled" class="rounded border-neutral-300 text-primary-600"/>
                     </label>
-                    <button @click="editBlock(block)" class="p-1 text-neutral-500 hover:text-primary-600">
+                    <button v-if="!isRigidTemplate" @click="editBlock(block)" class="p-1 text-neutral-500 hover:text-primary-600">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                     </button>
                   </div>
@@ -281,6 +282,7 @@
             
             <!-- Add Block Button -->
             <button 
+              v-if="!isRigidTemplate"
               @click="showAddBlockModal = true"
               class="w-full py-4 mt-6 border-2 border-dashed border-primary-300 rounded-xl flex items-center justify-center gap-2 text-primary-600 font-bold hover:bg-primary-50 hover:border-primary-500 transition-all group"
             >
@@ -889,6 +891,45 @@
                  </div>
                  <p class="text-neutral-400 text-sm">Notifikasi Live Viewer di pojok kiri bawah.</p>
               </div>
+
+               <!-- Gen Z Blocks -->
+               <div v-else-if="block.type === 'hero_gen_z'">
+                 <CampaignHeroGenZ :block="block" :styles="form.styles" :global-end-date="form.end_date" />
+               </div>
+               <div v-else-if="block.type === 'features_gen_z'">
+                 <CampaignFeaturesGenZ :block="block" :styles="form.styles" />
+               </div>
+               <div v-else-if="block.type === 'cta_gen_z'">
+                 <CampaignCtaGenZ :block="block" :styles="form.styles" :campaign-id="campaignId" />
+               </div>
+               <!-- Clean/TikTok Blocks -->
+               <div v-else-if="block.type === 'hero_clean'">
+                  <CampaignHeroClean :block="block" :styles="form.styles" :global-end-date="form.end_date" />
+               </div>
+                <div v-else-if="block.type === 'speaker_clean'">
+                  <CampaignSpeakerClean :block="block" :styles="form.styles" />
+               </div>
+                <div v-else-if="block.type === 'features_clean'">
+                  <CampaignFeaturesClean :block="block" :styles="form.styles" />
+               </div>
+                <div v-else-if="block.type === 'cta_clean'">
+                  <CampaignCtaClean :block="block" :styles="form.styles" :campaign-id="campaignId" />
+               </div>
+
+                <!-- Pro Blocks (Professional Minimalist) -->
+                <div v-else-if="block.type === 'hero_pro'">
+                  <CampaignHeroPro :block="block" :styles="form.styles" :global-end-date="form.end_date" />
+               </div>
+                <div v-else-if="block.type === 'speaker_pro'">
+                  <CampaignSpeakerPro :block="block" :styles="form.styles" />
+               </div>
+                <div v-else-if="block.type === 'features_pro'">
+                  <CampaignFeaturesPro :block="block" :styles="form.styles" />
+               </div>
+                <div v-else-if="block.type === 'cta_pro'">
+                  <CampaignCtaPro :block="block" :styles="form.styles" :campaign-id="campaignId" />
+               </div>
+
               </div><!-- Close Default Block Templates -->
               </div><!-- Close Block Wrapper -->
             </template>
@@ -936,7 +977,7 @@
 
           <!-- Per-Block Styling Section (ENHANCED) -->
           <details class="group" open>
-             <summary class="flex items-center gap-2 text-xs font-bold text-purple-700 cursor-pointer p-3 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors">
+             <summary v-if="!isRigidTemplate" class="flex items-center gap-2 text-xs font-bold text-purple-700 cursor-pointer p-3 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-lg border border-purple-200 hover:bg-purple-100 transition-colors">
                <span>🎨 Warna & Styling Blok Ini</span>
                <svg class="w-3 h-3 group-open:rotate-180 transition-transform ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
              </summary>
@@ -1231,6 +1272,10 @@ img:hover {
               <label class="block text-sm font-medium mb-1">Subheadline / Bio</label>
               <textarea v-model="editingBlock.data.subheadline" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
             </div>
+            <div v-if="editingBlock.variant !== 'bio_profile'">
+              <label class="block text-sm font-medium mb-1">Promo Text (Floating Badge)</label>
+              <input v-model="editingBlock.data.promo_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Promo Berakhir dalam"/>
+            </div>
             <div>
               <label class="block text-sm font-medium mb-1">{{ editingBlock.variant === 'bio_profile' ? 'Header Cover Image URL' : 'Background Image URL' }}</label>
               <input v-model="editingBlock.data.background_image" type="url" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
@@ -1296,9 +1341,13 @@ img:hover {
               <label class="block text-sm font-medium mb-1">CTA Text</label>
               <input v-model="editingBlock.data.cta_text" type="text" class="w-full px-3 py-2 border rounded-lg"/>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 mb-3">
               <input type="checkbox" v-model="editingBlock.data.show_timer" class="rounded border-neutral-300"/>
               <label class="text-sm">Tampilkan timer</label>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Trust Text (Bawah Tombol)</label>
+              <input v-model="editingBlock.data.trust_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Garansi 30 Hari Uang Kembali"/>
             </div>
           </template>
 
@@ -1357,7 +1406,7 @@ img:hover {
               </div>
               <div>
                 <label class="block text-sm font-medium mb-1">Avatar URL</label>
-                <input v-model="editingBlock.data.avatar" type="url" class="w-full px-3 py-2 border rounded-lg"/>
+                <input v-model="editingBlock.data.profile_image" type="url" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
               </div>
             </template>
           </template>
@@ -1380,19 +1429,242 @@ img:hover {
             </div>
           </template>
 
-          <!-- Trust Badges - No editor needed, just toggle -->
-          <template v-else-if="editingBlock.type === 'trust'">
-            <div class="text-center text-neutral-500 py-4">
-              <p class="text-4xl mb-2">🛡️</p>
-              <p>Block ini menampilkan trust badges otomatis:</p>
-              <div class="flex flex-wrap gap-3 justify-center mt-4 text-sm">
-                <span>🔒 Pembayaran Aman</span>
-                <span>💯 Garansi 30 Hari</span>
-                <span>🎓 Sertifikat</span>
-                <span>♾️ Akses Selamanya</span>
+            <!-- Hero Gen Z Editor -->
+            <template v-else-if="editingBlock.type === 'hero_gen_z'">
+              <div class="p-3 bg-purple-50 rounded-lg border border-purple-100 mb-4">
+                <label class="block text-xs font-bold text-purple-700 uppercase mb-2">⚡ Gen Z Settings</label>
+                <div>
+                   <label class="block text-sm font-medium mb-1">Badge Text (Neon)</label>
+                   <input v-model="editingBlock.data.badge" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="WEBINAR EKSKLUSIF"/>
+                </div>
               </div>
-            </div>
-          </template>
+              <div>
+                <label class="block text-sm font-medium mb-1">Headline</label>
+                <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="BELAJAR KEPABEANAN & CUKAI"/>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Subheadline</label>
+                <textarea v-model="editingBlock.data.subheadline" rows="2" class="w-full px-3 py-2 border rounded-lg" placeholder="Deskripsi singkat..."></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium mb-1">Promo Text (Above Countdown)</label>
+                <input v-model="editingBlock.data.promo_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Promo Early Bird Berakhir Dalam:"/>
+              </div>
+              <div>
+                 <!-- Link to Webinar removed as per request to rely on global -->
+              </div>
+            </template>
+
+            <!-- CLEAN / TIKTOK EDITORS -->
+            <template v-else-if="editingBlock.type === 'hero_clean'">
+                <div>
+                   <label class="block text-sm font-medium mb-1">Headline</label>
+                   <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Subheadline</label>
+                   <textarea v-model="editingBlock.data.subheadline" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Badge Text</label>
+                   <input v-model="editingBlock.data.badge" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                <div>
+                   <input v-model="editingBlock.data.image_url" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
+                   <p class="text-xs text-neutral-400 mt-1">Recommended size: 800x600px</p>
+                </div>
+                <!-- Style Overrides -->
+                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                   <div>
+                      <label class="block text-sm font-medium mb-1">Button Color</label>
+                      <input v-model="editingBlock.data.button_color" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="bg-blue-600 or hex"/>
+                   </div>
+                   <div>
+                       <label class="block text-sm font-medium mb-1">Font Family</label>
+                       <select v-model="editingBlock.data.font_family" class="w-full px-3 py-2 border rounded-lg">
+                          <option value="Inter">Inter</option>
+                          <option value="Poppins">Poppins</option>
+                          <option value="Roboto">Roboto</option>
+                           <option value="Outfit">Outfit</option>
+                       </select>
+                   </div>
+                </div>
+            </template>
+
+            <template v-else-if="editingBlock.type === 'hero_pro'">
+                <div>
+                   <label class="block text-sm font-medium mb-1">Headline</label>
+                   <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Subheadline</label>
+                   <textarea v-model="editingBlock.data.subheadline" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Badge Text</label>
+                   <input v-model="editingBlock.data.badge" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-lg border border-amber-200 mt-4">
+                   <h4 class="font-semibold text-amber-800 mb-3">📷 Foto Pembicara (Hero)</h4>
+                   <div>
+                      <label class="block text-sm font-medium mb-1">Nama Pembicara</label>
+                      <input v-model="editingBlock.data.speaker_name" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                   </div>
+                   <div class="mt-2">
+                      <label class="block text-sm font-medium mb-1">Jabatan Pembicara</label>
+                      <input v-model="editingBlock.data.speaker_title" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                   </div>
+                   <div class="mt-2">
+                      <label class="block text-sm font-medium mb-1">URL Foto Pembicara</label>
+                      <input v-model="editingBlock.data.speaker_image" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
+                      <p class="text-xs text-neutral-400 mt-1">Recommended: 400x500px (Portrait)</p>
+                   </div>
+                   <div v-if="editingBlock.data.speaker_image" class="mt-3">
+                      <p class="text-xs text-neutral-500 mb-1">Preview:</p>
+                      <img :src="editingBlock.data.speaker_image" class="w-24 h-24 object-cover rounded-lg border"/>
+                   </div>
+                </div>
+            </template>
+
+             <template v-else-if="editingBlock.type === 'speaker_clean'">
+                <div>
+                   <label class="block text-sm font-medium mb-1">Nama Pembicara</label>
+                   <input v-model="editingBlock.data.name" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Title / Jabatan</label>
+                   <input v-model="editingBlock.data.title" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                <div>
+                   <label class="block text-sm font-medium mb-1">Bio</label>
+                   <textarea v-model="editingBlock.data.bio" rows="4" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                </div>
+                <div>
+                   <label class="block text-sm font-medium mb-1">Speaker Photo URL</label>
+                   <input v-model="editingBlock.data.image_url" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
+                   <p class="text-xs text-neutral-400 mt-1">Recommended size: 800x1000px (Portrait)</p>
+                </div>
+                 <!-- Simple Stats Editor -->
+                 <label class="block text-sm font-medium mt-4 mb-2">Stats (2 Items)</label>
+                 <div v-for="(stat, idx) in editingBlock.data.stats" :key="idx" class="flex gap-2 mb-2">
+                     <input v-model="stat.icon" class="w-12 px-2 py-1 border rounded" placeholder="Icon"/>
+                     <input v-model="stat.label" class="flex-1 px-2 py-1 border rounded" placeholder="Label"/>
+                 </div>
+            </template>
+
+            <template v-else-if="editingBlock.type === 'features_clean'">
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Section Title</label>
+                   <input v-model="editingBlock.data.title" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                <div class="mt-4">
+                     <label class="block text-sm font-medium mb-2">Features Items</label>
+                     <div v-for="(item, idx) in editingBlock.data.items" :key="idx" class="p-3 border rounded-lg mb-3 bg-neutral-50">
+                        <input v-model="item.title" class="w-full mb-2 px-2 py-1 border rounded bg-white text-sm font-bold" placeholder="Title"/>
+                        <textarea v-model="item.text" rows="2" class="w-full mb-2 px-2 py-1 border rounded bg-white text-sm" placeholder="Description"></textarea>
+                        <input v-model="item.icon" class="w-12 px-2 py-1 border rounded bg-white text-center" placeholder="Icon"/>
+                     </div>
+                </div>
+            </template>
+
+            <template v-else-if="editingBlock.type === 'cta_clean'">
+                <div>
+                   <label class="block text-sm font-medium mb-1">Headline</label>
+                   <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+                </div>
+                 <div>
+                   <label class="block text-sm font-medium mb-1">Subheadline</label>
+                   <textarea v-model="editingBlock.data.subheadline" rows="2" class="w-full px-3 py-2 border rounded-lg"></textarea>
+                </div>
+                <!-- Style Overrides -->
+                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t">
+                   <div>
+                      <label class="block text-sm font-medium mb-1">Button Color</label>
+                      <input v-model="editingBlock.data.button_color" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="bg-blue-600 or hex"/>
+                   </div>
+                   <div>
+                       <label class="block text-sm font-medium mb-1">Font Family</label>
+                       <select v-model="editingBlock.data.font_family" class="w-full px-3 py-2 border rounded-lg">
+                          <option value="Inter">Inter</option>
+                          <option value="Poppins">Poppins</option>
+                          <option value="Roboto">Roboto</option>
+                           <option value="Outfit">Outfit</option>
+                       </select>
+                   </div>
+                </div>
+            </template>
+
+            <!-- Features Gen Z Editor -->
+            <template v-else-if="editingBlock.type === 'features_gen_z'">
+              <div>
+                <label class="block text-sm font-medium mb-1">Section Title</label>
+                <input v-model="editingBlock.data.title" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Yang Bakal Kamu DAPETIN"/>
+              </div>
+              <div class="mt-4">
+                <label class="block text-sm font-medium mb-2">Grid Items (4 Cards)</label>
+                <div v-for="(item, idx) in editingBlock.data.items" :key="idx" class="p-3 border rounded-lg mb-3 bg-neutral-900 text-white border-neutral-700">
+                   <div class="flex gap-2 mb-2">
+                      <div class="w-10">
+                         <label class="text-[10px] text-neutral-400">Icon</label>
+                         <input v-model="item.icon" type="text" class="w-full px-1 py-1 bg-neutral-800 border border-neutral-600 rounded text-center" placeholder="📘"/>
+                      </div>
+                      <div class="flex-1">
+                         <label class="text-[10px] text-neutral-400">Title</label>
+                         <input v-model="item.title" type="text" class="w-full px-2 py-1 bg-neutral-800 border border-neutral-600 rounded text-white" placeholder="Judul Fitur"/>
+                      </div>
+                      <button @click="editingBlock.data.items.splice(idx, 1)" class="text-red-400 hover:text-red-300">✕</button>
+                   </div>
+                   <div>
+                      <label class="text-[10px] text-neutral-400">Description</label>
+                      <textarea v-model="item.desc" rows="2" class="w-full px-2 py-1 bg-neutral-800 border border-neutral-600 rounded text-xs text-neutral-300"></textarea>
+                   </div>
+                   <div class="grid grid-cols-2 gap-2 mt-2">
+                      <div>
+                        <label class="text-[10px] text-neutral-400">Text Color Class</label>
+                        <input v-model="item.color" type="text" class="w-full px-2 py-1 bg-neutral-800 border border-neutral-600 rounded text-xs text-green-400 font-mono" placeholder="text-purple-400"/>
+                      </div>
+                      <div>
+                        <label class="text-[10px] text-neutral-400">Bg Color Class</label>
+                        <input v-model="item.bg" type="text" class="w-full px-2 py-1 bg-neutral-800 border border-neutral-600 rounded text-xs text-green-400 font-mono" placeholder="bg-purple-500/10"/>
+                      </div>
+                   </div>
+                </div>
+                <button @click="editingBlock.data.items = editingBlock.data.items || []; editingBlock.data.items.push({title:'New Feature', desc:'', icon:'✨', color:'text-white', bg:'bg-white/10'})" class="text-purple-600 text-sm font-bold border border-purple-200 w-full py-2 rounded-lg hover:bg-purple-50">+ Add Gen Z Card</button>
+              </div>
+            </template>
+
+            <!-- CTA Gen Z Editor -->
+            <template v-else-if="editingBlock.type === 'cta_gen_z'">
+              <div>
+                <label class="block text-sm font-medium mb-1">Headline</label>
+                <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="SIAP JADI AHLI KEPABEANAN?"/>
+              </div>
+               <div>
+                <label class="block text-sm font-medium mb-1">Subheadline</label>
+                <input v-model="editingBlock.data.subheadline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Daftar sekarang dan amankan slot early bird!"/>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                 <div>
+                    <label class="block text-sm font-medium mb-1">Price (Rp)</label>
+                    <input v-model.number="editingBlock.data.price" type="number" class="w-full px-3 py-2 border rounded-lg"/>
+                 </div>
+                 <div>
+                    <label class="block text-sm font-medium mb-1">Original Price (Rp)</label>
+                    <input v-model.number="editingBlock.data.original_price" type="number" class="w-full px-3 py-2 border rounded-lg"/>
+                 </div>
+              </div>
+              <div>
+                 <label class="block text-sm font-medium mb-1">Button Text</label>
+                 <input v-model="editingBlock.data.button_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="DAFTAR SEKARANG 🚀"/>
+              </div>
+              <div class="p-3 bg-neutral-50 rounded border mt-2">
+                 <label class="block text-xs font-bold text-neutral-500 uppercase mb-2">Form Integration</label>
+                 <div class="flex items-center justify-between text-sm">
+                    <span class="text-neutral-600">Whatsapp Notification</span>
+                    <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">ACTIVE</span>
+                 </div>
+              </div>
+            </template>
 
           <!-- CTA Banner Editor (NEW) -->
           <template v-else-if="editingBlock.type === 'cta_banner'">
@@ -1760,6 +2032,18 @@ img:hover {
 import draggable from 'vuedraggable'
 import { CAMPAIGN_TEMPLATES, type CampaignTemplate, type Block as TemplateBlock } from '~/utils/templates'
 import { THEME_PRESETS, type ThemePreset } from '~/utils/themes'
+import CampaignHeroGenZ from '~/components/campaign/blocks/CampaignHeroGenZ.vue'
+import CampaignFeaturesGenZ from '~/components/campaign/blocks/CampaignFeaturesGenZ.vue'
+import CampaignCtaGenZ from '~/components/campaign/blocks/CampaignCtaGenZ.vue'
+import CampaignHeroClean from '~/components/campaign/blocks/CampaignHeroClean.vue'
+import CampaignSpeakerClean from '~/components/campaign/blocks/CampaignSpeakerClean.vue'
+import CampaignFeaturesClean from '~/components/campaign/blocks/CampaignFeaturesClean.vue'
+import CampaignCtaClean from '~/components/campaign/blocks/CampaignCtaClean.vue'
+import CampaignSpeakerGenZ from '~/components/campaign/blocks/CampaignSpeakerGenZ.vue'
+import CampaignHeroPro from '~/components/campaign/blocks/CampaignHeroPro.vue'
+import CampaignSpeakerPro from '~/components/campaign/blocks/CampaignSpeakerPro.vue'
+import CampaignFeaturesPro from '~/components/campaign/blocks/CampaignFeaturesPro.vue'
+import CampaignCtaPro from '~/components/campaign/blocks/CampaignCtaPro.vue'
 
 interface Course {
   id: string
@@ -1961,6 +2245,11 @@ const currentThemeId = computed(() => {
   // Simple check based on primary color match to avoid full object comparison issues
   const match = themePresets.find(t => t.styles.primaryColor === form.value.styles.primaryColor && t.styles.backgroundColor === form.value.styles.backgroundColor)
   return match ? match.id : null
+})
+
+const isRigidTemplate = computed(() => {
+  // Identify if we are using the "Rigid" Gen Z template based on its unique blocks
+  return form.value.blocks.some(b => ['hero_gen_z', 'features_gen_z', 'cta_gen_z'].includes(b.type))
 })
 
 const applyTheme = (theme: any) => {
@@ -2274,39 +2563,119 @@ const blockCategories = {
     { type: 'testimonials', label: 'Testimonials', icon: '💬', desc: 'Review Siswa' },
     { type: 'countdown', label: 'Countdown', icon: '⏰', desc: 'Timer Promo' },
     { type: 'benefits', label: 'Benefits', icon: '✨', desc: 'Keuntungan' }
+  ],
+  special: [
+    { type: 'hero_gen_z', label: 'Hero Gen Z', icon: '🚀', desc: 'Floating Emojis & Gradient (Lovable)' },
+    { type: 'features_gen_z', label: 'Features Gen Z', icon: '✨', desc: 'Glassmorphism Cards (Lovable)' },
+    { type: 'cta_gen_z', label: 'CTA Gen Z', icon: '🔥', desc: 'Neon Form Registration (Lovable)' }
   ]
 }
 
 const addBlock = (type: string) => {
   const existingBlock = form.value.blocks.find(b => b.type === type && !b.enabled)
+  
+  // Helper to get default styled data
+  const getStyleDefaults = () => ({
+     backgroundColor: form.value.styles.backgroundColor || '#ffffff',
+     titleColor: form.value.styles.textPrimaryColor || '#000000',
+     textColor: form.value.styles.textSecondaryColor || '#4b5563',
+     buttonColor: form.value.styles.buttonColor || '#2563eb'
+  })
+
+  // Specific defaults per block type
+  const getBlockDefaults = (type: string) => {
+      const styles = form.value.styles
+      const baseStyles = getStyleDefaults()
+      
+      switch(type) {
+          case 'faq':
+             return {
+                title: 'Pertanyaan Umum',
+                items: [{ question: 'Apakah ini cocok untuk pemula?', answer: 'Tentu saja! Materi disusun dari dasar.' }],
+                ...baseStyles
+             }
+          case 'pricing':
+             return {
+                original_price: 1000000,
+                discount_price: 499000,
+                cta_text: 'Beli Sekarang',
+                trust_text: 'Garansi 30 Hari',
+                // Special case for Gen Z/Dark themes: ensure contrast if bg is dark
+                cardBgColor: styles.backgroundColor === '#050505' ? '#171717' : '#ffffff',
+                ...baseStyles
+             }
+          case 'testimonials':
+             return {
+                title: 'Apa Kata Mereka',
+                items: [{ name: 'Budi Santoso', text: 'Materinya sangat daging!' }],
+                ...baseStyles
+             }
+           case 'hero_gen_z':
+              return {
+                 headline: 'NEW HERO',
+                 subheadline: 'Subtitle here...',
+                 badge: 'NEW',
+                 promo_text: 'Limited Time',
+                 ...baseStyles
+              }
+           case 'features_gen_z':
+              return {
+                 title: 'Key Features',
+                 items: [{ title: 'Feature 1', desc: 'Description', icon: '✨', color: 'text-white', bg: 'bg-white/10' }],
+                 ...baseStyles
+              }
+           case 'cta_gen_z':
+              return {
+                  headline: 'Ready to Join?',
+                  subheadline: 'Secure your spot',
+                  button_text: 'Join Now',
+                  price: 0,
+                  original_price: 0,
+                  ...baseStyles
+              }
+           case 'hero_clean':
+               return { headline: 'Headline', subheadline: 'Subheadline', badge: 'WEBINAR', image_url: 'https://images.unsplash.com/photo-1573164713988-8665fc963095?auto=format&fit=crop&q=80&w=800', button_color: 'linear-gradient(to right, #1e3a8a, #3b82f6)', font_family: 'Inter', ...baseStyles }
+           case 'speaker_gen_z':
+               return { name: 'Joni', title: 'Expert', bio: 'Bio...', image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300', stats: [], ...baseStyles }
+           case 'speaker_clean':
+               return { name: 'Name', title: 'Title', bio: 'Bio...', stats: [{ icon: 'A', label: 'Stat 1' }, { icon: 'B', label: 'Stat 2' }], image_url: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800', font_family: 'Inter', ...baseStyles }
+           case 'features_clean':
+               return { title: 'Section Title', items: [{ title: 'Feature 1', text: 'Description', icon: '✨' }], font_family: 'Inter', ...baseStyles }
+           case 'cta_clean':
+               return { headline: 'Headline', subheadline: 'Subheadline', button_color: 'linear-gradient(to right, #1e3a8a, #3b82f6)', font_family: 'Inter', ...baseStyles }
+           case 'link_button':
+              return { label: 'Klik disini', url: '#', icon: '', style: 'solid', thumbnail: '' }
+           case 'bonus':
+              return { title: 'Produk Digital', items: [], total_value: 0, displayMode: 'list' }
+           default:
+              return { ...baseStyles }
+      }
+  }
+
   if (existingBlock) {
     existingBlock.enabled = true
     const maxOrder = Math.max(...form.value.blocks.map(b => b.order || 0))
     existingBlock.order = maxOrder + 1
+    // Update data with current styles to ensure it matches theme if re-enabled
+    existingBlock.data = { ...existingBlock.data, ...getStyleDefaults() }
   } else {
     const baseBlock = form.value.blocks.find(b => b.type === type)
     if (baseBlock) {
+       // Clone existing block structure but refresh styles
        const newBlock = JSON.parse(JSON.stringify(baseBlock))
        newBlock.id = `${type}_${Date.now()}`
        newBlock.enabled = true
        newBlock.order = Math.max(...form.value.blocks.map(b => b.order || 0)) + 1
+       newBlock.data = { ...newBlock.data, ...getStyleDefaults() }
        form.value.blocks.push(newBlock)
     } else {
-       // Initialize new block if not present in template
-       let newBlockData = {}
-       if (type === 'link_button') {
-          newBlockData = { label: 'Klik disini', url: '#', icon: '', style: 'solid', thumbnail: '' }
-       } else if (type === 'bonus') {
-          // Ensure default data for bonus/product
-          newBlockData = { title: 'Produk Digital', items: [], total_value: 0, displayMode: 'list' }
-       }
-
+       // Initialize completely new block
        const newBlock = {
           id: `${type}_${Date.now()}`,
           type: type,
           enabled: true,
           order: Math.max(0, ...form.value.blocks.map((b: any) => b.order || 0)) + 1,
-          data: newBlockData
+          data: getBlockDefaults(type)
        }
        form.value.blocks.push(newBlock)
     }

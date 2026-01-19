@@ -44,11 +44,11 @@ const toggle = (idx: number) => {
     <div :class="containerClass">
       <h2 
         class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-3" 
-        :style="{color: styles.textPrimaryColor, fontFamily: styles.fontFamilyHeading}"
+        :style="{color: block.data.titleColor || styles.textPrimaryColor, fontFamily: styles.fontFamilyHeading}"
       >
         {{ block.data.title || 'Pertanyaan Umum' }}
       </h2>
-      <p class="text-center mb-8 sm:mb-12" :style="{color: styles.textSecondaryColor}">
+      <p class="text-center mb-8 sm:mb-12" :style="{color: block.data.textColor || styles.textSecondaryColor}">
         {{ block.data.subtitle || 'Temukan jawaban untuk pertanyaan yang sering diajukan' }}
       </p>
       
@@ -65,14 +65,15 @@ const toggle = (idx: number) => {
             @click="toggle(idx)"
             class="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 transition-colors"
             :class="openIndex === idx ? 'bg-neutral-50' : 'bg-white hover:bg-neutral-50'"
+            :style="{backgroundColor: openIndex === idx ? (block.data.backgroundColor || '#f9fafb') : '#ffffff'}"
           >
-            <span class="font-semibold" :style="{color: styles.textPrimaryColor}">
+            <span class="font-semibold" :style="{color: block.data.titleColor || styles.textPrimaryColor}">
               {{ item.question }}
             </span>
             <svg 
               class="w-5 h-5 flex-shrink-0 transition-transform duration-200" 
               :class="openIndex === idx ? 'rotate-180' : ''"
-              :style="{color: styles.primaryColor}"
+              :style="{color: block.data.accentColor || styles.primaryColor}"
               fill="none" 
               stroke="currentColor" 
               viewBox="0 0 24 24"
@@ -86,7 +87,7 @@ const toggle = (idx: number) => {
             class="overflow-hidden transition-all duration-200"
             :class="openIndex === idx ? 'max-h-96' : 'max-h-0'"
           >
-            <div class="p-4 sm:p-5 pt-0 text-sm sm:text-base leading-relaxed" :style="{color: styles.textSecondaryColor}">
+            <div class="p-4 sm:p-5 pt-0 text-sm sm:text-base leading-relaxed" :style="{color: block.data.textColor || styles.textSecondaryColor}">
               {{ item.answer }}
             </div>
           </div>
