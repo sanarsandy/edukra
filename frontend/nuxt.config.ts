@@ -2,6 +2,17 @@ export default defineNuxtConfig({
   devtools: { enabled: process.env.NODE_ENV !== 'production' },
   css: ['~/assets/css/main.css'],
   modules: ['@pinia/nuxt', 'nuxt-icon'],
+
+  // Font preconnect for faster loading
+  app: {
+    head: {
+      link: [
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }
+      ]
+    }
+  },
+
   postcss: {
     plugins: {
       tailwindcss: {},
@@ -20,7 +31,7 @@ export default defineNuxtConfig({
   vite: {
     server: {
       host: '0.0.0.0',
-      allowedHosts: process.env.VITE_ALLOWED_HOSTS 
+      allowedHosts: process.env.VITE_ALLOWED_HOSTS
         ? process.env.VITE_ALLOWED_HOSTS.split(',')
         : ['localhost', '127.0.0.1']
     }

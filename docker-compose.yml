@@ -46,7 +46,7 @@ services:
       - db
     networks:
       - lms-network
-      - minio-network
+      # - minio-network
     volumes:
       - ./backend/uploads:/app/uploads
 
@@ -72,8 +72,8 @@ services:
 networks:
   lms-network:
     driver: bridge
-  minio-network:
-    external: true
+  # minio-network:
+  #   external: true
 
 volumes:
   postgres_data:

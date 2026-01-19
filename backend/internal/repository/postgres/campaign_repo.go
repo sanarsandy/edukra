@@ -23,13 +23,15 @@ func (r *CampaignRepository) Create(c *domain.Campaign) error {
 		INSERT INTO campaigns (
 			slug, is_active, course_id, title, meta_description, og_image_url,
 			blocks, styles, html_content, css_content, gjs_data,
-			start_date, end_date,
+			start_date, end_date, is_free_webinar, campaign_type, webinar_id,
+			gtm_id, facebook_pixel_id,
 			view_count, click_count, conversion_count, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6,
 			$7, $8, $9, $10, $11,
-			$12, $13,
-			$14, $15, $16, $17, $18
+			$12, $13, $14, $15, $16,
+			$17, $18,
+			$19, $20, $21, $22, $23
 		) RETURNING id
 	`
 
@@ -49,10 +51,16 @@ func (r *CampaignRepository) Create(c *domain.Campaign) error {
 		c.GJSData = []byte("{}")
 	}
 
+	// Default campaign_type if not set
+	if c.CampaignType == "" {
+		c.CampaignType = domain.CampaignTypeEcourseOnly
+	}
+
 	return r.db.QueryRow(query,
 		c.Slug, c.IsActive, c.CourseID, c.Title, c.MetaDesc, c.OGImageURL,
 		c.Blocks, c.Styles, c.HTMLContent, c.CSSContent, c.GJSData,
-		c.StartDate, c.EndDate,
+		c.StartDate, c.EndDate, c.IsFreeWebinar, c.CampaignType, c.WebinarID,
+		c.GtmID, c.FacebookPixelID,
 		c.ViewCount, c.ClickCount, c.ConversionCount, c.CreatedAt, c.UpdatedAt,
 	).Scan(&c.ID)
 }
@@ -63,7 +71,8 @@ func (r *CampaignRepository) GetByID(id string) (*domain.Campaign, error) {
 		SELECT 
 			c.id, c.slug, c.is_active, c.course_id, c.title, c.meta_description, c.og_image_url,
 			c.blocks, c.styles, c.html_content, c.css_content, c.gjs_data,
-			c.start_date, c.end_date,
+			c.start_date, c.end_date, c.is_free_webinar, c.campaign_type, c.webinar_id,
+			c.gtm_id, c.facebook_pixel_id,
 			c.view_count, c.click_count, c.conversion_count, c.created_at, c.updated_at,
 			course.id, course.title, course.slug, course.price, course.discount_price, course.thumbnail_url
 		FROM campaigns c
@@ -80,7 +89,8 @@ func (r *CampaignRepository) GetByID(id string) (*domain.Campaign, error) {
 	err := r.db.QueryRow(query, id).Scan(
 		&camp.ID, &camp.Slug, &camp.IsActive, &camp.CourseID, &camp.Title, &camp.MetaDesc, &camp.OGImageURL,
 		&camp.Blocks, &camp.Styles, &htmlContent, &cssContent, &gjsData,
-		&camp.StartDate, &camp.EndDate,
+		&camp.StartDate, &camp.EndDate, &camp.IsFreeWebinar, &camp.CampaignType, &camp.WebinarID,
+		&camp.GtmID, &camp.FacebookPixelID,
 		&camp.ViewCount, &camp.ClickCount, &camp.ConversionCount, &camp.CreatedAt, &camp.UpdatedAt,
 		&courseID, &courseTitle, &courseSlug, &coursePrice, &courseDiscountPrice, &courseThumbnail,
 	)
@@ -126,7 +136,8 @@ func (r *CampaignRepository) GetBySlug(slug string) (*domain.Campaign, error) {
 		SELECT 
 			c.id, c.slug, c.is_active, c.course_id, c.title, c.meta_description, c.og_image_url,
 			c.blocks, c.styles, c.html_content, c.css_content, c.gjs_data,
-			c.start_date, c.end_date,
+			c.start_date, c.end_date, c.is_free_webinar, c.campaign_type, c.webinar_id,
+			c.gtm_id, c.facebook_pixel_id,
 			c.view_count, c.click_count, c.conversion_count, c.created_at, c.updated_at,
 			course.id, course.title, course.slug, course.price, course.discount_price, course.thumbnail_url, course.description,
 			u.id, u.full_name, u.avatar_url, u.bio
@@ -146,7 +157,8 @@ func (r *CampaignRepository) GetBySlug(slug string) (*domain.Campaign, error) {
 	err := r.db.QueryRow(query, slug).Scan(
 		&camp.ID, &camp.Slug, &camp.IsActive, &camp.CourseID, &camp.Title, &camp.MetaDesc, &camp.OGImageURL,
 		&camp.Blocks, &camp.Styles, &htmlContent, &cssContent, &gjsData,
-		&camp.StartDate, &camp.EndDate,
+		&camp.StartDate, &camp.EndDate, &camp.IsFreeWebinar, &camp.CampaignType, &camp.WebinarID,
+		&camp.GtmID, &camp.FacebookPixelID,
 		&camp.ViewCount, &camp.ClickCount, &camp.ConversionCount, &camp.CreatedAt, &camp.UpdatedAt,
 		&courseID, &courseTitle, &courseSlug, &coursePrice, &courseDiscountPrice, &courseThumbnail, &courseDesc,
 		&instrID, &instrName, &instrAvatar, &instrBio,
@@ -200,7 +212,7 @@ func (r *CampaignRepository) List(limit, offset int) ([]*domain.Campaign, error)
 	query := `
 		SELECT 
 			c.id, c.slug, c.is_active, c.course_id, c.title, c.meta_description, c.og_image_url,
-			c.blocks, c.styles, c.start_date, c.end_date,
+			c.blocks, c.styles, c.start_date, c.end_date, c.is_free_webinar, c.campaign_type, c.webinar_id,
 			c.view_count, c.click_count, c.conversion_count, c.created_at, c.updated_at,
 			course.id, course.title, course.thumbnail_url
 		FROM campaigns c
@@ -222,7 +234,7 @@ func (r *CampaignRepository) List(limit, offset int) ([]*domain.Campaign, error)
 
 		err := rows.Scan(
 			&camp.ID, &camp.Slug, &camp.IsActive, &camp.CourseID, &camp.Title, &camp.MetaDesc, &camp.OGImageURL,
-			&camp.Blocks, &camp.Styles, &camp.StartDate, &camp.EndDate,
+			&camp.Blocks, &camp.Styles, &camp.StartDate, &camp.EndDate, &camp.IsFreeWebinar, &camp.CampaignType, &camp.WebinarID,
 			&camp.ViewCount, &camp.ClickCount, &camp.ConversionCount, &camp.CreatedAt, &camp.UpdatedAt,
 			&courseID, &courseTitle, &courseThumbnail,
 		)
@@ -251,18 +263,25 @@ func (r *CampaignRepository) Update(c *domain.Campaign) error {
 			slug = $2, is_active = $3, course_id = $4, title = $5, 
 			meta_description = $6, og_image_url = $7,
 			blocks = $8, styles = $9, html_content = $10, css_content = $11, gjs_data = $12,
-			start_date = $13, end_date = $14,
-			updated_at = $15
+			start_date = $13, end_date = $14, is_free_webinar = $15, campaign_type = $16, webinar_id = $17,
+			gtm_id = $18, facebook_pixel_id = $19,
+			updated_at = $20
 		WHERE id = $1
 	`
 
 	c.UpdatedAt = time.Now()
 
+	// Default campaign_type if not set
+	if c.CampaignType == "" {
+		c.CampaignType = domain.CampaignTypeEcourseOnly
+	}
+
 	_, err := r.db.Exec(query,
 		c.ID, c.Slug, c.IsActive, c.CourseID, c.Title,
 		c.MetaDesc, c.OGImageURL,
 		c.Blocks, c.Styles, c.HTMLContent, c.CSSContent, c.GJSData,
-		c.StartDate, c.EndDate,
+		c.StartDate, c.EndDate, c.IsFreeWebinar, c.CampaignType, c.WebinarID,
+		c.GtmID, c.FacebookPixelID,
 		c.UpdatedAt,
 	)
 

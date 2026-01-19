@@ -71,19 +71,22 @@ func CreateCampaign(c echo.Context) error {
 	}
 
 	campaign := &domain.Campaign{
-		Slug:        req.Slug,
-		Title:       req.Title,
-		IsActive:    req.IsActive,
-		CourseID:    req.CourseID,
-		MetaDesc:    req.MetaDesc,
-		OGImageURL:  req.OGImageURL,
-		Blocks:      blocksJSON,
-		Styles:      req.Styles,
-		HTMLContent: req.HTMLContent,
-		CSSContent:  req.CSSContent,
-		GJSData:     req.GJSData,
-		StartDate:   startDate,
-		EndDate:     endDate,
+		Slug:          req.Slug,
+		Title:         req.Title,
+		IsActive:      req.IsActive,
+		CourseID:      req.CourseID,
+		MetaDesc:      req.MetaDesc,
+		OGImageURL:    req.OGImageURL,
+		Blocks:        blocksJSON,
+		Styles:        req.Styles,
+		HTMLContent:   req.HTMLContent,
+		CSSContent:    req.CSSContent,
+		GJSData:       req.GJSData,
+		StartDate:     startDate,
+		EndDate:       endDate,
+		IsFreeWebinar: req.IsFreeWebinar,
+		CampaignType:  req.CampaignType,
+		WebinarID:     req.WebinarID,
 	}
 
 	if err := campaignRepo.Create(campaign); err != nil {
@@ -209,6 +212,19 @@ func UpdateCampaign(c echo.Context) error {
 			campaign.EndDate = &t
 		}
 	}
+	// Handle is_free_webinar - note: we need to explicitly set it including nil
+	// since the request may want to clear the override
+	campaign.IsFreeWebinar = req.IsFreeWebinar
+	
+	// Handle campaign_type
+	if req.CampaignType != nil {
+		campaign.CampaignType = *req.CampaignType
+	}
+	
+	// Handle webinar_id
+	if req.WebinarID != nil {
+		campaign.WebinarID = req.WebinarID
+	}
 
 	if err := campaignRepo.Update(campaign); err != nil {
 		log.Printf("[Campaign] Failed to update: %v", err)
@@ -253,6 +269,7 @@ func GetCampaignAnalytics(c echo.Context) error {
 // GET /api/c/:slug
 func GetCampaignBySlug(c echo.Context) error {
 	initCampaignRepo()
+	initWebinarRepo()
 	slug := c.Param("slug")
 
 	campaign, err := campaignRepo.GetBySlug(slug)
@@ -262,6 +279,16 @@ func GetCampaignBySlug(c echo.Context) error {
 	}
 	if campaign == nil {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Campaign not found"})
+	}
+
+	// Populate Webinar if exists
+	if campaign.WebinarID != nil && *campaign.WebinarID != "" {
+		webinar, err := webinarRepo.GetByID(*campaign.WebinarID)
+		if err == nil {
+			campaign.Webinar = webinar
+		} else {
+			log.Printf("[Campaign] Failed to fetch webinar %s: %v", *campaign.WebinarID, err)
+		}
 	}
 
 	// Track view asynchronously

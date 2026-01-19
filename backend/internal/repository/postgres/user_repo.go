@@ -97,12 +97,12 @@ func (r *UserRepository) GetByEmail(tenantID, email string) (*domain.User, error
 	}
 	
 	var user domain.User
-	var tid, avatarURL, bio, phone, googleID sql.NullString
+	var tid, avatarURL, bio, phone, googleID, passwordHash sql.NullString
 	
 	var metadata []byte
 	
 	err := r.db.QueryRow(query, args...).Scan(
-		&user.ID, &tid, &user.Email, &user.PasswordHash, &user.Role,
+		&user.ID, &tid, &user.Email, &passwordHash, &user.Role,
 		&user.FullName, &avatarURL, &bio, &phone, &googleID, &user.AuthProvider,
 		&user.IsActive, &metadata, &user.CreatedAt, &user.UpdatedAt,
 	)
@@ -116,6 +116,9 @@ func (r *UserRepository) GetByEmail(tenantID, email string) (*domain.User, error
 	
 	if tid.Valid {
 		user.TenantID = &tid.String
+	}
+	if passwordHash.Valid {
+		user.PasswordHash = passwordHash.String
 	}
 	if avatarURL.Valid {
 		user.AvatarURL = &avatarURL.String

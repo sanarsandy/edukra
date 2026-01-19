@@ -5,6 +5,13 @@ import (
 	"time"
 )
 
+// Campaign type constants
+const (
+	CampaignTypeWebinarOnly    = "webinar_only"     // Webinar registration only, no course access
+	CampaignTypeEcourseOnly    = "ecourse_only"     // Course access only, no webinar
+	CampaignTypeWebinarEcourse = "webinar_ecourse"  // Both webinar and course access
+)
+
 // Campaign represents a promotional landing page
 type Campaign struct {
 	ID          string    `json:"id" db:"id"`
@@ -26,9 +33,15 @@ type Campaign struct {
 	ConversionCount int   `json:"conversion_count" db:"conversion_count"`
 	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	IsFreeWebinar *bool   `json:"is_free_webinar,omitempty" db:"is_free_webinar"` // Override: true=free, false=paid, nil=use course price
+	CampaignType  string  `json:"campaign_type" db:"campaign_type"` // webinar_only, ecourse_only, webinar_ecourse
+	WebinarID     *string `json:"webinar_id,omitempty" db:"webinar_id"` // Direct link to webinar
+	GtmID         *string `json:"gtm_id,omitempty" db:"gtm_id"`         // Google Tag Manager ID
+	FacebookPixelID *string `json:"facebook_pixel_id,omitempty" db:"facebook_pixel_id"` // Facebook Pixel ID
 
 	// Joined data (not in DB)
 	Course      *Course   `json:"course,omitempty" db:"-"`
+	Webinar     *Webinar  `json:"webinar,omitempty" db:"-"`
 	ParsedBlocks []CampaignBlock `json:"parsed_blocks,omitempty" db:"-"`
 }
 
@@ -133,8 +146,11 @@ type CreateCampaignRequest struct {
 	CSSContent  *string         `json:"css_content,omitempty"`
 	GJSData     json.RawMessage `json:"gjs_data,omitempty"`
 	StartDate   *string         `json:"start_date,omitempty"`
-	EndDate     *string         `json:"end_date,omitempty"`
-	IsActive    bool            `json:"is_active"`
+	EndDate       *string         `json:"end_date,omitempty"`
+	IsActive      bool            `json:"is_active"`
+	IsFreeWebinar *bool           `json:"is_free_webinar,omitempty"`
+	CampaignType  string          `json:"campaign_type,omitempty"` // webinar_only, ecourse_only, webinar_ecourse
+	WebinarID     *string         `json:"webinar_id,omitempty"`
 }
 
 type UpdateCampaignRequest struct {
@@ -149,8 +165,11 @@ type UpdateCampaignRequest struct {
 	CSSContent  *string         `json:"css_content,omitempty"`
 	GJSData     json.RawMessage `json:"gjs_data,omitempty"`
 	StartDate   *string         `json:"start_date,omitempty"`
-	EndDate     *string         `json:"end_date,omitempty"`
-	IsActive    *bool           `json:"is_active,omitempty"`
+	EndDate       *string         `json:"end_date,omitempty"`
+	IsActive      *bool           `json:"is_active,omitempty"`
+	IsFreeWebinar *bool           `json:"is_free_webinar,omitempty"`
+	CampaignType  *string         `json:"campaign_type,omitempty"`
+	WebinarID     *string         `json:"webinar_id,omitempty"`
 }
 
 // Default blocks for new campaign

@@ -174,6 +174,44 @@ EDUKRA Learning Platform`,
 	return s.SendMessage(phone, message)
 }
 
+// SendWebinarOnlyConfirmation sends confirmation for webinar-only campaign (no LMS info)
+func (s *WhatsAppService) SendWebinarOnlyConfirmation(phone string, data WebinarConfirmationData) error {
+	var meetingPasswordInfo string
+	if data.MeetingPassword != "" {
+		meetingPasswordInfo = fmt.Sprintf("\n🔐 Password Meeting: %s", data.MeetingPassword)
+	}
+
+	message := fmt.Sprintf(`🎉 *Selamat! Pendaftaran Berhasil*
+
+Halo %s! 👋
+
+Terima kasih telah mendaftar webinar:
+📚 *%s*
+
+📅 *Jadwal:*
+Tanggal: %s
+Waktu: %s WIB
+Durasi: %d menit
+
+📍 *Link Webinar:*
+%s%s
+
+Sampai jumpa di webinar! 🚀
+
+---
+EDUKRA Learning Platform`,
+		data.UserName,
+		data.WebinarTitle,
+		data.WebinarDate,
+		data.WebinarTime,
+		data.DurationMinutes,
+		data.MeetingURL,
+		meetingPasswordInfo,
+	)
+
+	return s.SendMessage(phone, message)
+}
+
 // SendReminder1Day sends H-1 reminder
 func (s *WhatsAppService) SendReminder1Day(phone string, webinar *domain.Webinar, userName string) error {
 	message := fmt.Sprintf(`⏰ *Reminder: Webinar Besok!*
@@ -381,6 +419,15 @@ func SendWebinarConfirmationAsync(phone string, data WebinarConfirmationData) {
 	go func() {
 		if err := GetWhatsAppService().SendWebinarConfirmation(phone, data); err != nil {
 			log.Printf("[WhatsApp] Failed to send webinar confirmation to %s: %v", phone, err)
+		}
+	}()
+}
+
+// SendWebinarOnlyConfirmationAsync sends confirmation for webinar-only campaign in background
+func SendWebinarOnlyConfirmationAsync(phone string, data WebinarConfirmationData) {
+	go func() {
+		if err := GetWhatsAppService().SendWebinarOnlyConfirmation(phone, data); err != nil {
+			log.Printf("[WhatsApp] Failed to send webinar only confirmation to %s: %v", phone, err)
 		}
 	}()
 }

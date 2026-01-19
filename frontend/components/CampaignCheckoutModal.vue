@@ -4,7 +4,7 @@
       <!-- Header -->
       <div class="flex items-center justify-between p-5 border-b">
         <div>
-          <h3 class="text-xl font-bold text-neutral-900">Checkout</h3>
+          <h3 class="text-xl font-bold text-neutral-900">{{ props.isFree ? 'Daftar Gratis' : 'Checkout' }}</h3>
           <p class="text-sm text-neutral-500">{{ props.courseName }}</p>
         </div>
         <button @click="close" class="text-neutral-400 hover:text-neutral-600 text-2xl">&times;</button>
@@ -48,8 +48,8 @@
           />
         </div>
 
-        <!-- Payment Method -->
-        <div>
+        <!-- Payment Method (only for paid) -->
+        <div v-if="!props.isFree">
           <label class="block text-sm font-medium text-neutral-700 mb-2">Metode Pembayaran *</label>
           
           <div v-if="loadingMethods" class="flex items-center justify-center py-8">
@@ -84,8 +84,8 @@
           </div>
         </div>
 
-        <!-- Coupon Code -->
-        <div>
+        <!-- Coupon Code (only for paid) -->
+        <div v-if="!props.isFree">
           <label class="block text-sm font-medium text-neutral-700 mb-1.5">Kode Kupon (opsional)</label>
           <input 
             v-model="form.couponCode" 
@@ -95,8 +95,8 @@
           />
         </div>
 
-        <!-- Price Summary -->
-        <div class="bg-neutral-50 rounded-xl p-4 space-y-2">
+        <!-- Price Summary (only for paid) -->
+        <div v-if="!props.isFree" class="bg-neutral-50 rounded-xl p-4 space-y-2">
           <div class="flex justify-between text-sm">
             <span class="text-neutral-600">Harga</span>
             <span>Rp {{ formatNumber(props.coursePrice) }}</span>
@@ -111,6 +111,13 @@
           </div>
         </div>
 
+        <!-- Free Notice -->
+        <div v-if="props.isFree" class="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
+          <div class="text-3xl mb-2">🎉</div>
+          <div class="font-bold text-green-700">GRATIS</div>
+          <p class="text-sm text-green-600 mt-1">Daftarkan diri Anda sekarang tanpa biaya!</p>
+        </div>
+
         <!-- Error Message -->
         <div v-if="error" class="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
           {{ error }}
@@ -119,14 +126,15 @@
         <!-- Submit Button -->
         <button 
           type="submit"
-          :disabled="submitting || !form.paymentMethod"
-          class="w-full py-4 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          :disabled="submitting || (!props.isFree && !form.paymentMethod)"
+          class="w-full py-4 text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          :class="props.isFree ? 'bg-green-600 hover:bg-green-700' : 'bg-primary-600 hover:bg-primary-700'"
         >
           <span v-if="submitting" class="flex items-center justify-center gap-2">
             <div class="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
             Memproses...
           </span>
-          <span v-else>Bayar Sekarang</span>
+          <span v-else>{{ props.isFree ? '🎉 Daftar Sekarang' : 'Bayar Sekarang' }}</span>
         </button>
 
         <!-- Terms -->
@@ -153,6 +161,7 @@ interface Props {
   courseName: string
   coursePrice: number
   discountPrice?: number
+  isFree?: boolean
 }
 
 const props = defineProps<Props>()
@@ -200,8 +209,14 @@ const fetchPaymentMethods = async () => {
 const handleSubmit = async () => {
   error.value = ''
   
-  if (!form.value.email || !form.value.phone || !form.value.paymentMethod) {
-    error.value = 'Mohon lengkapi semua field yang wajib diisi'
+  // For free registrations, only email and phone required
+  if (!form.value.email || !form.value.phone) {
+    error.value = 'Mohon lengkapi email dan nomor WhatsApp'
+    return
+  }
+  // For paid, also require payment method
+  if (!props.isFree && !form.value.paymentMethod) {
+    error.value = 'Mohon pilih metode pembayaran'
     return
   }
 
@@ -220,7 +235,7 @@ const handleSubmit = async () => {
         email: form.value.email,
         phone: form.value.phone,
         full_name: form.value.fullName,
-        payment_method: form.value.paymentMethod,
+        payment_method: props.isFree ? '' : form.value.paymentMethod,
         coupon_code: form.value.couponCode || undefined
       }
     })
@@ -243,9 +258,9 @@ const handleSubmit = async () => {
   }
 }
 
-// Fetch payment methods when modal opens
+// Fetch payment methods when modal opens (only for paid)
 watch(() => props.show, (newVal) => {
-  if (newVal) {
+  if (newVal && !props.isFree) {
     fetchPaymentMethods()
   }
 })

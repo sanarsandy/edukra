@@ -127,7 +127,9 @@ const route = useRoute()
 const config = useRuntimeConfig()
 
 const orderId = computed(() => route.query.order_id as string)
-const apiBase = config.public.apiBase || 'http://localhost:8080'
+const apiBase = import.meta.server 
+  ? (config.apiInternal as string) || 'http://api:8080'
+  : (config.public.apiBase as string) || 'http://localhost:8080'
 
 interface Transaction {
   order_id: string
@@ -142,7 +144,8 @@ const { data: transaction, pending, refresh } = await useFetch<Transaction>(
   () => `/api/transaction-status/${orderId.value}`,
   {
     baseURL: apiBase,
-    watch: [orderId]
+    watch: [orderId],
+    key: `transaction-${orderId.value}`
   }
 )
 

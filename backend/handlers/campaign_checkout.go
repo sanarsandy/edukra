@@ -3,9 +3,11 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -16,6 +18,7 @@ import (
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/domain"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/payment"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/repository/postgres"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/service"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -25,7 +28,10 @@ var (
 
 func initCampaignCheckoutRepos() {
 	if campaignRepoCheckout == nil && db.DB != nil {
-		campaignRepoCheckout = postgres.NewCampaignRepository(db.DB)
+	campaignRepoCheckout = postgres.NewCampaignRepository(db.DB)
+	}
+	if webinarRepo == nil && db.DB != nil {
+		webinarRepo = postgres.NewWebinarRepository(db.DB)
 	}
 	initPaymentRepos()
 }
@@ -112,40 +118,58 @@ func generateRandomPassword() string {
 func findOrCreateGuestUser(email, phone, fullName string) (*domain.User, bool, error) {
 	userRepo := postgres.NewUserRepository(db.DB)
 	
-	// Try to find existing user (use empty tenant for now)
+	// Try to find existing user by email (case-insensitive)
+	// Use empty tenant for now (NULL tenant_id)
 	existingUser, err := userRepo.GetByEmail("", email)
-	if err == nil && existingUser != nil {
-		// Update phone if not set OR if input phone is provided
-		// We trust the latest input from checkout for guest users
+	if err != nil {
+		// DB error occurred - don't create new user, return error
+		log.Printf("[CampaignCheckout] DB error looking up user by email %s: %v", email, err)
+		return nil, false, fmt.Errorf("failed to lookup user: %v", err)
+	}
+	
+	if existingUser != nil {
+		log.Printf("[CampaignCheckout] Found existing user for email %s: %s", email, existingUser.ID)
+		
+		needsUpdate := false
+		
+		// Update FullName if provided from checkout form
+		if fullName != "" && existingUser.FullName != fullName {
+			log.Printf("[CampaignCheckout] Updating fullName for user %s: old=%s, new=%s", existingUser.ID, existingUser.FullName, fullName)
+			existingUser.FullName = fullName
+			needsUpdate = true
+		}
+		
+		// Update phone if not set
+		// SECURITY: Do NOT overwrite existing phone number from guest checkout
 		if phone != "" {
 			normalizedPhone := normalizePhone(phone)
 			
-			// Update only if current phone is empty
-			// SECURITY: Do NOT overwrite existing phone number from a guest checkout
-			// to prevent unauthorized profile modification.
 			if existingUser.Phone == nil || *existingUser.Phone == "" {
 				log.Printf("[CampaignCheckout] Updating empty phone for user %s: new=%s", existingUser.ID, normalizedPhone)
-				
 				phoneVal := normalizedPhone
 				existingUser.Phone = &phoneVal
-				
-				if err := userRepo.Update(existingUser); err != nil {
-					log.Printf("[CampaignCheckout] Failed to update user phone: %v", err)
-					// Continue anyway, don't block checkout
-				} else {
-					log.Printf("[CampaignCheckout] User phone updated successfully")
-				}
+				needsUpdate = true
 			} else if *existingUser.Phone != normalizedPhone {
 				log.Printf("[CampaignCheckout] SECURITY: Skipping phone update for user %s. Existing: %s, Input: %s", existingUser.ID, *existingUser.Phone, normalizedPhone)
-				// We do not update the profile, but we should ideally use the input phone for this specific transaction notification
-				// However, current architecture pulls from user profile. 
-				// For now, security takes precedence: prevent overwrite.
 			}
 		}
+		
+		// Persist updates if any
+		if needsUpdate {
+			if err := userRepo.Update(existingUser); err != nil {
+				log.Printf("[CampaignCheckout] Failed to update user: %v", err)
+				// Continue anyway, don't block checkout
+			} else {
+				log.Printf("[CampaignCheckout] User updated successfully")
+			}
+		}
+		
 		return existingUser, false, nil
 	}
 	
-	// Create new guest user
+	// No existing user found - create new guest user
+	log.Printf("[CampaignCheckout] No existing user found for email %s, creating new guest user", email)
+	
 	password := generateRandomPassword()
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
@@ -173,6 +197,16 @@ func findOrCreateGuestUser(email, phone, fullName string) (*domain.User, bool, e
 	}
 	
 	if err := userRepo.Create(newUser); err != nil {
+		// Check if it's a unique constraint violation (email already exists)
+		// This can happen in race conditions
+		if strings.Contains(err.Error(), "duplicate key") || strings.Contains(err.Error(), "unique constraint") {
+			log.Printf("[CampaignCheckout] Race condition: user %s was created by another request, fetching...", email)
+			// Try to fetch the existing user again
+			existingUser, fetchErr := userRepo.GetByEmail("", email)
+			if fetchErr == nil && existingUser != nil {
+				return existingUser, false, nil
+			}
+		}
 		return nil, false, fmt.Errorf("failed to create user: %v", err)
 	}
 	
@@ -198,7 +232,7 @@ func CampaignCheckout(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
 	}
 
-	// Validate required fields
+	// Validate required fields (payment_method validated later based on isFree)
 	if req.CampaignID == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Campaign ID is required"})
 	}
@@ -208,9 +242,7 @@ func CampaignCheckout(c echo.Context) error {
 	if req.Phone == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Phone number is required"})
 	}
-	if req.PaymentMethod == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Payment method is required"})
-	}
+	// Note: PaymentMethod validation moved after isFree determination
 
 	// Validate email format
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
@@ -237,16 +269,21 @@ func CampaignCheckout(c echo.Context) error {
 	}
 
 	// Check if campaign has linked course
-	if campaign.CourseID == nil || *campaign.CourseID == "" {
+	if (campaign.CourseID == nil || *campaign.CourseID == "") && campaign.CampaignType != "webinar_only" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Campaign has no linked course"})
 	}
 
 	// Get course
-	course, err := courseRepoCheckout.GetByID(*campaign.CourseID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch course"})
+	var course *domain.Course
+	if campaign.CourseID != nil && *campaign.CourseID != "" {
+		fetchedCourse, err := courseRepoCheckout.GetByID(*campaign.CourseID)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch course"})
+		}
+		course = fetchedCourse
 	}
-	if course == nil {
+	
+	if course == nil && campaign.CampaignType != "webinar_only" {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "Course not found"})
 	}
 
@@ -258,14 +295,138 @@ func CampaignCheckout(c echo.Context) error {
 	}
 
 	// Check if already enrolled
-	enrolled, err := enrollmentRepoCheckout.IsEnrolled(user.ID, *campaign.CourseID)
-	if err == nil && enrolled {
-		return c.JSON(http.StatusConflict, map[string]string{
-			"error": "Anda sudah terdaftar di kursus ini",
-		})
+	if campaign.CourseID != nil {
+		enrolled, err := enrollmentRepoCheckout.IsEnrolled(user.ID, *campaign.CourseID)
+		if err == nil && enrolled {
+			return c.JSON(http.StatusConflict, map[string]string{
+				"error": "Anda sudah terdaftar di kursus ini",
+			})
+		}
+	}
+
+	// Determine if this is a free registration
+	// Priority: 1) campaign.IsFreeWebinar override, 2) course.Price == 0
+	isFreeWebinar := false
+	if campaign.IsFreeWebinar != nil {
+		isFreeWebinar = *campaign.IsFreeWebinar
+	} else if course != nil {
+		isFreeWebinar = course.Price == 0
+	} else if campaign.CampaignType == "webinar_only" {
+		// Webinar only without price override is assumed free for now (until we have webinar pricing)
+		isFreeWebinar = true
+	}
+
+	// Validate payment method only for paid courses
+	if !isFreeWebinar && req.PaymentMethod == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Payment method is required for paid courses"})
+	}
+
+	// Handle free webinar registration (no payment needed)
+	if isFreeWebinar {
+		campaignType := campaign.CampaignType
+		if campaignType == "" {
+			campaignType = domain.CampaignTypeEcourseOnly // default for backward compatibility
+		}
+
+		cidSafe := "nil"
+		if campaign.CourseID != nil {
+			cidSafe = *campaign.CourseID
+		}
+		log.Printf("[CampaignCheckout] Processing free registration: type=%s, user=%s, course=%s", 
+			campaignType, user.Email, cidSafe)
+
+		switch campaignType {
+		case domain.CampaignTypeWebinarOnly:
+			// Webinar only - register to webinar without course enrollment
+			// Use direct webinar_id if available, otherwise fall back to course-based webinar lookup
+			go handleWebinarOnlyNotificationDirect(user.ID, campaign.WebinarID, campaign.CourseID)
+			
+			return c.JSON(http.StatusOK, CampaignCheckoutResponse{
+				IsFree:    true,
+				Message:   "Selamat! Anda berhasil terdaftar webinar. Informasi akan dikirim via WhatsApp.",
+				IsNewUser: isNewUser,
+			})
+
+		case domain.CampaignTypeEcourseOnly:
+			// Course only - enroll without webinar registration
+			if campaign.CourseID == nil {
+				log.Printf("[CampaignCheckout] Error: ecourse_only campaign %s has no linked course", campaign.ID)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Campaign configuration error: No linked course"})
+			}
+			enrollment := &postgres.Enrollment{
+				UserID:   user.ID,
+				CourseID: *campaign.CourseID,
+			}
+			if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
+				log.Printf("[CampaignCheckout] Failed to enroll (ecourse_only): %v", err)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to enroll"})
+			}
+
+			go handleEcourseOnlyNotification(user.ID, *campaign.CourseID)
+
+			return c.JSON(http.StatusOK, CampaignCheckoutResponse{
+				IsFree:    true,
+				Message:   "Selamat! Anda berhasil terdaftar. Akses kursus Anda sudah tersedia.",
+				IsNewUser: isNewUser,
+			})
+
+		case domain.CampaignTypeWebinarEcourse:
+			// Both webinar and course - enroll AND register to webinar
+			if campaign.CourseID == nil {
+				log.Printf("[CampaignCheckout] Error: webinar_ecourse campaign %s has no linked course", campaign.ID)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Campaign configuration error: No linked course"})
+			}
+			enrollment := &postgres.Enrollment{
+				UserID:   user.ID,
+				CourseID: *campaign.CourseID,
+			}
+			if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
+				log.Printf("[CampaignCheckout] Failed to enroll (webinar_ecourse): %v", err)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to enroll"})
+			}
+
+			// This will handle both webinar registration and combined notification
+			go handlePaymentSuccessNotification(user.ID, *campaign.CourseID)
+
+			return c.JSON(http.StatusOK, CampaignCheckoutResponse{
+				IsFree:    true,
+				Message:   "Selamat! Anda berhasil terdaftar. Informasi webinar dan akses kursus akan dikirim via WhatsApp.",
+				IsNewUser: isNewUser,
+			})
+
+		default:
+			// Fallback to existing behavior (enroll + webinar notification)
+			if campaign.CourseID == nil {
+				log.Printf("[CampaignCheckout] Error: default campaign %s has no linked course", campaign.ID)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Campaign configuration error: No linked course"})
+			}
+			enrollment := &postgres.Enrollment{
+				UserID:   user.ID,
+				CourseID: *campaign.CourseID,
+			}
+			if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
+				log.Printf("[CampaignCheckout] Failed to enroll (default): %v", err)
+				return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to enroll"})
+			}
+
+			go handlePaymentSuccessNotification(user.ID, *campaign.CourseID)
+
+			return c.JSON(http.StatusOK, CampaignCheckoutResponse{
+				IsFree:    true,
+				Message:   "Selamat! Anda berhasil terdaftar. Informasi akan dikirim via WhatsApp.",
+				IsNewUser: isNewUser,
+			})
+		}
 	}
 
 	// Calculate price
+	// Ensure course is not nil for paid flows
+	if course == nil {
+		log.Printf("[CampaignCheckout] Error: Paid campaign type %s has no linked course for pricing", campaign.CampaignType)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Konfigurasi campaign tidak valid: Webinar berbayar harus terhubung dengan kursus (untuk harga).",
+		})
+	}
 	originalPrice := course.Price
 	finalPrice := course.Price
 
@@ -388,6 +549,16 @@ func CampaignCheckout(c echo.Context) error {
 	tx.CourseID = campaign.CourseID
 	tx.OrderID = &orderID
 	
+	// Store metadata (webinar_id)
+	metadata := make(map[string]string)
+	if campaign.WebinarID != nil {
+		metadata["webinar_id"] = *campaign.WebinarID
+	}
+	if len(metadata) > 0 {
+		metaJSON, _ := json.Marshal(metadata)
+		tx.Metadata = metaJSON
+	}
+	
 	totalDiscount := originalPrice - finalPrice
 	if totalDiscount > 0 || appliedCoupon != nil {
 		tx.OriginalAmount = &originalPrice
@@ -406,13 +577,24 @@ func CampaignCheckout(c echo.Context) error {
 	ctx := c.Request().Context()
 	
 	// Determine callback URL
+	// Determine callback URL
 	callbackURL := fmt.Sprintf("%s://%s/api/webhooks/duitku", c.Scheme(), c.Request().Host)
+	
+	// Default return URL (backend) - not ideal
 	returnURL := fmt.Sprintf("%s://%s/payment/success?order_id=%s", c.Scheme(), c.Request().Host, orderID)
 	
-	// Override with frontend URL if available
-	frontendURL := getSettingValue("frontend_url", "")
-	if frontendURL != "" {
-		returnURL = fmt.Sprintf("%s/payment/success?order_id=%s", frontendURL, orderID)
+	// Try getting from Env first (Best for Docker/Prod)
+	if envFrontend := os.Getenv("FRONTEND_URL"); envFrontend != "" {
+		returnURL = fmt.Sprintf("%s/payment/success?order_id=%s", envFrontend, orderID)
+	} else {
+		// Try getting from DB Settings
+		frontendURL := getSettingValue("frontend_url", "")
+		if frontendURL != "" {
+			returnURL = fmt.Sprintf("%s/payment/success?order_id=%s", frontendURL, orderID)
+		} else if strings.Contains(c.Request().Host, "localhost") {
+			// Fallback for local development if settings not set
+			returnURL = fmt.Sprintf("http://localhost:3000/payment/success?order_id=%s", orderID)
+		}
 	}
 
 	paymentReq := &payment.CreateTransactionRequest{
@@ -496,4 +678,198 @@ func GetTransactionStatus(c echo.Context) error {
 		"course_slug": courseSlug,
 		"created_at":  tx.CreatedAt,
 	})
+}
+
+// handleWebinarOnlyNotification handles webinar-only registration (no course enrollment)
+// Registers user to webinar and sends webinar-only WhatsApp notification
+func handleWebinarOnlyNotification(userID, courseID string) {
+	webinarRepo := postgres.NewWebinarRepository(db.DB)
+	userRepo := postgres.NewUserRepository(db.DB)
+
+	// Get user info
+	user, err := userRepo.GetByID(userID)
+	if err != nil || user == nil {
+		log.Printf("[WebinarOnly] Failed to get user %s: %v", userID, err)
+		return
+	}
+
+	// Get LMS URL
+	lmsURL := getSettingValue("frontend_url", "")
+	if lmsURL == "" {
+		lmsURL = os.Getenv("FRONTEND_URL")
+	}
+	if lmsURL == "" {
+		lmsURL = "https://lms.edukra.com"
+	}
+
+	// Check for upcoming webinars
+	webinars, err := webinarRepo.GetUpcomingByCourse(courseID)
+	if err != nil {
+		log.Printf("[WebinarOnly] Failed to check webinars for course %s: %v", courseID, err)
+		return
+	}
+
+	if len(webinars) == 0 {
+		log.Printf("[WebinarOnly] No upcoming webinars found for course %s", courseID)
+		return
+	}
+
+	// Register user to each webinar
+	for _, webinar := range webinars {
+		if err := webinarRepo.RegisterUser(webinar.ID, userID, "campaign"); err != nil {
+			log.Printf("[WebinarOnly] Failed to register user %s to webinar %s: %v", userID, webinar.ID, err)
+			continue
+		}
+		log.Printf("[WebinarOnly] User %s registered to webinar %s", userID, webinar.ID)
+		webinarRepo.CreateReminders(webinar.ID, userID, webinar.ScheduledAt)
+	}
+
+	// Send Webinar Confirmation WA
+	if user.Phone != nil && *user.Phone != "" {
+		webinar := webinars[0]
+		data := service.WebinarConfirmationData{
+			UserName:        user.FullName,
+			UserEmail:       user.Email,
+			WebinarTitle:    webinar.Title,
+			WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
+			WebinarTime:     webinar.ScheduledAt.Format("15:04"),
+			DurationMinutes: webinar.DurationMinutes,
+			LMSUrl:          lmsURL,
+		}
+
+		if webinar.MeetingURL != nil {
+			data.MeetingURL = *webinar.MeetingURL
+		}
+		if webinar.MeetingPassword != nil {
+			data.MeetingPassword = *webinar.MeetingPassword
+		}
+
+		service.SendWebinarConfirmationAsync(*user.Phone, data)
+		log.Printf("[WebinarOnly] Webinar confirmation sent to %s", *user.Phone)
+	}
+}
+
+// handleEcourseOnlyNotification handles course-only registration (no webinar)
+// Sends course access notification without webinar info
+func handleEcourseOnlyNotification(userID, courseID string) {
+	userRepo := postgres.NewUserRepository(db.DB)
+	courseRepo := postgres.NewCourseRepository(db.DB)
+
+	// Get user info
+	user, err := userRepo.GetByID(userID)
+	if err != nil || user == nil {
+		log.Printf("[EcourseOnly] Failed to get user %s: %v", userID, err)
+		return
+	}
+
+	// Get LMS URL
+	lmsURL := getSettingValue("frontend_url", "")
+	if lmsURL == "" {
+		lmsURL = os.Getenv("FRONTEND_URL")
+	}
+	if lmsURL == "" {
+		lmsURL = "https://lms.edukra.com"
+	}
+
+	// Get course info
+	course, err := courseRepo.GetByID(courseID)
+	if err != nil || course == nil {
+		log.Printf("[EcourseOnly] Failed to get course %s: %v", courseID, err)
+		return
+	}
+
+	// Send Course Access WA
+	if user.Phone != nil && *user.Phone != "" {
+		if err := service.GetWhatsAppService().SendPaymentSuccess(*user.Phone, user.FullName, course.Title, lmsURL); err != nil {
+			log.Printf("[EcourseOnly] Failed to send course access WA to %s: %v", *user.Phone, err)
+		} else {
+			log.Printf("[EcourseOnly] Course access WA sent to %s", *user.Phone)
+		}
+	}
+}
+
+// handleWebinarOnlyNotificationDirect handles webinar-only registration with direct webinar_id
+// Supports both direct webinar link and course-based webinar lookup (fallback)
+func handleWebinarOnlyNotificationDirect(userID string, webinarID *string, courseID *string) {
+	webinarRepo := postgres.NewWebinarRepository(db.DB)
+	userRepo := postgres.NewUserRepository(db.DB)
+
+	// Get user info
+	user, err := userRepo.GetByID(userID)
+	if err != nil || user == nil {
+		log.Printf("[WebinarOnlyDirect] Failed to get user %s: %v", userID, err)
+		return
+	}
+
+	// Get LMS URL
+	lmsURL := getSettingValue("frontend_url", "")
+	if lmsURL == "" {
+		lmsURL = os.Getenv("FRONTEND_URL")
+	}
+	if lmsURL == "" {
+		lmsURL = "https://lms.edukra.com"
+	}
+
+	var webinar *domain.Webinar
+
+	// If direct webinar_id is provided, use it
+	if webinarID != nil && *webinarID != "" {
+		webinar, err = webinarRepo.GetByID(*webinarID)
+		if err != nil || webinar == nil {
+			log.Printf("[WebinarOnlyDirect] Failed to get webinar %s: %v", *webinarID, err)
+			return
+		}
+
+		// Register user to this specific webinar
+		if err := webinarRepo.RegisterUser(webinar.ID, userID, "campaign"); err != nil {
+			log.Printf("[WebinarOnlyDirect] Failed to register user %s to webinar %s: %v", userID, webinar.ID, err)
+		} else {
+			log.Printf("[WebinarOnlyDirect] User %s registered to webinar %s", userID, webinar.ID)
+			webinarRepo.CreateReminders(webinar.ID, userID, webinar.ScheduledAt)
+		}
+	} else if courseID != nil && *courseID != "" {
+		// Fallback: lookup webinars from course
+		webinars, err := webinarRepo.GetUpcomingByCourse(*courseID)
+		if err != nil || len(webinars) == 0 {
+			log.Printf("[WebinarOnlyDirect] No webinars found for course %s", *courseID)
+			return
+		}
+
+		// Register to all upcoming webinars for the course
+		for _, w := range webinars {
+			if err := webinarRepo.RegisterUser(w.ID, userID, "campaign"); err != nil {
+				log.Printf("[WebinarOnlyDirect] Failed to register user %s to webinar %s: %v", userID, w.ID, err)
+				continue
+			}
+			log.Printf("[WebinarOnlyDirect] User %s registered to webinar %s", userID, w.ID)
+			webinarRepo.CreateReminders(w.ID, userID, w.ScheduledAt)
+		}
+		webinar = webinars[0]
+	} else {
+		log.Printf("[WebinarOnlyDirect] No webinar_id or course_id provided")
+		return
+	}
+
+	// Send Webinar Confirmation WA
+	if user.Phone != nil && *user.Phone != "" && webinar != nil {
+		data := service.WebinarConfirmationData{
+			UserName:        user.FullName,
+			UserEmail:       user.Email,
+			WebinarTitle:    webinar.Title,
+			WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
+			WebinarTime:     webinar.ScheduledAt.Format("15:04"),
+			DurationMinutes: webinar.DurationMinutes,
+			LMSUrl:          lmsURL,
+		}
+
+		if webinar.MeetingURL != nil {
+			data.MeetingURL = *webinar.MeetingURL
+		}
+		if webinar.MeetingPassword != nil {
+			data.MeetingPassword = *webinar.MeetingPassword
+		}
+
+		service.SendWebinarOnlyConfirmationAsync(*user.Phone, data)
+		log.Printf("[WebinarOnlyDirect] Webinar confirmation sent to %s", *user.Phone)
+	}
 }

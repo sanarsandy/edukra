@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"encoding/json"
 	"log"
 	"net/http"
 	"os"
@@ -522,23 +523,38 @@ func DuitkuWebhook(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, "Failed to update transaction")
 	}
 
-	// If payment successful, create enrollment and record coupon usage
-	if result.IsSuccess && tx.CourseID != nil {
-		enrolled, _ := enrollmentRepoCheckout.IsEnrolled(tx.UserID, *tx.CourseID)
-		if !enrolled {
-			enrollment := &postgres.Enrollment{
-				UserID:        tx.UserID,
-				CourseID:      *tx.CourseID,
-				TransactionID: &tx.ID,
+	// If payment successful
+	if result.IsSuccess {
+		// Check for webinar_only via metadata
+		var metadata map[string]string
+		if len(tx.Metadata) > 0 {
+			json.Unmarshal(tx.Metadata, &metadata)
+		}
+		
+		webinarID := metadata["webinar_id"]
+
+		if tx.CourseID != nil {
+			// Normal course enrollment logic
+			enrolled, _ := enrollmentRepoCheckout.IsEnrolled(tx.UserID, *tx.CourseID)
+			if !enrolled {
+				enrollment := &postgres.Enrollment{
+					UserID:        tx.UserID,
+					CourseID:      *tx.CourseID,
+					TransactionID: &tx.ID,
+				}
+				if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
+					log.Printf("[Duitku Webhook] Failed to create enrollment: %v", err)
+				} else {
+					log.Printf("[Duitku Webhook] Enrollment created for user %s, course %s", tx.UserID, *tx.CourseID)
+					
+					// Send payment success notification and handle webinar registration
+					go handlePaymentSuccessNotification(tx.UserID, *tx.CourseID)
+				}
 			}
-			if err := enrollmentRepoCheckout.Create(enrollment); err != nil {
-				log.Printf("[Duitku Webhook] Failed to create enrollment: %v", err)
-			} else {
-				log.Printf("[Duitku Webhook] Enrollment created for user %s, course %s", tx.UserID, *tx.CourseID)
-				
-				// Send payment success notification and handle webinar registration
-				go handlePaymentSuccessNotification(tx.UserID, *tx.CourseID)
-			}
+		} else if webinarID != "" {
+			// Webinar Only logic (no course enrollment)
+			log.Printf("[Duitku Webhook] Webinar Only payment for webinar %s", webinarID)
+			go handleWebinarPaymentSuccess(tx.UserID, webinarID)
 		}
 		
 		// Record coupon usage if a coupon was applied
@@ -952,4 +968,60 @@ func GetPaymentMethods(c echo.Context) error {
 		"provider":        providerName,
 		"payment_methods": methods,
 	})
+}
+
+func handleWebinarPaymentSuccess(userID, webinarID string) {
+	// Initialize repos
+	userRepo := postgres.NewUserRepository(db.DB)
+	webinarRepo := postgres.NewWebinarRepository(db.DB)
+
+	// 1. Get User
+	user, err := userRepo.GetByID(userID)
+	if err != nil {
+		log.Printf("[WebinarOnlyPayment] Failed to get user: %v", err)
+		return
+	}
+
+	// 2. Get Webinar
+	webinar, err := webinarRepo.GetByID(webinarID)
+	if err != nil {
+		log.Printf("[WebinarOnlyPayment] Failed to get webinar: %v", err)
+		return
+	}
+
+	// 3. Register user to webinar
+	// Check if already registered
+	registered, _ := webinarRepo.IsUserRegistered(webinarID, userID)
+	if !registered {
+		err = webinarRepo.RegisterUser(webinarID, userID, "payment_gateway")
+		if err != nil {
+			log.Printf("[WebinarOnlyPayment] Failed to register user to webinar: %v", err)
+			// Continue to notification? Maybe better to retry or log error. 
+			// Attempt notification anyway as manual fallback.
+		} else {
+			log.Printf("[WebinarOnlyPayment] User %s registered to webinar %s", userID, webinarID)
+		}
+	}
+
+	// 4. Send WhatsApp Notification
+	if user.Phone != nil && *user.Phone != "" {
+		data := service.WebinarConfirmationData{
+			UserName:        user.FullName,
+			UserEmail:       user.Email,
+			WebinarTitle:    webinar.Title,
+			WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
+			WebinarTime:     webinar.ScheduledAt.Format("15:04"),
+			DurationMinutes: webinar.DurationMinutes,
+		}
+
+		if webinar.MeetingURL != nil {
+			data.MeetingURL = *webinar.MeetingURL
+		}
+		if webinar.MeetingPassword != nil {
+			data.MeetingPassword = *webinar.MeetingPassword
+		}
+
+		service.SendWebinarOnlyConfirmationAsync(*user.Phone, data)
+		log.Printf("[WebinarOnlyPayment] Confirmation sent to %s", *user.Phone)
+	}
 }
