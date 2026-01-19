@@ -312,7 +312,19 @@ export function useCampaignCountdown(discountEndDate: Ref<string | undefined>) {
     let countdownInterval: ReturnType<typeof setInterval> | null = null
 
     const startCountdown = () => {
-        if (!discountEndDate.value) return
+        // Prevent running on server to avoid [nuxt] setInterval error
+        if (typeof window === 'undefined') return
+
+        // Clear existing interval
+        if (countdownInterval) {
+            clearInterval(countdownInterval)
+            countdownInterval = null
+        }
+
+        if (!discountEndDate.value) {
+            countdown.value = null
+            return
+        }
 
         const endDate = new Date(discountEndDate.value).getTime()
 
@@ -321,7 +333,7 @@ export function useCampaignCountdown(discountEndDate: Ref<string | undefined>) {
             const distance = endDate - now
 
             if (distance <= 0) {
-                countdown.value = null
+                countdown.value = { days: 0, hours: 0, minutes: 0, seconds: 0 }
                 if (countdownInterval) clearInterval(countdownInterval)
                 return
             }
@@ -337,6 +349,13 @@ export function useCampaignCountdown(discountEndDate: Ref<string | undefined>) {
         updateCountdown()
         countdownInterval = setInterval(updateCountdown, 1000)
     }
+
+    // Watch for changes in discountEndDate (important for async data)
+    watch(discountEndDate, (newVal) => {
+        if (newVal) {
+            startCountdown()
+        }
+    }, { immediate: true })
 
     onMounted(() => {
         startCountdown()

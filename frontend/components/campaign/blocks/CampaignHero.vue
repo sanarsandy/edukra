@@ -158,15 +158,15 @@ const scrollTo = (target: string) => {
     <div v-else-if="block.variant === 'split'" :class="[containerClassWide, 'relative z-10 py-20 sm:py-32 grid lg:grid-cols-2 gap-12 items-center']">
        <div class="text-left">
           <!-- Badge -->
-          <div v-if="block.data.badge" class="inline-block bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-medium mb-6 animate-fade-in-up">
+          <div v-if="block.data.badge" class="inline-block bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-medium mb-6 animate-fade-in-up" :style="{color: block.data.textColor || '#ffffff'}">
             {{ block.data.badge }}
           </div>
           <!-- Headline -->
-          <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight tracking-tight animate-fade-in-up delay-100">
+          <h1 class="text-3xl sm:text-5xl lg:text-6xl font-extrabold mb-6 leading-tight tracking-tight animate-fade-in-up delay-100" :style="{color: block.data.titleColor || '#ffffff'}">
             {{ block.data.headline }}
           </h1>
           <!-- Subheadline -->
-          <p class="text-lg sm:text-xl text-white/90 mb-8 leading-relaxed animate-fade-in-up delay-200">
+          <p class="text-lg sm:text-xl mb-8 leading-relaxed animate-fade-in-up delay-200" :style="{color: block.data.textColor || 'rgba(255,255,255,0.9)'}">
             {{ block.data.subheadline }}
           </p>
           <!-- Price & CTA -->
@@ -197,17 +197,17 @@ const scrollTo = (target: string) => {
     <!-- Content: Centered Variant (Default) -->
     <div v-else :class="[containerClass, 'relative z-10 text-center py-16 sm:py-24']">
       <!-- Badge -->
-      <div v-if="block.data.badge" class="inline-block bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+      <div v-if="block.data.badge" class="inline-block bg-white/20 backdrop-blur px-4 py-1.5 rounded-full text-sm font-medium mb-6" :style="{color: block.data.textColor || '#ffffff'}">
         {{ block.data.badge }}
       </div>
       
       <!-- Headline -->
-      <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-6 leading-tight tracking-tight">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 sm:mb-6 leading-tight tracking-tight" :style="{color: block.data.titleColor || '#ffffff'}">
         {{ block.data.headline }}
       </h1>
       
       <!-- Subheadline -->
-      <p class="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed">
+      <p class="text-base sm:text-lg md:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed" :style="{color: block.data.textColor || 'rgba(255,255,255,0.9)'}">
         {{ block.data.subheadline }}
       </p>
       
@@ -227,7 +227,10 @@ const scrollTo = (target: string) => {
       </button>
       
       <!-- Trust Indicator -->
-      <p class="mt-4 text-white/60 text-sm">✓ Akses Seumur Hidup • ✓ Garansi 30 Hari</p>
+      <!-- Trust Indicator -->
+      <p v-if="block.data.trust_text !== undefined ? block.data.trust_text : true" class="mt-4 text-white/60 text-sm">
+        {{ block.data.trust_text || '✓ Akses Seumur Hidup • ✓ Garansi 30 Hari' }}
+      </p>
     </div>
     
     <!-- Scroll Indicator -->

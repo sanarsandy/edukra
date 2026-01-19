@@ -1245,15 +1245,23 @@ img:hover {
                 <input v-model="editingBlock.data.cta_link" type="text" class="w-full px-3 py-2 border rounded-lg"/>
               </div>
             </div>
+            <div v-if="editingBlock.variant !== 'bio_profile'">
+              <label class="block text-sm font-medium mb-1">Trust Text (Bawah Tombol)</label>
+              <input v-model="editingBlock.data.trust_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="✓ Akses Seumur Hidup • ✓ Garansi 30 Hari"/>
+            </div>
           </template>
 
           <!-- Countdown Editor -->
           <template v-else-if="editingBlock.type === 'countdown'">
             <div>
               <label class="block text-sm font-medium mb-1">Label</label>
-              <input v-model="editingBlock.data.label" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+              <input v-model="editingBlock.data.label" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="⏰ Penawaran berakhir dalam:"/>
             </div>
-            <p class="text-sm text-neutral-500">* Waktu countdown diambil dari "Countdown End Date"</p>
+            <div>
+              <label class="block text-sm font-medium mb-1">Countdown Target (Waktu Berakhir)</label>
+              <input v-model="editingBlock.data.end_date" type="datetime-local" class="w-full px-3 py-2 border rounded-lg"/>
+              <p class="text-xs text-neutral-500 mt-1">Jika tidak diisi, akan menggunakan "Countdown End Date" dari pengaturan campaign global.</p>
+            </div>
           </template>
 
           <!-- Benefits Editor -->
