@@ -373,8 +373,8 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
                     subheadline: 'Pahami regulasi impor-ekspor dengan bahasa sederhana. Cocok untuk pemula yang ingin belajar kepabeanan tanpa pusing!',
                     badge: 'WEBINAR GRATIS',
                     button_text: 'Daftar Sekarang — Gratis',
-                    end_date: '2026-02-15T19:00:00+07:00',
-                    speaker_image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+                    end_date: '2026-01-28T19:05:00+07:00',
+                    speaker_image: '/images/Foto Narasumber-Indra Pratama.jpeg',
                     speaker_name: 'Indra Pratama',
                     speaker_title: 'Ex Auditor Bea & Cukai'
                 }
@@ -404,7 +404,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
                     name: 'Indra Pratama',
                     title: 'Ex Auditor Bea & Cukai',
                     bio: 'Berpengalaman lebih dari 10 tahun di bidang kepabeanan. Akan membagikan insight praktis dan tips agar kamu tidak salah langkah saat berurusan dengan Bea & Cukai.',
-                    image_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400',
+                    image_url: '/images/Foto Narasumber-Indra Pratama.jpeg',
                     stats: [
                         { icon: '🕵️', label: '10+ Tahun Pengalaman' },
                         { icon: '📚', label: 'Praktisi Kepabeanan' }
