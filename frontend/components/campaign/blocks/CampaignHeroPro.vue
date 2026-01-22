@@ -120,8 +120,8 @@ const speakerTitle = computed(() => props.block.data.speaker_title || 'Ex Audito
                       <span class="text-white font-medium">{{ displayTime }}</span>
                     </div>
                     <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/10 rounded-xl px-4 py-3">
-                      <span class="text-amber-400">💻</span>
-                      <span class="text-white font-medium">Zoom</span>
+                      <img src="/gmeets_logo.png" alt="Google Meet" class="w-5 h-5 object-contain" />
+                      <span class="text-white font-medium">Google Meet</span>
                     </div>
                   </div>
                   

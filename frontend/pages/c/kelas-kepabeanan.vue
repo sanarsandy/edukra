@@ -176,8 +176,8 @@ const handleRegister = async () => {
           <span class="font-medium text-sm text-neutral-300">19:00 WIB</span>
         </div>
         <div class="flex items-center gap-2 bg-neutral-900/80 border border-neutral-800 px-5 py-2.5 rounded-full backdrop-blur-md hover:border-[#d946ef]/50 transition-colors">
-          <span class="text-[#3b82f6]">📍</span>
-          <span class="font-medium text-sm text-neutral-300">Online via Zoom</span>
+          <img src="/gmeets_logo.png" alt="Google Meet" class="w-5 h-5 object-contain" />
+          <span class="font-medium text-sm text-neutral-300">Google Meet</span>
         </div>
       </div>
 

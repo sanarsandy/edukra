@@ -422,7 +422,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
                         { question: 'Apakah webinar ini benar-benar gratis?', answer: 'Ya, 100% gratis tanpa biaya apa pun.' },
                         { question: 'Apakah pemula boleh ikut?', answer: 'Sangat boleh! Webinar ini memang dirancang untuk pemula.' },
                         { question: 'Apakah dapat sertifikat?', answer: 'Ya, semua peserta akan mendapatkan e-sertifikat.' },
-                        { question: 'Bagaimana cara bergabung?', answer: 'Setelah mendaftar, link Zoom akan dikirim via WhatsApp.' }
+                        { question: 'Bagaimana cara bergabung?', answer: 'Setelah mendaftar, link Google Meet akan dikirim via WhatsApp.' }
                     ]
                 }
             },
@@ -492,7 +492,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
                     items: [
                         { emoji: '📘', title: 'Ebook Gratis', value: 0, description: 'Panduan lengkap untuk pemula' },
                         { emoji: '🚀', title: 'Kelas Online', value: 0, description: 'Belajar intensif selama 4 minggu' },
-                        { emoji: '💬', title: 'Konsultasi 1-on-1', value: 0, description: 'Diskusi privat via Zoom' }
+                        { emoji: '💬', title: 'Konsultasi 1-on-1', value: 0, description: 'Diskusi privat via Google Meet' }
                     ],
                     total_value: 0
                 }
@@ -825,7 +825,7 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
                     title: 'Pilih Paket Coaching',
                     headers: ['Manfaat', 'Group', 'Private Vip'],
                     rows: [
-                        { feature: 'Sesi Zoom Live', val_a: true, val_b: true },
+                        { feature: 'Sesi Google Meet Live', val_a: true, val_b: true },
                         { feature: 'Grup Support WA', val_a: true, val_b: true },
                         { feature: 'Review Bisnis Personal', val_a: false, val_b: true },
                         { feature: 'Akses Direct WA Mentor', val_a: false, val_b: true }

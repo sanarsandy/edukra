@@ -101,7 +101,7 @@ const scrollToForm = () => {
                  <span>⏰</span> {{ displayTime }}
              </div>
               <div class="flex items-center gap-2">
-                 <span>🎥</span> Zoom Meeting
+                 <img src="/gmeets_logo.png" alt="Google Meet" class="w-5 h-5 object-contain" /> Google Meet
              </div>
         </div>
 
