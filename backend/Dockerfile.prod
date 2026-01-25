@@ -25,6 +25,11 @@ FROM alpine:3.19
 
 WORKDIR /app
 
+# Set Timezone to Asia/Jakarta
+ENV TZ=Asia/Jakarta
+RUN apk add --no-cache tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # Install runtime dependencies
 # - ca-certificates, tzdata: standard runtime deps
 # - poppler-utils: for pdftotext (PDF processing in AI Tutor)

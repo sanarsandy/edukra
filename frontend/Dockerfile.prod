@@ -16,6 +16,11 @@ RUN npm run build
 FROM node:22-alpine
 WORKDIR /app
 
+# Set Timezone to Asia/Jakarta
+ENV TZ=Asia/Jakarta
+RUN apk add --no-cache tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 COPY --from=builder /app/.output ./
 RUN mkdir -p /app/server/chunks && ln -s /app/public /app/server/chunks/public
 

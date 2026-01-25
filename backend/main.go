@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -17,6 +18,15 @@ import (
 )
 
 func main() {
+	// Set Global Timezone to Asia/Jakarta
+	loc, err := time.LoadLocation("Asia/Jakarta")
+	if err != nil {
+		log.Printf("Warning: Failed to load Asia/Jakarta timezone: %v", err)
+	} else {
+		time.Local = loc
+		log.Println("Global Timezone set to Asia/Jakarta")
+	}
+
 	// Initialize Database
 	db.Init()
 
