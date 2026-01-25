@@ -25,8 +25,8 @@ FROM alpine:3.19 AS production
 
 WORKDIR /app
 
-# Install runtime dependencies including PDF and video processing tools
-RUN apk add --no-cache ca-certificates tzdata poppler-utils yt-dlp
+# Install runtime dependencies including PDF, video processing and HLS encoding
+RUN apk add --no-cache ca-certificates tzdata poppler-utils yt-dlp ffmpeg
 
 # Create non-root user for security
 RUN addgroup -g 1001 -S appgroup && \
@@ -56,8 +56,8 @@ FROM golang:1.21-alpine AS development
 
 WORKDIR /app
 
-# Install dev tools and PDF/video processing tools
-RUN apk add --no-cache git poppler-utils yt-dlp
+# Install dev tools, PDF/video processing and HLS encoding
+RUN apk add --no-cache git poppler-utils yt-dlp ffmpeg
 
 # Copy go mod files
 COPY go.mod go.sum ./

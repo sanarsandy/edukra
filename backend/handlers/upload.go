@@ -96,8 +96,10 @@ func uploadToMinio(c echo.Context, s *storage.MinioStorage, src io.Reader, objec
 	// Upload to MinIO
 	err := s.Upload(ctx, "", objectName, src, size, contentType)
 	if err != nil {
+		// Log detailed error for debugging
+		fmt.Printf("[UPLOAD ERROR] Failed to upload %s: %v\n", objectName, err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to upload file to storage",
+			"error": fmt.Sprintf("Failed to upload file to storage: %v", err),
 		})
 	}
 

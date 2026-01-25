@@ -99,6 +99,22 @@ export const CAMPAIGN_THEMES: { id: string, name: string, styles: TemplateStyle 
             hasGradient: true,
             fontFamily: 'Poppins'
         }
+    },
+    {
+        id: 'healing_spiritual',
+        name: 'Healing & Spiritual',
+        styles: {
+            primaryColor: '#4a4540', // Warm brown
+            accentColor: '#d4a84c', // Amber gold
+            backgroundColor: '#f5f0e8', // Warm cream
+            buttonColor: '#4a4540',
+            textPrimaryColor: '#4a4540',
+            textSecondaryColor: '#6b635a',
+            buttonStyle: 'solid',
+            borderRadius: 'rounded',
+            hasGradient: false,
+            fontFamily: 'Playfair Display'
+        }
     }
 ]
 
@@ -435,6 +451,126 @@ export const CAMPAIGN_TEMPLATES: CampaignTemplate[] = [
                     headline: 'Amankan Tempatmu Sekarang!',
                     subheadline: 'Kuota terbatas! Daftar gratis dan dapatkan akses penuh ke webinar beserta e-sertifikat.',
                     button_text: 'Daftar Webinar Gratis'
+                }
+            }
+        ]
+    },
+    // P.U.L.I.H Webinar (Healing & Spiritual Theme)
+    {
+        id: 'webinar_healing',
+        name: 'Webinar Healing (P.U.L.I.H Style)',
+        description: 'Template hangat & spiritual untuk webinar healing, self-improvement, dan mindfulness.',
+        category: 'webinar',
+        thumbnail: '🌿',
+        isRigid: true,
+        styles: {
+            primaryColor: '#4a4540', // Warm brown
+            accentColor: '#d4a84c', // Amber gold
+            backgroundColor: '#f5f0e8', // Warm cream
+            buttonColor: '#4a4540',
+            textPrimaryColor: '#4a4540',
+            textSecondaryColor: '#6b635a',
+            buttonStyle: 'solid',
+            borderRadius: 'rounded',
+            hasGradient: false,
+            fontFamily: 'Playfair Display' as any
+        },
+        blocks: [
+            {
+                id: 'hero_healing',
+                type: 'hero_healing',
+                enabled: true,
+                order: 1,
+                data: {
+                    headline: 'P.U.L.I.H',
+                    subheadline: 'Seni Berdamai dengan Luka Batin',
+                    badge: 'FREE WEBINAR',
+                    platform: 'Online via Zoom',
+                    button_text: 'DAFTAR GRATIS SEKARANG',
+                    cta_note: 'Kuota terbatas, amankan tempatmu sekarang!',
+                    end_date: '2025-01-28T19:00:00+07:00'
+                }
+            },
+            {
+                id: 'problem_healing',
+                type: 'problem_healing',
+                enabled: true,
+                order: 2,
+                data: {
+                    eyebrow: 'Apakah kamu merasakan ini?',
+                    headline: 'Bukan Masalah Hari Ini...',
+                    subheadline: 'Tapi luka lama dan pola lama yang kebawa sampai sekarang.',
+                    reflection: '"Ingin pulih, tapi nggak tahu caranya? Atau sudah coba banyak hal, tapi reaksinya tetap berulang?"',
+                    problems: [
+                        { emoji: '😤', title: 'Kepancing Emosi', description: 'Tiba-tiba marah atau sedih tanpa alasan jelas, padahal situasinya biasa saja' },
+                        { emoji: '🌀', title: 'Overthinking', description: 'Pikiran berputar-putar, susah tidur, cemas tentang hal yang belum terjadi' },
+                        { emoji: '🚪', title: 'Nutup Diri', description: 'Menghindari orang lain, susah terbuka, merasa tidak ada yang mengerti' },
+                        { emoji: '⏰', title: 'Prokrastinasi', description: 'Menunda-nunda hal penting, padahal tahu harus dilakukan' }
+                    ]
+                }
+            },
+            {
+                id: 'solution_healing',
+                type: 'solution_healing',
+                enabled: true,
+                order: 3,
+                data: {
+                    eyebrow: 'Di Webinar P.U.L.I.H',
+                    headline: 'Yang Akan Kamu Pelajari',
+                    subheadline: 'Pulih bukan berarti memorinya hilang, tapi sistem operasi mental lo yang di-upgrade.',
+                    key_message: 'Kita akan bahas gimana cara pakai pikiran dewasa lo buat ngerapihin peta mental yang lo pakai hari ini.',
+                    learnings: [
+                        { icon: '🧠', title: 'Upgrade Sistem Operasi Mental', description: 'Pelajari cara menggunakan pikiran dewasa untuk merapikan peta mental yang dipakai hari ini' },
+                        { icon: '🔍', title: 'Kenali Sumber Luka', description: 'Pahami akar masalah dari pola emosi dan perilaku yang terus berulang' },
+                        { icon: '🛠️', title: 'Teknik Praktis Pemulihan', description: 'Dapatkan tools yang bisa langsung dipraktikkan setelah webinar selesai' },
+                        { icon: '🌱', title: 'Langkah Pertama Healing', description: 'Mulai perjalanan pemulihan dengan fondasi yang tepat dan terarah' }
+                    ]
+                }
+            },
+            {
+                id: 'speaker_healing',
+                type: 'speaker_healing',
+                enabled: true,
+                order: 4,
+                data: {
+                    eyebrow: 'Dipandu Oleh',
+                    headline: 'Tentang Instruktur',
+                    name: 'Fransiskus Indra Pratama',
+                    title: 'Coach, Hypnotherapist & Trainer',
+                    bio: 'Seorang Coach, Hypnotherapist dan Trainer dengan ratusan jam pembelajaran dan praktik. Pendekatan kerja mengintegrasikan hipnosis Ericksonian, coaching, NLP dan Neuro-Semantics untuk membantu proses kejelasan, perubahan, dan pengambilan keputusan yang bertanggung jawab.',
+                    credentials: [
+                        'Certified Hypnotherapist (NGH & IACT)',
+                        'Coaching Level 1 ICF',
+                        'Ericksonian Corporate Hypnotherapist',
+                        'Master Neuro-Semantics'
+                    ]
+                }
+            },
+            {
+                id: 'faq_healing',
+                type: 'faq',
+                enabled: true,
+                order: 5,
+                data: {
+                    title: 'Pertanyaan Umum',
+                    items: [
+                        { question: 'Apakah webinar ini benar-benar gratis?', answer: 'Ya, 100% gratis tanpa biaya apa pun.' },
+                        { question: 'Apakah pemula boleh ikut?', answer: 'Sangat boleh! Webinar ini cocok untuk siapa saja yang ingin memulai perjalanan healing.' },
+                        { question: 'Apakah dapat rekaman?', answer: 'Ya, peserta akan mendapatkan akses rekaman selama 7 hari.' },
+                        { question: 'Bagaimana cara bergabung?', answer: 'Setelah mendaftar, link Zoom akan dikirim via email dan WhatsApp.' }
+                    ]
+                }
+            },
+            {
+                id: 'cta_healing',
+                type: 'cta_healing',
+                enabled: true,
+                order: 6,
+                data: {
+                    headline: 'Siap Memulai Perjalanan Pemulihan?',
+                    subheadline: 'Daftar sekarang untuk mengamankan tempatmu di webinar gratis ini.',
+                    button_text: 'DAFTAR GRATIS SEKARANG',
+                    privacy_note: 'Data kamu aman dan tidak akan dibagikan ke pihak lain.'
                 }
             }
         ]

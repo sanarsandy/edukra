@@ -928,7 +928,24 @@
                </div>
                 <div v-else-if="block.type === 'cta_pro'">
                   <CampaignCtaPro :block="block" :styles="form.styles" :campaign-id="campaignId" />
-               </div>
+                </div>
+
+                <!-- Healing Blocks (P.U.L.I.H Theme) -->
+                <div v-else-if="block.type === 'hero_healing'">
+                  <CampaignHeroHealing :block="block" :styles="form.styles" :global-end-date="form.end_date" />
+                </div>
+                <div v-else-if="block.type === 'problem_healing'">
+                  <CampaignProblemHealing :block="block" :styles="form.styles" />
+                </div>
+                <div v-else-if="block.type === 'solution_healing'">
+                  <CampaignSolutionHealing :block="block" :styles="form.styles" />
+                </div>
+                <div v-else-if="block.type === 'speaker_healing'">
+                  <CampaignSpeakerHealing :block="block" :styles="form.styles" />
+                </div>
+                <div v-else-if="block.type === 'cta_healing'">
+                  <CampaignCtaHealing :block="block" :styles="form.styles" :campaign-id="campaignId" />
+                </div>
 
               </div><!-- Close Default Block Templates -->
               </div><!-- Close Block Wrapper -->
@@ -1922,6 +1939,180 @@ img:hover {
                </div>
              </div>
           </template>
+
+          <!-- HEALING BLOCKS EDITORS (P.U.L.I.H Theme) -->
+          
+          <!-- Hero Healing Editor -->
+          <template v-else-if="editingBlock.type === 'hero_healing'">
+            <div>
+              <label class="block text-sm font-medium mb-1">Headline Utama</label>
+              <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="P.U.L.I.H"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Subheadline</label>
+              <input v-model="editingBlock.data.subheadline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Seni Berdamai dengan Luka Batin"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Badge Text</label>
+              <input v-model="editingBlock.data.badge" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="FREE WEBINAR"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Platform</label>
+              <input v-model="editingBlock.data.platform" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Online via Zoom"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Button Text</label>
+              <input v-model="editingBlock.data.button_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="DAFTAR GRATIS SEKARANG"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">CTA Note</label>
+              <input v-model="editingBlock.data.cta_note" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Kuota terbatas, amankan tempatmu sekarang!"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Background Image URL</label>
+              <input v-model="editingBlock.data.image_url" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
+            </div>
+          </template>
+
+          <!-- Problem Healing Editor -->
+          <template v-else-if="editingBlock.type === 'problem_healing'">
+            <div>
+              <label class="block text-sm font-medium mb-1">Eyebrow Text</label>
+              <input v-model="editingBlock.data.eyebrow" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Apakah kamu merasakan ini?"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Headline</label>
+              <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Bukan Masalah Hari Ini..."/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Subheadline</label>
+              <input v-model="editingBlock.data.subheadline" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Reflection Quote</label>
+              <textarea v-model="editingBlock.data.reflection" rows="3" class="w-full px-3 py-2 border rounded-lg"></textarea>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-medium mb-2">Problem Cards</label>
+              <div v-for="(problem, idx) in editingBlock.data.problems" :key="idx" class="p-3 border rounded-lg mb-3 bg-amber-50">
+                <div class="flex gap-2 mb-2">
+                  <input v-model="problem.emoji" type="text" class="w-12 px-2 py-1 border rounded text-center" placeholder="😤"/>
+                  <input v-model="problem.title" type="text" class="flex-1 px-2 py-1 border rounded" placeholder="Title"/>
+                  <button @click="editingBlock.data.problems.splice(idx, 1)" class="text-red-500">✕</button>
+                </div>
+                <textarea v-model="problem.description" rows="2" class="w-full px-2 py-1 border rounded text-sm" placeholder="Description"></textarea>
+              </div>
+              <button @click="editingBlock.data.problems = editingBlock.data.problems || []; editingBlock.data.problems.push({emoji:'❓', title:'', description:''})" class="text-amber-700 text-sm font-medium border border-dashed border-amber-300 w-full py-2 rounded-lg hover:bg-amber-50">+ Add Problem Card</button>
+            </div>
+          </template>
+
+          <!-- Solution Healing Editor -->
+          <template v-else-if="editingBlock.type === 'solution_healing'">
+            <div>
+              <label class="block text-sm font-medium mb-1">Eyebrow Text</label>
+              <input v-model="editingBlock.data.eyebrow" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Di Webinar P.U.L.I.H"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Headline</label>
+              <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Yang Akan Kamu Pelajari"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Subheadline</label>
+              <input v-model="editingBlock.data.subheadline" type="text" class="w-full px-3 py-2 border rounded-lg"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Key Message</label>
+              <textarea v-model="editingBlock.data.key_message" rows="3" class="w-full px-3 py-2 border rounded-lg"></textarea>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-medium mb-2">Learning Points</label>
+              <div v-for="(item, idx) in editingBlock.data.learnings" :key="idx" class="p-3 border rounded-lg mb-3 bg-green-50">
+                <div class="flex gap-2 mb-2">
+                  <input v-model="item.icon" type="text" class="w-12 px-2 py-1 border rounded text-center" placeholder="🧠"/>
+                  <input v-model="item.title" type="text" class="flex-1 px-2 py-1 border rounded" placeholder="Title"/>
+                  <button @click="editingBlock.data.learnings.splice(idx, 1)" class="text-red-500">✕</button>
+                </div>
+                <textarea v-model="item.description" rows="2" class="w-full px-2 py-1 border rounded text-sm" placeholder="Description"></textarea>
+              </div>
+              <button @click="editingBlock.data.learnings = editingBlock.data.learnings || []; editingBlock.data.learnings.push({icon:'✨', title:'', description:''})" class="text-green-700 text-sm font-medium border border-dashed border-green-300 w-full py-2 rounded-lg hover:bg-green-50">+ Add Learning Point</button>
+            </div>
+          </template>
+
+          <!-- Speaker Healing Editor -->
+          <template v-else-if="editingBlock.type === 'speaker_healing'">
+            <div class="p-3 bg-amber-50 rounded-lg border border-amber-200">
+              <h4 class="font-semibold text-amber-800 mb-3">👤 Profil Instruktur</h4>
+              <div>
+                <label class="block text-sm font-medium mb-1">Eyebrow Text</label>
+                <input v-model="editingBlock.data.eyebrow" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Dipandu Oleh"/>
+              </div>
+              <div class="mt-2">
+                <label class="block text-sm font-medium mb-1">Headline</label>
+                <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Tentang Instruktur"/>
+              </div>
+              <div class="mt-2">
+                <label class="block text-sm font-medium mb-1">Nama Instruktur</label>
+                <input v-model="editingBlock.data.name" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Fransiskus Indra Pratama"/>
+              </div>
+              <div class="mt-2">
+                <label class="block text-sm font-medium mb-1">Jabatan / Title</label>
+                <input v-model="editingBlock.data.title" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Coach, Hypnotherapist & Trainer"/>
+              </div>
+              <div class="mt-2">
+                <label class="block text-sm font-medium mb-1">Bio</label>
+                <textarea v-model="editingBlock.data.bio" rows="4" class="w-full px-3 py-2 border rounded-lg"></textarea>
+              </div>
+              <div class="mt-2">
+                <label class="block text-sm font-medium mb-1">Foto Instruktur (URL)</label>
+                <input v-model="editingBlock.data.image_url" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="https://..."/>
+                <p class="text-xs text-neutral-400 mt-1">Recommended: 600x600px (Square/Portrait)</p>
+              </div>
+              <div v-if="editingBlock.data.image_url" class="mt-3">
+                <p class="text-xs text-neutral-500 mb-1">Preview:</p>
+                <img :src="editingBlock.data.image_url" class="w-24 h-24 object-cover rounded-lg border"/>
+              </div>
+            </div>
+            <div class="mt-4">
+              <label class="block text-sm font-medium mb-2">Sertifikasi / Credentials</label>
+              <div v-for="(cred, idx) in editingBlock.data.credentials" :key="idx" class="flex gap-2 mb-2">
+                <input v-model="editingBlock.data.credentials[idx]" type="text" class="flex-1 px-2 py-1 border rounded text-sm" placeholder="Certified Hypnotherapist"/>
+                <button @click="editingBlock.data.credentials.splice(idx, 1)" class="text-red-500">✕</button>
+              </div>
+              <button @click="editingBlock.data.credentials = editingBlock.data.credentials || []; editingBlock.data.credentials.push('')" class="text-amber-700 text-sm font-medium border border-dashed border-amber-300 w-full py-2 rounded-lg hover:bg-amber-50">+ Add Credential</button>
+            </div>
+          </template>
+
+          <!-- CTA Healing Editor -->
+          <template v-else-if="editingBlock.type === 'cta_healing'">
+            <div>
+              <label class="block text-sm font-medium mb-1">Headline</label>
+              <input v-model="editingBlock.data.headline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Siap Memulai Perjalanan Pemulihan?"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Subheadline</label>
+              <input v-model="editingBlock.data.subheadline" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Daftar sekarang untuk mengamankan tempatmu..."/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Button Text</label>
+              <input v-model="editingBlock.data.button_text" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="DAFTAR GRATIS SEKARANG"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Button Color</label>
+              <input v-model="editingBlock.data.button_color" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="#4a4540 or gradient"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">Privacy Note</label>
+              <input v-model="editingBlock.data.privacy_note" type="text" class="w-full px-3 py-2 border rounded-lg" placeholder="Data kamu aman dan tidak akan dibagikan ke pihak lain."/>
+            </div>
+            <div class="p-3 bg-neutral-50 rounded border mt-3">
+              <label class="block text-xs font-bold text-neutral-500 uppercase mb-2">Form Integration</label>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-neutral-600">WhatsApp Notification</span>
+                <span class="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-bold">ACTIVE</span>
+              </div>
+            </div>
+          </template>
+
         </div>
 
         <div class="flex justify-end gap-3 p-4 border-t">
@@ -2044,6 +2235,11 @@ import CampaignHeroPro from '~/components/campaign/blocks/CampaignHeroPro.vue'
 import CampaignSpeakerPro from '~/components/campaign/blocks/CampaignSpeakerPro.vue'
 import CampaignFeaturesPro from '~/components/campaign/blocks/CampaignFeaturesPro.vue'
 import CampaignCtaPro from '~/components/campaign/blocks/CampaignCtaPro.vue'
+import CampaignHeroHealing from '~/components/campaign/blocks/CampaignHeroHealing.vue'
+import CampaignProblemHealing from '~/components/campaign/blocks/CampaignProblemHealing.vue'
+import CampaignSolutionHealing from '~/components/campaign/blocks/CampaignSolutionHealing.vue'
+import CampaignSpeakerHealing from '~/components/campaign/blocks/CampaignSpeakerHealing.vue'
+import CampaignCtaHealing from '~/components/campaign/blocks/CampaignCtaHealing.vue'
 
 interface Course {
   id: string

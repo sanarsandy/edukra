@@ -142,6 +142,13 @@ func EchoServer() *echo.Echo {
 	api.GET("/content/:lessonId/document", handlers.GetSecureDocumentURL)
 	// Stream content directly through backend (bypasses pre-signed URL issues)
 	api.GET("/content/:lessonId/stream", handlers.StreamContent)
+	
+	// HLS Encrypted Video Streaming
+	api.GET("/content/:lessonId/hls/manifest", handlers.GetHLSManifest)
+	api.GET("/content/:lessonId/hls/segment/:filename", handlers.GetHLSSegment)
+	api.GET("/content/:lessonId/hls/key", handlers.GetHLSKey)
+	api.GET("/content/:lessonId/hls/status", handlers.GetHLSStatus)
+	
 	// Public images (thumbnails, etc) - no auth required
 	e.GET("/api/images/:objectKey", handlers.GetPublicImage)
 

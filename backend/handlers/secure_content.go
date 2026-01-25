@@ -295,7 +295,13 @@ func StreamContent(c echo.Context) error {
 	// Set headers for streaming
 	c.Response().Header().Set("Content-Type", info.ContentType)
 	c.Response().Header().Set("Content-Length", fmt.Sprintf("%d", info.Size))
-	c.Response().Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", objectName))
+	
+	// Security headers to prevent easy downloading
+	c.Response().Header().Set("Content-Disposition", "inline") // Force inline, no filename hint
+	c.Response().Header().Set("X-Content-Type-Options", "nosniff")
+	c.Response().Header().Set("Cache-Control", "no-store, no-cache, must-revalidate, private")
+	c.Response().Header().Set("Pragma", "no-cache")
+	c.Response().Header().Set("X-Frame-Options", "SAMEORIGIN")
 	
 	// For video streaming support (range requests)
 	c.Response().Header().Set("Accept-Ranges", "bytes")
@@ -353,6 +359,7 @@ func GetPublicImage(c echo.Context) error {
 	c.Response().Header().Set("Content-Type", info.ContentType)
 	c.Response().Header().Set("Content-Length", fmt.Sprintf("%d", info.Size))
 	c.Response().Header().Set("Cache-Control", "public, max-age=86400") // 1 day cache
+	c.Response().Header().Set("X-Content-Type-Options", "nosniff")
 
 	// Stream the image
 	return c.Stream(http.StatusOK, info.ContentType, obj)

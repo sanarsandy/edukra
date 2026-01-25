@@ -115,7 +115,11 @@
         <!-- Content Preview -->
         <div class="bg-white rounded-xl border border-neutral-200 overflow-hidden">
           <!-- Video Preview -->
-          <div v-if="selectedLesson && selectedLesson.type === 'video'" class="aspect-video flex items-center justify-center relative bg-neutral-900">
+          <div 
+            v-if="selectedLesson && selectedLesson.type === 'video'" 
+            class="aspect-video flex items-center justify-center relative bg-neutral-900 protected-content"
+            @contextmenu.prevent
+          >
             <!-- Embed Video (YouTube, Vimeo, Google Drive, etc) -->
             <template v-if="isEmbedVideo(selectedLesson.videoUrl)">
               <div v-if="!showVideoPlayer" class="text-center text-white cursor-pointer" @click="playVideo">
@@ -126,14 +130,29 @@
                 </div>
                 <p class="text-sm opacity-80">Klik untuk memutar {{ getVideoProviderName(selectedLesson.videoUrl) }}</p>
               </div>
-              <iframe 
-                v-else
-                :src="getEmbedUrl(selectedLesson.videoUrl)"
-                class="w-full h-full"
-                frameborder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowfullscreen
-              ></iframe>
+              <!-- YouTube: Use SecureEmbedPlayer with permanent overlay -->
+              <SecureEmbedPlayer 
+                v-else-if="isYouTubeVideo(selectedLesson.videoUrl) && getYouTubeVideoId(selectedLesson.videoUrl)"
+                :video-id="getYouTubeVideoId(selectedLesson.videoUrl)!"
+                :autoplay="true"
+                @ended="onVideoEnded"
+              />
+              <!-- Other embeds (Vimeo, GDrive, etc): Use iframe with overlay -->
+              <div v-else class="relative w-full h-full">
+                <iframe 
+                  :src="getEmbedUrl(selectedLesson.videoUrl)"
+                  class="w-full h-full"
+                  frameborder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                  allowfullscreen
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
+                ></iframe>
+                <!-- Permanent overlay to block right-click -->
+                <div 
+                  class="absolute inset-0 z-10"
+                  @contextmenu.prevent
+                ></div>
+              </div>
             </template>
             <!-- Direct Video File -->
             <template v-else>
@@ -145,19 +164,36 @@
                 </div>
                 <p class="text-sm opacity-80">Klik untuk memutar video</p>
               </div>
-              <video 
-                v-else
-                ref="videoPlayer"
-                :src="secureVideoUrl || getFileUrl(selectedLesson.videoUrl)"
-                controls
-                class="w-full h-full"
-                @ended="onVideoEnded"
-              ></video>
+              <div v-else class="relative w-full h-full">
+                <video 
+                  ref="videoPlayer"
+                  :src="secureVideoUrl || getFileUrl(selectedLesson.videoUrl)"
+                  controls
+                  controlsList="nodownload noplaybackrate"
+                  disablepictureinpicture
+                  class="w-full h-full"
+                  @ended="onVideoEnded"
+                  @contextmenu.prevent
+                  @playing="videoIsPlaying = true"
+                  @pause="videoIsPlaying = false"
+                ></video>
+                <!-- Watermark Overlay -->
+                <VideoWatermark 
+                  v-if="videoIsPlaying && currentUserEmail"
+                  :user-email="currentUserEmail"
+                  :opacity="0.12"
+                  :rotate-interval="25"
+                />
+              </div>
             </template>
           </div>
 
           <!-- PDF/Document Preview -->
-          <div v-else-if="selectedLesson && (selectedLesson.type === 'pdf' || selectedLesson.type === 'document')" class="aspect-video flex items-center justify-center bg-neutral-100">
+          <div 
+            v-else-if="selectedLesson && (selectedLesson.type === 'pdf' || selectedLesson.type === 'document')" 
+            class="aspect-video flex items-center justify-center bg-neutral-100 protected-content"
+            @contextmenu.prevent
+          >
             <div class="text-center">
               <div class="w-20 h-24 mx-auto mb-4 bg-white rounded-lg shadow-md flex items-center justify-center relative">
                 <svg class="w-10 h-10 text-red-500" viewBox="0 0 24 24" fill="currentColor">
@@ -515,7 +551,7 @@
               </svg>
             </button>
           </div>
-          <div class="flex-1 overflow-y-auto p-6">
+          <div class="flex-1 overflow-y-auto p-6 protected-content" @contextmenu.prevent @copy.prevent>
             <div class="prose max-w-none" v-html="selectedLesson?.content || 'Tidak ada konten'"></div>
           </div>
           <div class="p-4 border-t border-neutral-100 flex justify-end gap-2">
@@ -717,19 +753,55 @@ const isEmbedVideo = (url: string | null | undefined): boolean => {
   return ['youtube', 'vimeo', 'gdrive', 'zoom', 'msstream', 'sharepoint', 'embed'].includes(type)
 }
 
+// Check if it's specifically a YouTube video
+const isYouTubeVideo = (url: string | null | undefined): boolean => {
+  return detectVideoType(url) === 'youtube'
+}
+
+// Extract YouTube video ID from URL
+const getYouTubeVideoId = (url: string): string | null => {
+  // Handle youtube.com/watch?v=VIDEO_ID
+  const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/)
+  if (watchMatch) return watchMatch[1]
+  // Handle youtu.be/VIDEO_ID
+  const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)
+  if (shortMatch) return shortMatch[1]
+  // Handle youtube.com/embed/VIDEO_ID
+  const embedMatch = url.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]+)/)
+  if (embedMatch) return embedMatch[1]
+  // Handle youtube-nocookie.com/embed/VIDEO_ID
+  const nocookieMatch = url.match(/youtube-nocookie\.com\/embed\/([a-zA-Z0-9_-]+)/)
+  if (nocookieMatch) return nocookieMatch[1]
+  return null
+}
+
 const getEmbedUrl = (url: string): string => {
   const type = detectVideoType(url)
   
   switch (type) {
     case 'youtube': {
+      // Security parameters for YouTube embed
+      const ytParams = new URLSearchParams({
+        rel: '0',           // No related videos at end
+        modestbranding: '1', // Minimal YouTube branding
+        disablekb: '1',     // Disable keyboard controls (prevents some URL exposure)
+        iv_load_policy: '3', // Disable annotations
+        playsinline: '1',   // Play inline on mobile
+        cc_load_policy: '0', // Don't show captions by default
+        origin: window?.location?.origin || '' // Security: specify origin
+      }).toString()
+      
       // Handle youtube.com/watch?v=VIDEO_ID
       const watchMatch = url.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/)
-      if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`
+      if (watchMatch) return `https://www.youtube-nocookie.com/embed/${watchMatch[1]}?${ytParams}`
       // Handle youtu.be/VIDEO_ID
       const shortMatch = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/)
-      if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`
-      // Already embed format
-      if (url.includes('/embed/')) return url
+      if (shortMatch) return `https://www.youtube-nocookie.com/embed/${shortMatch[1]}?${ytParams}`
+      // Already embed format - add params if not present
+      if (url.includes('/embed/')) {
+        const hasParams = url.includes('?')
+        return hasParams ? url : `${url}?${ytParams}`
+      }
       return url
     }
     
@@ -839,6 +911,29 @@ const selectedLesson = ref<any>(null)
 // Video
 const showVideoPlayer = ref(false)
 const videoPlayer = ref<HTMLVideoElement | null>(null)
+const videoIsPlaying = ref(false)
+const embedInteractionEnabled = ref(false)
+
+// Enable interaction with embedded video after first click
+const enableEmbedInteraction = () => {
+  embedInteractionEnabled.value = true
+}
+
+// Current user email for watermark
+const currentUserEmail = computed(() => {
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const userData = localStorage.getItem('user')
+      if (userData) {
+        const user = JSON.parse(userData)
+        return user.email || ''
+      }
+    } catch (e) {
+      return ''
+    }
+  }
+  return ''
+})
 
 // Quiz
 const showQuizModal = ref(false)
@@ -1044,6 +1139,7 @@ const playVideo = async () => {
   // For embed videos (YouTube, Vimeo, GDrive), proceed directly
   if (selectedLesson.value && isEmbedVideo(selectedLesson.value.videoUrl)) {
     showVideoPlayer.value = true
+    embedInteractionEnabled.value = false // Reset overlay for new embed
     setTimeout(() => {
       if (selectedLesson.value && !completedLessonIds.value.includes(selectedLesson.value.id)) {
         markLessonComplete()
@@ -1264,4 +1360,34 @@ const getContentTypeBadgeClass = (type: string) => {
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 .slide-up-enter-active, .slide-up-leave-active { transition: all 0.3s ease; }
 .slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translateY(20px); }
+
+/* Content Protection Styles */
+.protected-content {
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+.protected-content img,
+.protected-content video {
+  pointer-events: auto;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Hide download button in video controls */
+video::-webkit-media-controls-download-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  overflow: hidden !important;
+}
+
+/* Prevent picture-in-picture button */
+video::-webkit-media-controls-picture-in-picture-button {
+  display: none !important;
+}
 </style>

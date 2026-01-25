@@ -30,6 +30,11 @@ import CampaignHeroPro from './blocks/CampaignHeroPro.vue'
 import CampaignSpeakerPro from './blocks/CampaignSpeakerPro.vue'
 import CampaignFeaturesPro from './blocks/CampaignFeaturesPro.vue'
 import CampaignCtaPro from './blocks/CampaignCtaPro.vue'
+import CampaignHeroHealing from './blocks/CampaignHeroHealing.vue'
+import CampaignProblemHealing from './blocks/CampaignProblemHealing.vue'
+import CampaignSolutionHealing from './blocks/CampaignSolutionHealing.vue'
+import CampaignSpeakerHealing from './blocks/CampaignSpeakerHealing.vue'
+import CampaignCtaHealing from './blocks/CampaignCtaHealing.vue'
 
 interface Props {
   block: Block
@@ -340,6 +345,39 @@ const handleScrollTo = (target: string) => {
 
     <CampaignCtaPro
       v-else-if="block.type === 'cta_pro'"
+      :block="block"
+      :styles="styles"
+      :campaign-id="campaignId"
+    />
+
+    <!-- Healing Blocks (P.U.L.I.H Theme) -->
+    <CampaignHeroHealing
+      v-else-if="block.type === 'hero_healing'"
+      :block="block"
+      :styles="styles"
+      :global-end-date="endDate"
+    />
+
+    <CampaignProblemHealing
+      v-else-if="block.type === 'problem_healing'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignSolutionHealing
+      v-else-if="block.type === 'solution_healing'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignSpeakerHealing
+      v-else-if="block.type === 'speaker_healing'"
+      :block="block"
+      :styles="styles"
+    />
+
+    <CampaignCtaHealing
+      v-else-if="block.type === 'cta_healing'"
       :block="block"
       :styles="styles"
       :campaign-id="campaignId"

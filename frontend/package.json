@@ -15,6 +15,7 @@
     "@pinia/nuxt": "^0.5.1",
     "@types/dompurify": "^3.0.5",
     "dompurify": "^3.3.1",
+    "hls.js": "^1.5.7",
     "marked": "^17.0.1",
     "nuxt": "^3.10.0",
     "nuxt-icon": "^0.6.0",
