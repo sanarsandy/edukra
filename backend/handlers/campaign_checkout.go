@@ -728,11 +728,15 @@ func handleWebinarOnlyNotification(userID, courseID string) {
 	if user.Phone != nil && *user.Phone != "" {
 		webinar := webinars[0]
 		data := service.WebinarConfirmationData{
+			// Convert to WIB
+			loc := time.FixedZone("WIB", 7*60*60)
+			scheduledAtWIB := webinar.ScheduledAt.In(loc)
+
 			UserName:        user.FullName,
 			UserEmail:       user.Email,
 			WebinarTitle:    webinar.Title,
-			WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
-			WebinarTime:     webinar.ScheduledAt.Format("15:04"),
+			WebinarDate:     scheduledAtWIB.Format("02 January 2006"),
+			WebinarTime:     scheduledAtWIB.Format("15:04") + " WIB",
 			DurationMinutes: webinar.DurationMinutes,
 			LMSUrl:          lmsURL,
 		}
@@ -853,11 +857,15 @@ func handleWebinarOnlyNotificationDirect(userID string, webinarID *string, cours
 	// Send Webinar Confirmation WA
 	if user.Phone != nil && *user.Phone != "" && webinar != nil {
 		data := service.WebinarConfirmationData{
+			// Convert to WIB
+			loc := time.FixedZone("WIB", 7*60*60)
+			scheduledAtWIB := webinar.ScheduledAt.In(loc)
+
 			UserName:        user.FullName,
 			UserEmail:       user.Email,
 			WebinarTitle:    webinar.Title,
-			WebinarDate:     webinar.ScheduledAt.Format("02 January 2006"),
-			WebinarTime:     webinar.ScheduledAt.Format("15:04"),
+			WebinarDate:     scheduledAtWIB.Format("02 January 2006"),
+			WebinarTime:     scheduledAtWIB.Format("15:04") + " WIB",
 			DurationMinutes: webinar.DurationMinutes,
 			LMSUrl:          lmsURL,
 		}
