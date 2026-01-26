@@ -159,6 +159,10 @@ func EchoServer() *echo.Echo {
 	api.GET("/content/:lessonId/hls/key", handlers.GetHLSKey)
 	api.GET("/content/:lessonId/hls/status", handlers.GetHLSStatus)
 	
+	// Secure PDF Viewer (converts PDF to images server-side)
+	api.GET("/content/:lessonId/pdf/pages", handlers.GetPDFPages)
+	api.GET("/content/:lessonId/pdf/page/:pageNum", handlers.GetPDFPageImage)
+	
 	// Public images (thumbnails, etc) - no auth required
 	e.GET("/api/images/:objectKey", handlers.GetPublicImage)
 
