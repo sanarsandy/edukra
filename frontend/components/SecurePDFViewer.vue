@@ -155,8 +155,9 @@
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Set worker source - use CDN for reliability
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs'
+// Get version from the installed package and use matching worker from CDN
+const pdfjsVersion = pdfjsLib.version
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.mjs`
 
 interface Props {
   isOpen: boolean
