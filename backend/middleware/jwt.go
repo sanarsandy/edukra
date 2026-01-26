@@ -21,6 +21,7 @@ func JWTMiddleware() echo.MiddlewareFunc {
 			return new(jwt.MapClaims)
 		},
 		SigningKey: []byte(jwtSecret),
+		TokenLookup: "header:Authorization:Bearer ,query:token",
 		ErrorHandler: func(c echo.Context, err error) error {
 			authHeader := c.Request().Header.Get("Authorization")
 			log.Printf("[JWT] 401 Error on %s: %v | Auth Header: %s", c.Request().URL.Path, err, authHeader)

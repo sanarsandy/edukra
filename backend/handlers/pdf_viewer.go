@@ -231,9 +231,11 @@ func getPDFPageCount(objectName string) (int, error) {
 
 	// Use pdfinfo to get page count
 	cmd := exec.Command("pdfinfo", tmpPath)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	output, err := cmd.Output()
 	if err != nil {
-		return 0, fmt.Errorf("pdfinfo failed: %v", err)
+		return 0, fmt.Errorf("pdfinfo failed: %v, stderr: %s", err, stderr.String())
 	}
 
 	// Parse output for "Pages:" line
@@ -285,8 +287,10 @@ func convertPDFPageToImage(objectName string, pageNum int, watermarkEmail string
 		outputPrefix,
 	)
 	
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
-		return nil, fmt.Errorf("pdftoppm failed: %v", err)
+		return nil, fmt.Errorf("pdftoppm failed: %v, stderr: %s", err, stderr.String())
 	}
 
 	// Find the output file (pdftoppm adds page number suffix)
