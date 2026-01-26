@@ -551,8 +551,15 @@
               </svg>
             </button>
           </div>
-          <div class="flex-1 overflow-y-auto p-6 protected-content" @contextmenu.prevent @copy.prevent>
+          <div class="flex-1 overflow-y-auto p-6 protected-content relative" @contextmenu.prevent @copy.prevent>
             <div class="prose max-w-none" v-html="selectedLesson?.content || 'Tidak ada konten'"></div>
+            <!-- Watermark Overlay for Text Content -->
+            <VideoWatermark 
+              v-if="currentUserEmail"
+              :user-email="currentUserEmail"
+              :opacity="0.08"
+              :rotate-interval="30"
+            />
           </div>
           <div class="p-4 border-t border-neutral-100 flex justify-end gap-2">
             <button 
@@ -589,6 +596,17 @@
     <AIChatWidget 
       v-if="isEnrolled" 
       :course-id="courseId" 
+    />
+
+    <!-- Secure PDF Viewer Modal -->
+    <SecurePDFViewer
+      :is-open="showPdfViewer"
+      :pdf-url="pdfViewerUrl"
+      :title="selectedLesson?.title || 'Dokumen'"
+      :user-email="currentUserEmail"
+      :is-completed="selectedLesson ? completedLessonIds.includes(selectedLesson.id) : false"
+      @close="showPdfViewer = false"
+      @complete="markLessonComplete"
     />
   </div>
 </template>
@@ -946,6 +964,10 @@ const submittingQuiz = ref(false)
 // Text Content
 const showTextModal = ref(false)
 
+// PDF Viewer
+const showPdfViewer = ref(false)
+const pdfViewerUrl = ref('')
+
 // Toast
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
 
@@ -1205,13 +1227,9 @@ const openDocument = async () => {
     docUrl = getFileUrl(selectedLesson.value.videoUrl)
   }
   
-  window.open(docUrl, '_blank')
-  showToast('Membuka dokumen...')
-  
-  // Auto mark as completed after opening
-  if (!completedLessonIds.value.includes(selectedLesson.value.id)) {
-    setTimeout(() => markLessonComplete(), 2000)
-  }
+  // Open in secure PDF viewer modal instead of new tab
+  pdfViewerUrl.value = docUrl
+  showPdfViewer.value = true
 }
 
 // Text Content Functions
