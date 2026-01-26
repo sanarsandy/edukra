@@ -4,7 +4,6 @@
       v-if="isOpen" 
       class="fixed inset-0 z-50 bg-black/90 flex flex-col"
       @contextmenu.prevent
-      @keydown.prevent="handleKeydown"
     >
       <!-- Header -->
       <div class="flex items-center justify-between p-4 bg-neutral-900 border-b border-neutral-800">
@@ -15,54 +14,10 @@
           <span class="text-white font-medium truncate max-w-md">{{ title }}</span>
         </div>
         <div class="flex items-center gap-2">
-          <!-- Page Navigation -->
-          <div class="flex items-center gap-2 mr-4">
-            <button 
-              @click="prevPage" 
-              :disabled="currentPage <= 1"
-              class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-              </svg>
-            </button>
-            <span class="text-neutral-300 text-sm">
-              {{ currentPage }} / {{ totalPages }}
-            </span>
-            <button 
-              @click="nextPage" 
-              :disabled="currentPage >= totalPages"
-              class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-            </button>
-          </div>
-          <!-- Zoom Controls -->
-          <button 
-            @click="zoomOut" 
-            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg"
-            title="Perkecil"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
-            </svg>
-          </button>
-          <span class="text-neutral-300 text-sm min-w-[4rem] text-center">{{ Math.round(scale * 100) }}%</span>
-          <button 
-            @click="zoomIn" 
-            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg"
-            title="Perbesar"
-          >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-          </button>
           <!-- Close Button -->
           <button 
             @click="close" 
-            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg ml-4"
+            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -71,58 +26,64 @@
         </div>
       </div>
 
-      <!-- PDF Canvas Container -->
-      <div 
-        ref="containerRef"
-        class="flex-1 overflow-auto flex items-start justify-center p-4 protected-content"
-        @scroll="onScroll"
-      >
-        <div v-if="loading" class="flex items-center justify-center h-full">
+      <!-- PDF Viewer Container -->
+      <div class="flex-1 relative overflow-hidden protected-content">
+        <!-- Loading State -->
+        <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-black z-10">
           <div class="text-center text-white">
             <div class="animate-spin w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-3"></div>
             <p class="text-sm opacity-80">Memuat dokumen...</p>
           </div>
         </div>
 
-        <div v-else-if="error" class="flex items-center justify-center h-full">
+        <!-- Error State -->
+        <div v-if="error" class="absolute inset-0 flex items-center justify-center bg-black z-10">
           <div class="text-center text-white p-4">
             <svg class="w-12 h-12 mx-auto mb-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
             </svg>
-            <p class="text-sm">{{ error }}</p>
-            <button @click="loadDocument" class="mt-3 px-4 py-2 bg-primary-600 rounded-lg text-sm hover:bg-primary-700 transition-colors">
-              Coba Lagi
-            </button>
+            <p class="text-sm mb-2">{{ error }}</p>
+            <p class="text-xs text-neutral-400 mb-4">Dokumen ini mungkin tidak bisa ditampilkan secara inline.</p>
           </div>
         </div>
 
-        <div v-else class="relative">
-          <canvas ref="canvasRef" class="shadow-2xl"></canvas>
-          
-          <!-- Watermark Overlay -->
-          <div 
-            v-if="userEmail"
-            class="absolute inset-0 pointer-events-none select-none overflow-hidden"
-          >
-            <div 
-              class="watermark-pattern"
-              :style="{ opacity: 0.08 }"
-            >
-              <template v-for="row in 5" :key="row">
-                <div class="watermark-row" :style="{ top: `${row * 20 - 10}%` }">
-                  <template v-for="col in 3" :key="col">
-                    <span 
-                      class="watermark-text"
-                      :style="{ left: `${col * 33 - 16}%` }"
-                    >
-                      {{ maskedEmail }}
-                    </span>
-                  </template>
-                </div>
-              </template>
-            </div>
+        <!-- PDF via iframe (for our own content) or Google Docs Viewer (for external) -->
+        <iframe
+          v-if="viewerUrl"
+          :src="viewerUrl"
+          class="w-full h-full border-0"
+          @load="onIframeLoad"
+          @error="onIframeError"
+          sandbox="allow-scripts allow-same-origin"
+        ></iframe>
+
+        <!-- Watermark Overlay (always on top) -->
+        <div 
+          v-if="userEmail"
+          class="absolute inset-0 pointer-events-none select-none overflow-hidden z-20"
+        >
+          <div class="watermark-pattern" :style="{ opacity: 0.06 }">
+            <template v-for="row in 6" :key="row">
+              <div class="watermark-row" :style="{ top: `${row * 16 - 8}%` }">
+                <template v-for="col in 4" :key="col">
+                  <span 
+                    class="watermark-text"
+                    :style="{ left: `${col * 25 - 12}%` }"
+                  >
+                    {{ maskedEmail }}
+                  </span>
+                </template>
+              </div>
+            </template>
           </div>
         </div>
+
+        <!-- Interaction Blocker Overlay (blocks right-click on iframe) -->
+        <div 
+          class="absolute inset-0 z-10"
+          style="pointer-events: none;"
+          @contextmenu.prevent
+        ></div>
       </div>
 
       <!-- Footer -->
@@ -152,11 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
-
-// Legacy build has worker embedded - no separate worker file needed
-// This is the recommended approach for bundled applications
+import { ref, computed, watch, onUnmounted } from 'vue'
 
 interface Props {
   isOpen: boolean
@@ -176,15 +133,8 @@ const emit = defineEmits<{
   (e: 'complete'): void
 }>()
 
-const containerRef = ref<HTMLDivElement | null>(null)
-const canvasRef = ref<HTMLCanvasElement | null>(null)
-
 const loading = ref(true)
 const error = ref<string | null>(null)
-const pdfDoc = ref<any>(null)
-const currentPage = ref(1)
-const totalPages = ref(0)
-const scale = ref(1.5)
 
 const maskedEmail = computed(() => {
   if (!props.userEmail) return ''
@@ -198,76 +148,34 @@ const maskedEmail = computed(() => {
   return props.userEmail
 })
 
-const loadDocument = async () => {
-  if (!props.pdfUrl) return
+// Determine the viewer URL
+const viewerUrl = computed(() => {
+  if (!props.pdfUrl) return ''
   
-  loading.value = true
+  // For blob URLs (from our backend proxy) - display directly
+  if (props.pdfUrl.startsWith('blob:')) {
+    return props.pdfUrl
+  }
+  
+  // For our own domain URLs - display directly
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  if (props.pdfUrl.startsWith(currentOrigin) || props.pdfUrl.startsWith('/')) {
+    return props.pdfUrl
+  }
+  
+  // For external URLs - use Google Docs Viewer to bypass CORS
+  // This renders the PDF through Google's servers
+  return `https://docs.google.com/viewer?url=${encodeURIComponent(props.pdfUrl)}&embedded=true`
+})
+
+const onIframeLoad = () => {
+  loading.value = false
   error.value = null
-
-  try {
-    const loadingTask = pdfjsLib.getDocument(props.pdfUrl)
-    pdfDoc.value = await loadingTask.promise
-    totalPages.value = pdfDoc.value.numPages
-    await renderPage(currentPage.value)
-  } catch (err) {
-    console.error('Failed to load PDF:', err)
-    error.value = 'Gagal memuat dokumen'
-  } finally {
-    loading.value = false
-  }
 }
 
-const renderPage = async (pageNum: number) => {
-  if (!pdfDoc.value || !canvasRef.value) return
-
-  try {
-    const page = await pdfDoc.value.getPage(pageNum)
-    const viewport = page.getViewport({ scale: scale.value })
-
-    const canvas = canvasRef.value
-    const context = canvas.getContext('2d')
-    
-    canvas.height = viewport.height
-    canvas.width = viewport.width
-
-    const renderContext = {
-      canvasContext: context!,
-      viewport: viewport
-    }
-
-    await page.render(renderContext).promise
-  } catch (err) {
-    console.error('Failed to render page:', err)
-    error.value = 'Gagal menampilkan halaman'
-  }
-}
-
-const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--
-    renderPage(currentPage.value)
-  }
-}
-
-const nextPage = () => {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-    renderPage(currentPage.value)
-  }
-}
-
-const zoomIn = () => {
-  if (scale.value < 3) {
-    scale.value = Math.min(3, scale.value + 0.25)
-    renderPage(currentPage.value)
-  }
-}
-
-const zoomOut = () => {
-  if (scale.value > 0.5) {
-    scale.value = Math.max(0.5, scale.value - 0.25)
-    renderPage(currentPage.value)
-  }
+const onIframeError = () => {
+  loading.value = false
+  error.value = 'Gagal memuat dokumen'
 }
 
 const close = () => {
@@ -278,10 +186,7 @@ const markComplete = () => {
   emit('complete')
 }
 
-const onScroll = () => {
-  // Could implement scroll-based page detection here
-}
-
+// Handle keyboard shortcuts
 const handleKeydown = (e: KeyboardEvent) => {
   // Block print shortcut
   if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
@@ -293,12 +198,8 @@ const handleKeydown = (e: KeyboardEvent) => {
     e.preventDefault()
     return
   }
-  // Navigation
-  if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
-    prevPage()
-  } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
-    nextPage()
-  } else if (e.key === 'Escape') {
+  // Close on escape
+  if (e.key === 'Escape') {
     close()
   }
 }
@@ -306,25 +207,13 @@ const handleKeydown = (e: KeyboardEvent) => {
 // Watch for open state changes
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen) {
-    nextTick(() => {
-      loadDocument()
-      document.addEventListener('keydown', handleKeydown)
-    })
-  } else {
-    document.removeEventListener('keydown', handleKeydown)
-    // Reset state
-    currentPage.value = 1
-    pdfDoc.value = null
     loading.value = true
     error.value = null
-  }
-})
-
-// Watch for URL changes while open
-watch(() => props.pdfUrl, () => {
-  if (props.isOpen) {
-    currentPage.value = 1
-    loadDocument()
+    document.addEventListener('keydown', handleKeydown)
+  } else {
+    document.removeEventListener('keydown', handleKeydown)
+    loading.value = true
+    error.value = null
   }
 })
 
@@ -358,20 +247,20 @@ onUnmounted(() => {
 .watermark-row {
   position: absolute;
   width: 100%;
-  height: 20%;
+  height: 16%;
 }
 
 .watermark-text {
   position: absolute;
-  transform: rotate(-30deg);
-  font-size: 14px;
+  transform: rotate(-25deg);
+  font-size: 13px;
   font-family: monospace;
-  color: #000;
+  color: #333;
   white-space: nowrap;
-  text-shadow: 0 0 1px rgba(255,255,255,0.5);
+  text-shadow: 0 0 2px rgba(255,255,255,0.8);
 }
 
-/* Prevent dev tools inspection (basic) */
+/* Hide when printing */
 @media print {
   .protected-content {
     display: none !important;
