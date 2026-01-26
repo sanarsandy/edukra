@@ -204,10 +204,8 @@ const maskedEmail = computed(() => {
 
 // Get auth token
 const getAuthToken = () => {
-  if (typeof localStorage !== 'undefined') {
-    return localStorage.getItem('token') || ''
-  }
-  return ''
+  const tokenCookie = useCookie('token')
+  return tokenCookie.value || ''
 }
 
 // Current page image URL
