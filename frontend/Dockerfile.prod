@@ -11,6 +11,8 @@ FROM base AS development
 RUN npm run postinstall || true
 
 FROM base AS builder
+# Copy PDF.js worker to public folder for bundling
+RUN cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs public/pdf.worker.min.mjs
 RUN npm run build
 
 FROM node:22-alpine
