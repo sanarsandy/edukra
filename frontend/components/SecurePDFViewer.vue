@@ -153,10 +153,10 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import * as pdfjsLib from 'pdfjs-dist'
+import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 
-// Use local worker file (copied to public/ during postinstall)
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+// Legacy build has worker embedded - no separate worker file needed
+// This is the recommended approach for bundled applications
 
 interface Props {
   isOpen: boolean
