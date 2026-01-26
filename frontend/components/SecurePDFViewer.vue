@@ -54,7 +54,7 @@
           class="w-full h-full border-0"
           @load="onIframeLoad"
           @error="onIframeError"
-          sandbox="allow-scripts allow-same-origin"
+          :sandbox="isExternalUrl ? 'allow-scripts allow-same-origin' : undefined"
         ></iframe>
 
         <!-- Watermark Overlay (always on top) -->
@@ -146,6 +146,16 @@ const maskedEmail = computed(() => {
     return `${maskedLocal}@${domain}`
   }
   return props.userEmail
+})
+
+// Check if external URL (from another domain)
+const isExternalUrl = computed(() => {
+  if (!props.pdfUrl) return false
+  if (props.pdfUrl.startsWith('blob:')) return false
+  if (props.pdfUrl.startsWith('/')) return false
+  
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  return !props.pdfUrl.startsWith(currentOrigin)
 })
 
 // Determine the viewer URL
