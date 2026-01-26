@@ -601,7 +601,7 @@
     <!-- Secure PDF Viewer Modal -->
     <SecurePDFViewer
       :is-open="showPdfViewer"
-      :lesson-id="selectedLesson?.id || ''"
+      :pdf-url="pdfViewerUrl"
       :title="selectedLesson?.title || 'Dokumen'"
       :user-email="currentUserEmail"
       :is-completed="selectedLesson ? completedLessonIds.includes(selectedLesson.id) : false"
@@ -966,6 +966,7 @@ const showTextModal = ref(false)
 
 // PDF Viewer
 const showPdfViewer = ref(false)
+const pdfViewerUrl = ref('')
 
 // Toast
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
@@ -1199,18 +1200,35 @@ const onVideoEnded = () => {
 }
 
 // Document Functions
-const openDocument = () => {
+const openDocument = async () => {
   if (!isEnrolled.value) {
     showToast('Silakan daftar kursus terlebih dahulu', 'error')
     return
   }
   
-  if (!selectedLesson.value) {
-    showToast('Silakan pilih materi terlebih dahulu', 'error')
+  if (!selectedLesson.value?.videoUrl) {
+    showToast('URL dokumen tidak tersedia', 'error')
     return
   }
   
-  // Open secure PDF viewer - server will convert PDF to images
+  let docUrl: string
+  
+  // For MinIO objects, fetch content via backend stream proxy
+  if (isMinioObject(selectedLesson.value.videoUrl)) {
+    // Use blob URL approach - streamed through backend to avoid signature issues
+    const url = await getContentBlobUrl(selectedLesson.value.id)
+    if (!url) {
+      showToast(secureContentError.value || 'Gagal memuat dokumen', 'error')
+      return
+    }
+    docUrl = url
+  } else {
+    // Legacy or direct URL
+    docUrl = getFileUrl(selectedLesson.value.videoUrl)
+  }
+  
+  // Open in secure PDF viewer modal
+  pdfViewerUrl.value = docUrl
   showPdfViewer.value = true
 }
 
