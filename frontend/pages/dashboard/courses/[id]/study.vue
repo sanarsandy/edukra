@@ -255,7 +255,7 @@
                 class="prose prose-neutral max-w-none protected-content relative"
                 @contextmenu.prevent
                 @copy.prevent
-                v-html="currentLesson.content || '<p class=\"text-neutral-500\">Tidak ada konten</p>'"
+                v-html="currentLesson.content || '<p class=text-neutral-500>Tidak ada konten</p>'"
               ></div>
               <!-- Watermark -->
               <VideoWatermark 
