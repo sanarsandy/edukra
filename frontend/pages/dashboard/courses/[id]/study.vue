@@ -357,28 +357,13 @@ const videoPlayer = ref<HTMLVideoElement | null>(null)
 const pdfUrl = ref('')
 const isEnrolled = ref(false)
 const enrollmentData = ref<any>(null)
+const currentUserEmail = ref('')
 
 // Toast
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
 
 definePageMeta({
   layout: false // Fullscreen layout
-})
-
-// Current user email for watermark
-const currentUserEmail = computed(() => {
-  if (typeof localStorage !== 'undefined') {
-    try {
-      const userData = localStorage.getItem('user')
-      if (userData) {
-        const user = JSON.parse(userData)
-        return user.email || ''
-      }
-    } catch (e) {
-      return ''
-    }
-  }
-  return ''
 })
 
 // Building lessons tree
@@ -575,6 +560,17 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
 
 // Initialize
 onMounted(async () => {
+  // Get user email from localStorage (client-side only)
+  try {
+    const userData = localStorage.getItem('user')
+    if (userData) {
+      const user = JSON.parse(userData)
+      currentUserEmail.value = user.email || ''
+    }
+  } catch (e) {
+    // Ignore errors
+  }
+  
   // Fetch course data
   await fetchCourse(courseId.value)
   
