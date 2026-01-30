@@ -180,12 +180,13 @@ definePageMeta({
 const config = useRuntimeConfig()
 const token = useCookie('token')
 
-// Fetch webinars
+// Fetch webinars (server: false to ensure token is available on client)
 const { data, pending, error, refresh } = await useFetch('/api/admin/webinars', {
   baseURL: config.public.apiBase,
   headers: {
     Authorization: `Bearer ${token.value}`
-  }
+  },
+  server: false
 })
 
 const webinars = computed(() => data.value?.webinars || [])

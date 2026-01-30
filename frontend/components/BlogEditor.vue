@@ -274,18 +274,18 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18M10 3v18M14 3v18M3 6a3 3 0 013-3h12a3 3 0 013 3v12a3 3 0 01-3 3H6a3 3 0 01-3-3V6z"/>
             </svg>
           </button>
-          <div v-if="showTableMenu" class="absolute top-full left-0 mt-1 p-2 bg-white rounded-lg shadow-lg border z-20 min-w-[140px]">
+          <div v-if="showTableMenu" @click.stop class="absolute top-full left-0 mt-1 p-2 bg-white rounded-lg shadow-lg border z-20 min-w-[140px]">
             <button @click="insertTable" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Insert Table</button>
             <hr class="my-1">
-            <button @click="editor?.chain().focus().addColumnBefore().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Col Before</button>
-            <button @click="editor?.chain().focus().addColumnAfter().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Col After</button>
-            <button @click="editor?.chain().focus().deleteColumn().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded text-red-600">Delete Column</button>
+            <button @click="addColBefore" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Col Before</button>
+            <button @click="addColAfter" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Col After</button>
+            <button @click="deleteColumn" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded text-red-600">Delete Column</button>
             <hr class="my-1">
-            <button @click="editor?.chain().focus().addRowBefore().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Row Before</button>
-            <button @click="editor?.chain().focus().addRowAfter().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Row After</button>
-            <button @click="editor?.chain().focus().deleteRow().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded text-red-600">Delete Row</button>
+            <button @click="addRowBefore" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Row Before</button>
+            <button @click="addRowAfter" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded">Add Row After</button>
+            <button @click="deleteRow" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded text-red-600">Delete Row</button>
             <hr class="my-1">
-            <button @click="editor?.chain().focus().deleteTable().run()" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded text-red-600">Delete Table</button>
+            <button @click="deleteTable" class="w-full text-left px-2 py-1 text-sm hover:bg-neutral-100 rounded text-red-600">Delete Table</button>
           </div>
         </div>
       </div>
@@ -535,6 +535,41 @@ const addYoutube = () => {
 
 const insertTable = () => {
   editor.value?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  showTableMenu.value = false
+}
+
+const addColBefore = () => {
+  editor.value?.chain().focus().addColumnBefore().run()
+  showTableMenu.value = false
+}
+
+const addColAfter = () => {
+  editor.value?.chain().focus().addColumnAfter().run()
+  showTableMenu.value = false
+}
+
+const deleteColumn = () => {
+  editor.value?.chain().focus().deleteColumn().run()
+  showTableMenu.value = false
+}
+
+const addRowBefore = () => {
+  editor.value?.chain().focus().addRowBefore().run()
+  showTableMenu.value = false
+}
+
+const addRowAfter = () => {
+  editor.value?.chain().focus().addRowAfter().run()
+  showTableMenu.value = false
+}
+
+const deleteRow = () => {
+  editor.value?.chain().focus().deleteRow().run()
+  showTableMenu.value = false
+}
+
+const deleteTable = () => {
+  editor.value?.chain().focus().deleteTable().run()
   showTableMenu.value = false
 }
 

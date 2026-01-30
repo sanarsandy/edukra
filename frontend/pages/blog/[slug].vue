@@ -156,3 +156,114 @@ const getInitials = (name) => {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
 }
 </script>
+
+<style scoped>
+/* Blog content styles for special elements */
+:deep(.prose table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+:deep(.prose th),
+:deep(.prose td) {
+  border: 1px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+:deep(.prose th) {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+:deep(.prose tr:nth-child(even)) {
+  background-color: #f9fafb;
+}
+
+/* Task list */
+:deep(.prose ul[data-type="taskList"]) {
+  list-style: none;
+  padding-left: 0;
+}
+
+:deep(.prose ul[data-type="taskList"] li) {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+:deep(.prose ul[data-type="taskList"] li input[type="checkbox"]) {
+  margin-top: 0.25rem;
+}
+
+/* YouTube embed */
+:deep(.prose iframe) {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 0.75rem;
+  margin: 1.5rem 0;
+}
+
+/* Highlight */
+:deep(.prose mark) {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+/* Subscript & Superscript */
+:deep(.prose sub) {
+  font-size: 0.75em;
+  vertical-align: sub;
+}
+
+:deep(.prose sup) {
+  font-size: 0.75em;
+  vertical-align: super;
+}
+
+/* Blockquote */
+:deep(.prose blockquote) {
+  border-left: 4px solid #6366f1;
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #6b7280;
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+/* Code blocks */
+:deep(.prose pre) {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+:deep(.prose code) {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+  color: #dc2626;
+}
+
+:deep(.prose pre code) {
+  background-color: transparent;
+  padding: 0;
+  color: inherit;
+}
+
+/* Images */
+:deep(.prose img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+  margin: 1.5rem auto;
+}
+</style>
