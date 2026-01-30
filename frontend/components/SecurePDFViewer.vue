@@ -1,5 +1,134 @@
 <template>
-  <Transition name="fade">
+  <!-- Inline Mode: No modal wrapper -->
+  <div 
+    v-if="inlineMode && isOpen" 
+    class="h-full flex flex-col bg-neutral-50"
+    @contextmenu.prevent
+  >
+    <!-- Inline Header -->
+    <div class="flex items-center justify-between px-4 py-2 bg-white border-b border-neutral-200">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 2l5 5h-5V4z"/>
+        </svg>
+        <span class="text-neutral-900 font-medium truncate max-w-md text-sm">{{ title }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <!-- Page Navigation -->
+        <div class="flex items-center gap-2" v-if="totalPages > 0">
+          <button 
+            @click="prevPage" 
+            :disabled="currentPage <= 1"
+            class="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <span class="text-neutral-600 text-xs">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button 
+            @click="nextPage" 
+            :disabled="currentPage >= totalPages"
+            class="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+        
+        <div class="h-4 w-px bg-neutral-200 mx-1"></div>
+        
+        <!-- Zoom Controls -->
+        <button 
+          @click="zoomOut" 
+          :disabled="zoomLevel <= 0"
+          class="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg disabled:opacity-30"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+          </svg>
+        </button>
+        <span class="text-neutral-600 text-xs min-w-[3rem] text-center">{{ zoomOptions[zoomLevel].label }}</span>
+        <button 
+          @click="zoomIn" 
+          :disabled="zoomLevel >= zoomOptions.length - 1"
+          class="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg disabled:opacity-30"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+        </button>
+        <button 
+          @click="fitToWidth" 
+          class="p-1.5 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg"
+          title="Sesuaikan Lebar"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    
+    <!-- PDF Container for Inline Mode -->
+    <div 
+      ref="containerRef"
+      class="flex-1 relative overflow-auto bg-neutral-100 flex justify-center protected-content"
+      :class="loading ? 'items-center' : 'items-start'"
+    >
+      <!-- Loading -->
+      <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10 bg-neutral-100">
+        <div class="text-center text-neutral-600">
+          <div class="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+          <p class="text-sm">Memuat dokumen...</p>
+        </div>
+      </div>
+      
+      <!-- Error -->
+      <div v-else-if="error" class="absolute inset-0 flex items-center justify-center z-10">
+        <div class="text-center text-red-500 p-4">
+          <svg class="w-12 h-12 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <p class="text-sm">{{ error }}</p>
+        </div>
+      </div>
+      
+      <!-- PDF Render -->
+      <div v-show="!loading && !error" class="py-6">
+        <VuePdfEmbed
+          v-if="effectivePdfUrl"
+          ref="pdfEmbed"
+          :source="effectivePdfUrl"
+          :page="currentPage"
+          :width="pdfWidth"
+          @loaded="onLoaded"
+          @rendered="onRendered"
+          @loading-failed="onError"
+        />
+      </div>
+      
+      <!-- Watermark -->
+      <div 
+        v-if="userEmail && !loading && !error" 
+        class="absolute inset-0 pointer-events-none select-none overflow-hidden z-20"
+      >
+        <div class="absolute inset-0 flex items-center justify-center" style="transform: rotate(-30deg);">
+          <div class="flex flex-wrap gap-40 opacity-[0.08]">
+            <span v-for="i in 20" :key="i" class="text-neutral-900 text-sm font-medium whitespace-nowrap">
+              {{ maskedEmail }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal Mode: Original behavior -->
+  <Transition v-else name="fade">
     <div 
       v-if="isOpen" 
       class="fixed inset-0 z-50 bg-black/95 flex flex-col"
@@ -202,11 +331,13 @@ interface Props {
   title?: string
   userEmail?: string
   isCompleted?: boolean
+  inlineMode?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   title: 'Dokumen',
-  isCompleted: false
+  isCompleted: false,
+  inlineMode: false
 })
 
 const emit = defineEmits<{
