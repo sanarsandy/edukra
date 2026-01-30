@@ -364,3 +364,88 @@ func GetPublicImage(c echo.Context) error {
 	// Stream the image
 	return c.Stream(http.StatusOK, info.ContentType, obj)
 }
+
+// ProxyExternalPDF proxies external PDF URLs through the server to bypass CORS restrictions
+// POST /api/content/proxy-pdf
+// Request body: { "url": "https://example.com/document.pdf" }
+func ProxyExternalPDF(c echo.Context) error {
+	// Get user from JWT (must be authenticated)
+	_, _, err := middleware.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	// Parse request body
+	var req struct {
+		URL string `json:"url"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	if req.URL == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "URL is required"})
+	}
+
+	// Validate URL is a valid external URL
+	if !strings.HasPrefix(req.URL, "http://") && !strings.HasPrefix(req.URL, "https://") {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid URL format"})
+	}
+
+	// Security: Only allow PDF files
+	urlLower := strings.ToLower(req.URL)
+	if !strings.Contains(urlLower, ".pdf") && !strings.Contains(urlLower, "application/pdf") {
+		// Allow URLs that might not have .pdf extension but serve PDFs
+		log.Printf("Warning: Proxying URL without .pdf extension: %s", req.URL)
+	}
+
+	// Create HTTP client with timeout
+	client := &http.Client{
+		Timeout: 60 * time.Second,
+	}
+
+	// Create request
+	httpReq, err := http.NewRequest("GET", req.URL, nil)
+	if err != nil {
+		log.Printf("Failed to create request for %s: %v", req.URL, err)
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Failed to create request"})
+	}
+
+	// Set user agent to avoid being blocked
+	httpReq.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	httpReq.Header.Set("Accept", "application/pdf,*/*")
+
+	// Fetch the PDF
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		log.Printf("Failed to fetch PDF from %s: %v", req.URL, err)
+		return c.JSON(http.StatusBadGateway, map[string]string{"error": "Failed to fetch external PDF"})
+	}
+	defer resp.Body.Close()
+
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("External PDF returned status %d for %s", resp.StatusCode, req.URL)
+		return c.JSON(resp.StatusCode, map[string]string{"error": fmt.Sprintf("External server returned status %d", resp.StatusCode)})
+	}
+
+	// Set response headers
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/pdf"
+	}
+	
+	c.Response().Header().Set("Content-Type", contentType)
+	if contentLength := resp.Header.Get("Content-Length"); contentLength != "" {
+		c.Response().Header().Set("Content-Length", contentLength)
+	}
+	
+	// Security headers
+	c.Response().Header().Set("Content-Disposition", "inline")
+	c.Response().Header().Set("X-Content-Type-Options", "nosniff")
+	c.Response().Header().Set("Cache-Control", "private, max-age=3600") // Cache for 1 hour
+	c.Response().Header().Set("X-Frame-Options", "SAMEORIGIN")
+
+	// Stream the PDF
+	return c.Stream(http.StatusOK, contentType, resp.Body)
+}

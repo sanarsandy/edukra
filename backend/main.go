@@ -159,6 +159,9 @@ func EchoServer() *echo.Echo {
 	api.GET("/content/:lessonId/hls/key", handlers.GetHLSKey)
 	api.GET("/content/:lessonId/hls/status", handlers.GetHLSStatus)
 	
+	// External PDF Proxy (bypass CORS for external PDFs)
+	api.POST("/content/proxy-pdf", handlers.ProxyExternalPDF)
+	
 	// Public images (thumbnails, etc) - no auth required
 	e.GET("/api/images/:objectKey", handlers.GetPublicImage)
 

@@ -42,19 +42,32 @@
           <!-- Zoom Controls -->
           <button 
             @click="zoomOut" 
-            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg"
+            :disabled="zoomLevel <= 0"
+            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg disabled:opacity-30"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
             </svg>
           </button>
-          <span class="text-neutral-300 text-sm min-w-[3rem] text-center">{{ Math.round(scale * 100) }}%</span>
+          <span class="text-neutral-300 text-sm min-w-[4rem] text-center">{{ zoomOptions[zoomLevel].label }}</span>
           <button 
             @click="zoomIn" 
-            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg"
+            :disabled="zoomLevel >= zoomOptions.length - 1"
+            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg disabled:opacity-30"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+          </button>
+          
+          <!-- Fit Width Button -->
+          <button 
+            @click="fitToWidth" 
+            class="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-lg ml-2"
+            title="Sesuaikan Lebar"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5"/>
             </svg>
           </button>
 
@@ -71,9 +84,13 @@
       </div>
 
       <!-- PDF Viewer Container -->
-      <div class="flex-1 relative overflow-auto bg-neutral-900 flex justify-center p-8 protected-content">
+      <div 
+        ref="containerRef"
+        class="flex-1 relative overflow-auto bg-neutral-800 flex justify-center protected-content"
+        :class="loading ? 'items-center' : 'items-start'"
+      >
         <!-- Loading State -->
-        <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10">
+        <div v-if="loading" class="absolute inset-0 flex items-center justify-center z-10 bg-neutral-800">
           <div class="text-center text-white">
             <div class="animate-spin w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full mx-auto mb-3"></div>
             <p class="text-sm opacity-80">Memuat dokumen...</p>
@@ -90,17 +107,21 @@
           </div>
         </div>
 
-        <!-- Canvas based PDF Viewer -->
-        <div class="relative shadow-2xl" :style="{ transform: `scale(${scale})`, transformOrigin: 'top center' }">
+        <!-- PDF Viewer with Native Width -->
+        <div 
+          class="relative my-6 shadow-2xl bg-white"
+          :style="{ width: pdfWidth + 'px' }"
+        >
           <ClientOnly>
             <VuePdfEmbed
-              v-if="pdfUrl"
+              v-if="effectivePdfUrl"
               ref="pdfEmbed"
-              :source="pdfUrl"
+              :source="effectivePdfUrl"
               :page="currentPage"
+              :width="pdfWidth"
               @loaded="onLoaded"
               @rendered="onRendered"
-              @load-error="onError"
+              @loading-failed="onError"
             />
           </ClientOnly>
 
@@ -110,12 +131,12 @@
             class="absolute inset-0 pointer-events-none select-none overflow-hidden z-20"
           >
             <div class="watermark-pattern">
-              <template v-for="row in 8" :key="row">
-                <div class="watermark-row" :style="{ top: `${row * 12 - 6}%` }">
-                  <template v-for="col in 5" :key="col">
+              <template v-for="row in 12" :key="row">
+                <div class="watermark-row" :style="{ top: `${row * 8 - 4}%` }">
+                  <template v-for="col in 6" :key="col">
                     <span 
                       class="watermark-text"
-                      :style="{ left: `${col * 20 - 10}%` }"
+                      :style="{ left: `${col * 16 - 8}%` }"
                     >
                       {{ maskedEmail }}
                     </span>
@@ -193,12 +214,97 @@ const emit = defineEmits<{
   (e: 'complete'): void
 }>()
 
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase || 'http://localhost:8080'
+
+// Zoom options with preset widths for better rendering quality
+const zoomOptions = [
+  { label: '50%', width: 400 },
+  { label: '75%', width: 600 },
+  { label: '100%', width: 800 },
+  { label: '125%', width: 1000 },
+  { label: '150%', width: 1200 },
+  { label: '175%', width: 1400 },
+  { label: '200%', width: 1600 },
+]
+
 const loading = ref(true)
 const error = ref<string | null>(null)
 const currentPage = ref(1)
 const totalPages = ref(0)
-const scale = ref(1.2)
+const zoomLevel = ref(3) // Default to 125% (index 3)
 const pdfEmbed = ref(null)
+const containerRef = ref<HTMLElement | null>(null)
+const scale = ref(1.25) // For backward compatibility
+const proxiedPdfUrl = ref<string | null>(null)
+
+// Computed PDF width based on zoom level
+const pdfWidth = computed(() => zoomOptions[zoomLevel.value].width)
+
+// Determine if URL is external (needs proxy)
+const isExternalUrl = (url: string): boolean => {
+  if (!url) return false
+  // External URLs start with http:// or https:// and are not from our domain
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      const urlObj = new URL(url)
+      const currentHost = typeof window !== 'undefined' ? window.location.hostname : ''
+      // If it's from a different domain, it's external
+      return urlObj.hostname !== currentHost && 
+             !url.includes(apiBase) && 
+             !urlObj.hostname.includes('localhost')
+    } catch {
+      return true
+    }
+  }
+  return false
+}
+
+// Get the actual URL to use for the PDF viewer
+const effectivePdfUrl = computed(() => {
+  // If we have a proxied URL (blob), use that
+  if (proxiedPdfUrl.value) return proxiedPdfUrl.value
+  // Otherwise use the original URL
+  return props.pdfUrl
+})
+
+// Fetch external PDF through proxy
+const fetchExternalPdf = async (url: string) => {
+  try {
+    loading.value = true
+    error.value = null
+    
+    // Get auth token
+    const token = localStorage.getItem('token')
+    if (!token) {
+      error.value = 'Sesi login tidak valid. Silakan login ulang.'
+      loading.value = false
+      return
+    }
+    
+    const response = await fetch(`${apiBase}/api/content/proxy-pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ url })
+    })
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData.error || `Failed to fetch PDF (${response.status})`)
+    }
+    
+    // Create blob URL from response
+    const blob = await response.blob()
+    proxiedPdfUrl.value = URL.createObjectURL(blob)
+  } catch (err: any) {
+    console.error('Failed to proxy PDF:', err)
+    error.value = err.message || 'Gagal memuat dokumen PDF eksternal.'
+    loading.value = false
+  }
+}
 
 const maskedEmail = computed(() => {
   if (!props.userEmail) return ''
@@ -243,14 +349,45 @@ const prevPage = () => {
 }
 
 const zoomIn = () => {
-  if (scale.value < 3) scale.value += 0.2
+  if (zoomLevel.value < zoomOptions.length - 1) {
+    zoomLevel.value++
+    scale.value = zoomOptions[zoomLevel.value].width / 800
+  }
 }
 
 const zoomOut = () => {
-  if (scale.value > 0.5) scale.value -= 0.2
+  if (zoomLevel.value > 0) {
+    zoomLevel.value--
+    scale.value = zoomOptions[zoomLevel.value].width / 800
+  }
+}
+
+// Fit PDF to container width
+const fitToWidth = () => {
+  if (containerRef.value) {
+    const containerWidth = containerRef.value.clientWidth - 80 // Account for padding
+    // Find closest zoom level
+    let closestIdx = 0
+    let minDiff = Math.abs(zoomOptions[0].width - containerWidth)
+    
+    for (let i = 1; i < zoomOptions.length; i++) {
+      const diff = Math.abs(zoomOptions[i].width - containerWidth)
+      if (diff < minDiff) {
+        minDiff = diff
+        closestIdx = i
+      }
+    }
+    zoomLevel.value = closestIdx
+    scale.value = zoomOptions[closestIdx].width / 800
+  }
 }
 
 const close = () => {
+  // Cleanup blob URL if created
+  if (proxiedPdfUrl.value) {
+    URL.revokeObjectURL(proxiedPdfUrl.value)
+    proxiedPdfUrl.value = null
+  }
   emit('close')
 }
 
@@ -266,22 +403,45 @@ const handleKeydown = (e: KeyboardEvent) => {
   }
   if (e.key === 'ArrowRight') nextPage()
   if (e.key === 'ArrowLeft') prevPage()
+  if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomIn() }
+  if (e.key === '-') { e.preventDefault(); zoomOut() }
   if (e.key === 'Escape') close()
 }
 
-watch(() => props.isOpen, (isOpen) => {
+watch(() => props.isOpen, async (isOpen) => {
   if (isOpen) {
     document.addEventListener('keydown', handleKeydown)
     // Reset state
     currentPage.value = 1
     loading.value = true
+    error.value = null
+    proxiedPdfUrl.value = null
+    
+    // Check if external URL needs proxy
+    if (props.pdfUrl && isExternalUrl(props.pdfUrl)) {
+      await fetchExternalPdf(props.pdfUrl)
+    }
+    
+    // Auto fit to width on next tick
+    setTimeout(() => {
+      fitToWidth()
+    }, 100)
   } else {
     document.removeEventListener('keydown', handleKeydown)
+    // Cleanup blob URL
+    if (proxiedPdfUrl.value) {
+      URL.revokeObjectURL(proxiedPdfUrl.value)
+      proxiedPdfUrl.value = null
+    }
   }
 })
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  // Cleanup blob URL
+  if (proxiedPdfUrl.value) {
+    URL.revokeObjectURL(proxiedPdfUrl.value)
+  }
 })
 </script>
 
@@ -310,11 +470,12 @@ onUnmounted(() => {
 .watermark-text {
   position: absolute;
   transform: rotate(-25deg);
-  font-size: 14px;
+  font-size: 12px;
   font-family: monospace;
-  color: rgba(0, 0, 0, 0.15); /* More visible watermark */
+  color: rgba(128, 128, 128, 0.25);
   white-space: nowrap;
-  font-weight: bold;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
 @media print {
