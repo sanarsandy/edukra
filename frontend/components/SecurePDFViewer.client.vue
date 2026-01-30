@@ -579,6 +579,27 @@ watch(() => props.isOpen, async (isOpen) => {
   }
 })
 
+// Also watch pdfUrl changes (for inline mode where isOpen is always true)
+watch(() => props.pdfUrl, async (newUrl, oldUrl) => {
+  if (!props.isOpen || !newUrl || newUrl === oldUrl) return
+  
+  // Reset state for new URL
+  currentPage.value = 1
+  loading.value = true
+  error.value = null
+  
+  // Cleanup old proxied URL if any
+  if (proxiedPdfUrl.value) {
+    URL.revokeObjectURL(proxiedPdfUrl.value)
+    proxiedPdfUrl.value = null
+  }
+  
+  // Check if external URL needs proxy
+  if (isExternalUrl(newUrl)) {
+    await fetchExternalPdf(newUrl)
+  }
+}, { immediate: true })
+
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
   // Cleanup blob URL
