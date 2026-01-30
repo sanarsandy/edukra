@@ -264,7 +264,14 @@ const isExternalUrl = (url: string): boolean => {
 const effectivePdfUrl = computed(() => {
   // If we have a proxied URL (blob), use that
   if (proxiedPdfUrl.value) return proxiedPdfUrl.value
-  // Otherwise use the original URL
+  
+  // If this is an external URL and we don't have a proxied URL yet, return null
+  // This prevents pdf.js from trying to fetch the external URL directly
+  if (props.pdfUrl && isExternalUrl(props.pdfUrl)) {
+    return null
+  }
+  
+  // For local/internal URLs, use directly
   return props.pdfUrl
 })
 
