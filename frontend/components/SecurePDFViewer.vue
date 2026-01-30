@@ -1,10 +1,11 @@
 <template>
-  <!-- Inline Mode: No modal wrapper -->
-  <div 
-    v-if="inlineMode && isOpen" 
-    class="h-full flex flex-col bg-neutral-50"
-    @contextmenu.prevent
-  >
+  <div class="secure-pdf-viewer-container">
+    <!-- Inline Mode: No modal wrapper -->
+    <div 
+      v-if="inlineMode && isOpen" 
+      class="h-full flex flex-col bg-neutral-50"
+      @contextmenu.prevent
+    >
     <!-- Inline Header -->
     <div class="flex items-center justify-between px-4 py-2 bg-white border-b border-neutral-200">
       <div class="flex items-center gap-3">
@@ -310,6 +311,7 @@
       </div>
     </div>
   </Transition>
+  </div>
 </template>
 
 <script setup lang="ts">
