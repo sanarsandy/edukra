@@ -211,15 +211,22 @@
             v-else-if="currentLesson.type === 'pdf' || currentLesson.type === 'document'" 
             class="flex-1 bg-neutral-50"
           >
-            <SecurePDFViewer
-              :is-open="true"
-              :pdf-url="pdfUrl"
-              :title="currentLesson.title"
-              :user-email="currentUserEmail"
-              :is-completed="completedLessonIds.includes(currentLesson.id)"
-              :inline-mode="true"
-              @complete="markLessonComplete"
-            />
+            <ClientOnly>
+              <SecurePDFViewer
+                :is-open="true"
+                :pdf-url="pdfUrl"
+                :title="currentLesson.title"
+                :user-email="currentUserEmail"
+                :is-completed="completedLessonIds.includes(currentLesson.id)"
+                :inline-mode="true"
+                @complete="markLessonComplete"
+              />
+              <template #fallback>
+                <div class="flex items-center justify-center h-full">
+                  <div class="animate-spin w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full"></div>
+                </div>
+              </template>
+            </ClientOnly>
           </div>
           
           <!-- Quiz Content -->
