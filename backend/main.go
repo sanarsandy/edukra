@@ -111,6 +111,10 @@ func EchoServer() *echo.Echo {
 	e.GET("/api/public/payment-methods", handlers.GetPaymentMethods) // Public for campaign checkout
 	e.GET("/api/settings", handlers.GetSettings) // Public settings (banner, site info)
 
+	// Public Blog Routes
+	e.GET("/api/blog", handlers.ListBlogPostsPublic)
+	e.GET("/api/blog/:slug", handlers.GetBlogPostBySlug)
+
 	// Public Webinar Routes
 	e.GET("/api/webinars/:id", handlers.GetPublicWebinar)
 	e.GET("/api/courses/:id/webinars", handlers.GetCourseWebinars)
@@ -304,6 +308,16 @@ func EchoServer() *echo.Echo {
 	admin.PUT("/campaigns/:id", handlers.UpdateCampaign)
 	admin.DELETE("/campaigns/:id", handlers.DeleteCampaign)
 	admin.GET("/campaigns/:id/analytics", handlers.GetCampaignAnalytics)
+
+	// Admin Blog Management
+	admin.GET("/blog", handlers.ListBlogPostsAdmin)
+	admin.POST("/blog", handlers.CreateBlogPost)
+	admin.GET("/blog/:id", handlers.GetBlogPostAdmin)
+	admin.PUT("/blog/:id", handlers.UpdateBlogPost)
+	admin.DELETE("/blog/:id", handlers.DeleteBlogPost)
+	admin.GET("/blog-categories", handlers.ListBlogCategories)
+	admin.POST("/blog-categories", handlers.CreateBlogCategory)
+	admin.DELETE("/blog-categories/:id", handlers.DeleteBlogCategory)
 
 	// Admin Quiz Management
 	admin.POST("/lessons/:lessonId/quiz", handlers.CreateQuiz)
