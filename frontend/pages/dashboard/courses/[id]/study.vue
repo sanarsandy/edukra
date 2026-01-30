@@ -327,6 +327,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
