@@ -129,13 +129,20 @@
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-neutral-700 mb-2">URL Gambar</label>
-            <input 
-              v-model="form.thumbnail_url"
-              type="text"
-              class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500"
-              placeholder="https://..."
-            />
+            <label class="block text-sm font-medium text-neutral-700 mb-2">Upload Gambar</label>
+            <div class="relative">
+              <input 
+                type="file"
+                accept="image/*"
+                @change="uploadThumbnail"
+                :disabled="uploadingThumbnail"
+                class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-admin-50 file:text-admin-700 hover:file:bg-admin-100"
+              />
+              <div v-if="uploadingThumbnail" class="absolute right-3 top-1/2 -translate-y-1/2">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-admin-600"></div>
+              </div>
+            </div>
+            <p class="text-xs text-neutral-500 mt-1">Format: JPG, PNG, WebP. Max 10MB.</p>
           </div>
         </div>
 
@@ -179,6 +186,7 @@ const apiBase = config.public.apiBase
 const router = useRouter()
 
 const submitting = ref(false)
+const uploadingThumbnail = ref(false)
 const form = ref({
   title: '',
   slug: '',
@@ -203,7 +211,38 @@ const getThumbnailUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   if (url.startsWith('/uploads')) return `${apiBase}${url}`
-  return `${apiBase}/api/images/${url}`
+  // MinIO object key - use content endpoint for presigned URL
+  return `${apiBase}/api/content/${encodeURIComponent(url)}`
+}
+
+const uploadThumbnail = async (event) => {
+  const file = event.target?.files?.[0]
+  if (!file) return
+  
+  uploadingThumbnail.value = true
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    const token = useCookie('token')
+    const response = await $fetch(`${apiBase}/api/admin/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token.value}`
+      }
+    })
+    
+    if (response?.url || response?.object_key) {
+      form.value.thumbnail_url = response.object_key || response.url
+    }
+  } catch (error) {
+    console.error('Upload error:', error)
+    alert('Gagal mengupload gambar')
+  } finally {
+    uploadingThumbnail.value = false
+    event.target.value = ''
+  }
 }
 
 const submitForm = async () => {
