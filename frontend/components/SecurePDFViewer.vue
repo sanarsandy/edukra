@@ -217,6 +217,9 @@ const emit = defineEmits<{
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase || 'http://localhost:8080'
 
+// Get auth token from cookie (Nuxt way)
+const tokenCookie = useCookie('token')
+
 // Zoom options with preset widths for better rendering quality
 const zoomOptions = [
   { label: '50%', width: 400 },
@@ -281,8 +284,8 @@ const fetchExternalPdf = async (url: string) => {
     loading.value = true
     error.value = null
     
-    // Get auth token
-    const token = localStorage.getItem('token')
+    // Get auth token from cookie
+    const token = tokenCookie.value
     if (!token) {
       error.value = 'Sesi login tidak valid. Silakan login ulang.'
       loading.value = false
