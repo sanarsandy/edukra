@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"lms-backend/internal/domain"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/domain"
 
 	"github.com/jmoiron/sqlx"
 )
