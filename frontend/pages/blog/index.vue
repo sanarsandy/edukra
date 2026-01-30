@@ -143,9 +143,11 @@ const apiBase = config.public.apiBase
 const page = ref(1)
 const perPage = 9
 
-const { data, pending } = await useFetch(`${apiBase}/api/blog`, {
+const { data, pending, error } = await useFetch(`/api/blog`, {
+  baseURL: apiBase,
   query: { page, per_page: perPage },
-  watch: [page]
+  watch: [page],
+  server: false
 })
 
 const posts = computed(() => data.value?.posts || [])

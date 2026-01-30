@@ -88,13 +88,14 @@
           <!-- Content -->
           <div class="bg-white rounded-xl border border-neutral-200 p-6">
             <label class="block text-sm font-medium text-neutral-700 mb-2">Konten Artikel *</label>
-            <textarea 
-              v-model="form.content"
-              rows="15"
-              class="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:ring-2 focus:ring-admin-500 focus:border-admin-500 font-mono text-sm"
-              placeholder="Tulis konten artikel..."
-              required
-            ></textarea>
+            <ClientOnly>
+              <BlogEditor v-model="form.content" placeholder="Tulis konten artikel Anda di sini..." />
+              <template #fallback>
+                <div class="border border-neutral-200 rounded-lg p-6 min-h-[400px] flex items-center justify-center bg-neutral-50">
+                  <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-admin-600"></div>
+                </div>
+              </template>
+            </ClientOnly>
           </div>
         </div>
 

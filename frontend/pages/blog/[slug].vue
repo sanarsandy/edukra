@@ -117,7 +117,10 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
-const { data: post, pending } = await useFetch(`${apiBase}/api/blog/${route.params.slug}`)
+const { data: post, pending, error } = await useFetch(`/api/blog/${route.params.slug}`, {
+  baseURL: apiBase,
+  server: false
+})
 
 // SEO
 useHead(() => ({

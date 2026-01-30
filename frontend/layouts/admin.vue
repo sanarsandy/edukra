@@ -132,6 +132,23 @@
               </NuxtLink>
 
               <NuxtLink 
+                to="/admin/blog" 
+                class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
+                :class="[
+                  isActive('/admin/blog') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white',
+                  sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'
+                ]"
+              >
+                <svg class="w-5 h-5 flex-shrink-0" :class="sidebarCollapsed ? '' : 'mr-3'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                </svg>
+                <span v-if="!sidebarCollapsed">Blog</span>
+                <div v-if="sidebarCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-white text-neutral-900 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
+                  Blog
+                </div>
+              </NuxtLink>
+
+              <NuxtLink 
                 to="/admin/webinars" 
                 class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
                 :class="[
@@ -398,6 +415,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
                   </svg>
                   Campaigns
+                </NuxtLink>
+                <NuxtLink to="/admin/blog" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/blog') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                  </svg>
+                  Blog
                 </NuxtLink>
                 <NuxtLink to="/admin/instructors" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/instructors') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
                   <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

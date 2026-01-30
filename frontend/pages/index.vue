@@ -637,82 +637,6 @@
       </div>
     </section>
 
-    <!-- Blog Section -->
-    <section class="section-padding bg-white">
-      <div class="container-custom">
-        <div class="text-center max-w-3xl mx-auto mb-16">
-          <span class="px-4 py-1.5 rounded-full bg-accent-50 text-accent-600 font-semibold text-sm mb-6 inline-block tracking-wide uppercase">Blog Terbaru</span>
-          <h2 class="text-3xl md:text-4xl font-display font-bold mb-4 text-neutral-900 leading-tight">
-            Tips & Insight untuk Karir Anda
-          </h2>
-          <p class="text-lg text-neutral-600 leading-relaxed">
-            Baca artikel terbaru seputar pembelajaran, pengembangan skill, dan tips karir.
-          </p>
-        </div>
-        
-        <!-- Loading -->
-        <div v-if="loadingBlog" class="flex items-center justify-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        </div>
-        
-        <!-- Blog Posts Grid -->
-        <div v-else-if="blogPosts && blogPosts.length > 0" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <article 
-            v-for="post in blogPosts.slice(0, 3)" 
-            :key="post.id"
-            class="bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-all duration-300 group cursor-pointer"
-            @click="$router.push(`/blog/${post.slug}`)"
-          >
-            <div class="h-48 bg-neutral-100 overflow-hidden">
-              <img 
-                v-if="post.thumbnail_url"
-                :src="getThumbnailUrl(post.thumbnail_url)"
-                :alt="post.title"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center text-neutral-400">
-                <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
-                </svg>
-              </div>
-            </div>
-            <div class="p-6">
-              <div class="flex items-center gap-3 mb-3">
-                <span class="text-xs text-neutral-500">{{ formatBlogDate(post.published_at || post.created_at) }}</span>
-              </div>
-              <h3 class="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
-                {{ post.title }}
-              </h3>
-              <p class="text-neutral-600 text-sm line-clamp-2">
-                {{ post.excerpt || '' }}
-              </p>
-              <div class="mt-4 flex items-center text-primary-600 text-sm font-medium">
-                Baca Selengkapnya
-                <svg class="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-              </div>
-            </div>
-          </article>
-        </div>
-        
-        <!-- Empty State -->
-        <div v-else class="text-center py-12 text-neutral-500">
-          <p>Belum ada artikel. Segera hadir!</p>
-        </div>
-        
-        <!-- View All -->
-        <div v-if="blogPosts && blogPosts.length > 0" class="text-center mt-12">
-          <NuxtLink to="/blog" class="inline-flex items-center px-6 py-3 text-sm font-semibold text-primary-600 bg-primary-50 rounded-xl hover:bg-primary-100 transition-colors">
-            Lihat Semua Artikel
-            <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </NuxtLink>
-        </div>
-      </div>
-    </section>
-
     <!-- CTA Section -->
     <section class="section-padding bg-primary-600 relative overflow-hidden">
       <!-- Background Pattern -->
@@ -763,6 +687,9 @@
         </div>
       </div>
     </section>
+
+    <!-- Blog Slider Section -->
+    <BlogSlider />
 
     <!-- Footer -->
     <footer class="bg-neutral-900 text-neutral-400 py-16">
@@ -907,28 +834,6 @@ const { data: popularCoursesData, pending: loadingCourses, error: errorCourses }
 const popularCourses = computed(() => {
   return popularCoursesData.value?.courses || []
 })
-
-// Fetch Blog Posts for Blog Section
-const { data: blogData, pending: loadingBlog } = useFetch('/api/blog', {
-  baseURL: config.public.apiBase,
-  query: { per_page: 3 },
-  server: false,
-  lazy: true
-})
-
-const blogPosts = computed(() => {
-  return blogData.value?.posts || []
-})
-
-const formatBlogDate = (dateStr: string): string => {
-  if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString('id-ID', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  })
-}
-
 
 // Helper: Check if discount is still active
 const isDiscountActive = (course: any): boolean => {
