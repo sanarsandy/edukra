@@ -138,8 +138,8 @@ const getThumbnailUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
   if (url.startsWith('/uploads')) return `${apiBase}${url}`
-  // MinIO object key - use content endpoint for presigned URL
-  return `${apiBase}/api/content/${encodeURIComponent(url)}`
+  // MinIO object key - use public images endpoint
+  return `${apiBase}/api/images/${encodeURIComponent(url)}`
 }
 
 const formatDate = (dateStr) => {
