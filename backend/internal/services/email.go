@@ -3,6 +3,7 @@ package services
 import (
 	"crypto/tls"
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
@@ -73,9 +74,17 @@ func (s *EmailService) SendWelcomeEmail(to, name string) error {
 
 // SendResetPasswordEmail sends a password reset link
 func (s *EmailService) SendResetPasswordEmail(to, token string) error {
+	// Priority 1: Check database setting
 	frontendURL := getSetting("frontend_url")
+	
+	// Priority 2: Check environment variable (docker-compose / .env)
 	if frontendURL == "" {
-		frontendURL = "http://localhost:3000" // Default
+		frontendURL = os.Getenv("FRONTEND_URL")
+	}
+	
+	// Priority 3: Fallback default
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
 	}
 	
 	// Remove trailing slash if present
