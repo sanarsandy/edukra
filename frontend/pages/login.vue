@@ -103,7 +103,7 @@
           <div>
             <div class="flex items-center justify-between mb-1.5">
               <label for="password" class="block text-sm font-medium text-neutral-700">Password</label>
-              <a href="#" class="text-sm text-success-400 hover:text-success-500">Lupa password?</a>
+              <NuxtLink to="/forgot-password" class="text-sm text-success-400 hover:text-success-500">Lupa password?</NuxtLink>
             </div>
             <input
               id="password"

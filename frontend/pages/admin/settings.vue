@@ -143,6 +143,10 @@
               </label>
             </div>
           </div>
+          
+          <div class="pt-6 border-t border-neutral-100">
+            <button type="button" @click="saveFeatureSettings" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Perubahan' }}</button>
+          </div>
         </div>
 
         <!-- Security Settings -->
@@ -156,7 +160,7 @@
                 <p class="text-xs text-neutral-500">Wajibkan 2FA untuk semua admin</p>
               </div>
               <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" v-model="settings.require2FA" class="sr-only peer">
+                <input type="checkbox" v-model="form.require2FA" class="sr-only peer">
                 <div class="w-11 h-6 bg-neutral-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-admin-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-admin-600"></div>
               </label>
             </div>
@@ -168,6 +172,113 @@
                 type="number" 
                 class="w-32 px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
               />
+            </div>
+          </div>
+          
+          <div class="pt-6 border-t border-neutral-100">
+            <button type="button" @click="saveSecuritySettings" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Perubahan' }}</button>
+          </div>
+        </div>
+        
+        <!-- Email Settings -->
+        <div v-if="activeTab === 'email'" class="bg-white rounded-xl border border-neutral-200 p-6">
+          <h3 class="font-semibold text-neutral-900 mb-6">Konfigurasi Email SMTP</h3>
+          <p class="text-sm text-neutral-500 mb-6">Pengaturan server email untuk notifikasi sistem (Reset Password, Invoice, dll).</p>
+          
+          <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">SMTP Host</label>
+                <input 
+                  v-model="form.smtpHost"
+                  type="text" 
+                  placeholder="smtp.gmail.com"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">SMTP Port</label>
+                <div class="relative">
+                  <input 
+                    v-model.number="form.smtpPort"
+                    type="number" 
+                    placeholder="587"
+                    class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                  />
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <span class="text-xs text-neutral-400">TLS/SSL</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">SMTP Username</label>
+                <input 
+                  v-model="form.smtpUsername"
+                  type="text" 
+                  autocomplete="off"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">SMTP Password</label>
+                <input 
+                  v-model="form.smtpPassword"
+                  type="password" 
+                  autocomplete="new-password"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Pengirim Email (From Email)</label>
+                <input 
+                  v-model="form.smtpFromEmail"
+                  type="email" 
+                  placeholder="noreply@example.com"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-neutral-700 mb-2">Nama Pengirim (From Name)</label>
+                <input 
+                  v-model="form.smtpFromName"
+                  type="text" 
+                  placeholder="Nama Platform Anda"
+                  class="w-full px-4 py-2.5 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+              </div>
+            </div>
+
+            <!-- Test Connection -->
+            <div class="bg-neutral-50 rounded-lg p-4 border border-neutral-100 mt-6">
+              <h4 class="text-sm font-medium text-neutral-900 mb-3">Test Koneksi Email</h4>
+              <div class="flex gap-3">
+                <input 
+                  v-model="testEmailTarget"
+                  type="email" 
+                  placeholder="Masukkan email tujuan test..."
+                  class="flex-1 px-4 py-2 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-admin-500 text-sm"
+                />
+                <button 
+                  type="button" 
+                  @click="testEmail" 
+                  :disabled="testingEmail"
+                  class="px-4 py-2 bg-white border border-neutral-200 text-neutral-700 rounded-lg hover:bg-neutral-50 hover:border-neutral-300 text-sm font-medium transition-colors"
+                >
+                  {{ testingEmail ? 'Mengirim...' : 'Kirim Test Email' }}
+                </button>
+              </div>
+              <p class="text-xs text-neutral-500 mt-2">Pastikan pengaturan di atas sudah disimpan sebelum melakukan test.</p>
+            </div>
+            
+            <div class="pt-6 border-t border-neutral-100 flex items-center justify-between">
+              <span class="text-xs text-neutral-500">Password disimpan terenkripsi</span>
+              <button type="button" @click="saveEmailSettings" :disabled="saving" class="btn-admin">{{ saving ? 'Menyimpan...' : 'Simpan Konfigurasi' }}</button>
             </div>
           </div>
         </div>
@@ -651,6 +762,7 @@ const tabs = [
   { id: 'payment', name: 'Pembayaran', description: 'Gateway pembayaran', icon: 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' },
   { id: 'ai', name: 'AI Tutor', description: 'Konfigurasi AI', icon: 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611l-.932.156a2.25 2.25 0 01-2.585-2.586l.156-.931a2.25 2.25 0 00.598-1.652' },
   { id: 'features', name: 'Fitur', description: 'Toggle fitur', icon: 'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z' },
+  { id: 'email', name: 'Email', description: 'SMTP & Notifikasi', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
   { id: 'security', name: 'Keamanan', description: 'Pengaturan keamanan', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
   { id: 'announcement', name: 'Pengumuman', description: 'Banner informasi', icon: 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z' }
 ]
@@ -663,7 +775,13 @@ const form = ref({
   theme: 'default',
   logo_url: '',
   require2FA: false,
-  sessionTimeout: 30
+  sessionTimeout: 30,
+  smtpHost: '',
+  smtpPort: 587,
+  smtpUsername: '',
+  smtpPassword: '',
+  smtpFromEmail: '',
+  smtpFromName: ''
 })
 
 // Logo upload state
@@ -940,6 +1058,102 @@ const saveThemeSettings = async () => {
   }
 }
 
+const saveFeatureSettings = async () => {
+  saving.value = true
+  try {
+    const featuresJson = JSON.stringify(features.value)
+    const result = await updateSettings({
+      features: featuresJson
+    })
+    
+    if (result) {
+      showToast('Fitur berhasil disimpan')
+    } else {
+      showToast('Gagal menyimpan fitur', 'error')
+    }
+  } catch (err) {
+    console.error('Failed to save features:', err)
+    showToast('Gagal menyimpan fitur', 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+const saveSecuritySettings = async () => {
+  saving.value = true
+  try {
+    const result = await updateSettings({
+      require_2fa: form.value.require2FA,
+      session_timeout: form.value.sessionTimeout
+    })
+    
+    if (result) {
+      showToast('Pengaturan keamanan berhasil disimpan')
+    } else {
+      showToast('Gagal menyimpan pengaturan keamanan', 'error')
+    }
+  } catch (err) {
+    console.error('Failed to save security settings:', err)
+    showToast('Gagal menyimpan pengaturan keamanan', 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+const testingEmail = ref(false)
+const testEmailTarget = ref('')
+
+const saveEmailSettings = async () => {
+  saving.value = true
+  try {
+    const result = await updateSettings({
+      smtp_host: form.value.smtpHost,
+      smtp_port: form.value.smtpPort,
+      smtp_username: form.value.smtpUsername,
+      smtp_password: form.value.smtpPassword,
+      smtp_from_email: form.value.smtpFromEmail,
+      smtp_from_name: form.value.smtpFromName
+    })
+    
+    if (result) {
+      showToast('Pengaturan email berhasil disimpan')
+    } else {
+      showToast('Gagal menyimpan pengaturan email', 'error')
+    }
+  } catch (err) {
+    console.error('Failed to save email settings:', err)
+    showToast('Gagal menyimpan pengaturan email', 'error')
+  } finally {
+    saving.value = false
+  }
+}
+
+const testEmail = async () => {
+  if (!form.value.contact_email && !testEmailTarget.value) {
+    showToast('Masukkan target email test', 'error')
+    return
+  }
+  
+  const target = testEmailTarget.value || form.value.contact_email
+  testingEmail.value = true
+  
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('token')
+    await $fetch(`${config.public.apiBase}/api/admin/settings/test-email`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token.value}` },
+      body: { to_email: target }
+    })
+    showToast(`Test email terkirim ke ${target}`)
+  } catch (err: any) {
+    console.error('Test email failed:', err)
+    showToast(err.data?.error || 'Gagal mengirim email test', 'error')
+  } finally {
+    testingEmail.value = false
+  }
+}
+
 // AI Settings Functions
 const fetchAISettings = async () => {
   try {
@@ -1061,6 +1275,28 @@ onMounted(async () => {
     form.value.contact_email = settings.value.contact_email || ''
     form.value.theme = settings.value.theme || 'default'
     form.value.logo_url = settings.value.logo_url || ''
+    form.value.require2FA = settings.value.require_2fa || false
+    form.value.sessionTimeout = settings.value.session_timeout || 30
+    
+    // Email/SMTP settings
+    form.value.smtpHost = settings.value.smtp_host || ''
+    form.value.smtpPort = settings.value.smtp_port || 587
+    form.value.smtpUsername = settings.value.smtp_username || ''
+    form.value.smtpPassword = settings.value.smtp_password || ''
+    form.value.smtpFromEmail = settings.value.smtp_from_email || settings.value.contact_email || ''
+    form.value.smtpFromName = settings.value.smtp_from_name || settings.value.site_name || ''
+    
+    // Parse features if available
+    if (settings.value.features) {
+      try {
+        const parsedFeatures = JSON.parse(settings.value.features)
+        if (Array.isArray(parsedFeatures) && parsedFeatures.length > 0) {
+          features.value = parsedFeatures
+        }
+      } catch (e) {
+        console.error('Error parsing features settings:', e)
+      }
+    }
   }
 })
 </script>

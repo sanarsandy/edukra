@@ -92,6 +92,8 @@ func EchoServer() *echo.Echo {
 	auth.POST("/login", handlers.Login)
 	auth.POST("/admin/login", handlers.AdminLogin)
 	auth.POST("/instructor/login", handlers.InstructorLogin)
+	auth.POST("/forgot-password", handlers.RequestPasswordReset, customMiddleware.PublicAPIRateLimiter.Middleware())
+	auth.POST("/reset-password", handlers.ResetPassword)
 	auth.GET("/google", handlers.GetGoogleAuthURL)
 	auth.GET("/google/callback", handlers.GoogleAuthCallback)
 
@@ -277,6 +279,7 @@ func EchoServer() *echo.Echo {
 	// Admin Settings
 	admin.GET("/settings", handlers.GetSettings)
 	admin.PUT("/settings", handlers.UpdateSettings)
+	admin.POST("/settings/test-email", handlers.TestSMTP)
 
 	// Admin AI Settings
 	admin.GET("/ai/settings", handlers.GetAISettings)

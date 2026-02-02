@@ -12,6 +12,15 @@ export interface Settings {
     banner_link?: string
     banner_bg_color?: string
     banner_text_color?: string
+    require_2fa?: boolean
+    session_timeout?: number
+    features?: string
+    smtp_host?: string
+    smtp_port?: number
+    smtp_username?: string
+    smtp_password?: string
+    smtp_from_email?: string
+    smtp_from_name?: string
 }
 
 export const useSettings = () => {

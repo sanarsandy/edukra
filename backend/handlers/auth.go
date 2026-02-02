@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"database/sql"
+	"encoding/hex"
+	"fmt"
 	"net/http"
 	"os"
 	"regexp"
@@ -11,6 +14,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
+	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/services"
 	customMiddleware "github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/middleware"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/models"
 	"golang.org/x/crypto/bcrypt"
@@ -429,5 +433,155 @@ func Logout(c echo.Context) error {
 	// Client should delete the token from storage
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "Berhasil logout",
+	})
+}
+
+// generateSecureToken creates a random token for password reset
+// generateSecureToken creates a random token for password reset
+func generateSecureToken(length int) (string, error) {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+// RequestPasswordReset handles password reset requests
+func RequestPasswordReset(c echo.Context) error {
+	type Request struct {
+		Email string `json:"email"`
+	}
+	req := new(Request)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Email required"})
+	}
+
+	// Always return success to prevent email enumeration
+	genericResponse := map[string]string{
+		"message": "If this email is registered, you will receive password reset instructions.",
+	}
+
+	// Check if user exists
+	var userID string
+	err := db.DB.QueryRow("SELECT id FROM users WHERE email = $1", email).Scan(&userID)
+	if err == sql.ErrNoRows {
+		// User not found, return generic success
+		return c.JSON(http.StatusOK, genericResponse)
+	} else if err != nil {
+		fmt.Printf("Error finding user %s: %v\n", email, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "System error"})
+	}
+
+	// Generate secure token
+	token, err := generateSecureToken(32) // 64 hex chars
+	if err != nil {
+		fmt.Printf("Error generating token: %v\n", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to generate token"})
+	}
+
+	// Set expiration (15 minutes)
+	expiry := time.Now().Add(15 * time.Minute)
+
+	// Save token to DB
+	_, err = db.DB.Exec(`
+		UPDATE users 
+		SET reset_password_token = $1, reset_password_expires_at = $2 
+		WHERE id = $3
+	`, token, expiry, userID)
+	
+	if err != nil {
+		fmt.Printf("Error saving token for %s: %v\n", email, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Database error"})
+	}
+
+	// Send email asynchronously
+	go func() {
+		err := services.Email.SendResetPasswordEmail(email, token)
+		if err != nil {
+			fmt.Printf("Failed to send reset email to %s: %v\n", email, err)
+		}
+	}()
+
+	return c.JSON(http.StatusOK, genericResponse)
+}
+
+// ResetPassword handles password reset with token
+func ResetPassword(c echo.Context) error {
+	type Request struct {
+		Token    string `json:"token"`
+		Password string `json:"password"`
+	}
+	req := new(Request)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
+	}
+
+	if req.Token == "" || req.Password == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Token and password required"})
+	}
+
+	// Validate password strength
+	if valid, errMsg := isValidPassword(req.Password); !valid {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": errMsg})
+	}
+
+	// Verify token and get current auth provider
+	var userID string
+	var expiresAt time.Time
+	var authProvider string
+	
+	err := db.DB.QueryRow(`
+		SELECT id, reset_password_expires_at,  COALESCE(auth_provider, 'email')
+		FROM users 
+		WHERE reset_password_token = $1
+	`, req.Token).Scan(&userID, &expiresAt, &authProvider)
+
+	if err == sql.ErrNoRows {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid or expired token"})
+	} else if err != nil {
+		fmt.Printf("Error verifying token: %v\n", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "System error"})
+	}
+
+	if time.Now().After(expiresAt) {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Token expired"})
+	}
+
+	// Hash new password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Printf("Error hashing password: %v\n", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to process password"})
+	}
+
+	// Determine new auth provider status
+	// If currently 'google', switch to 'both' so they can login with password
+	newAuthProvider := authProvider
+	if authProvider == "google" {
+		newAuthProvider = "both"
+	}
+
+	// Update password, clear token, and update auth_provider
+	_, err = db.DB.Exec(`
+		UPDATE users 
+		SET password_hash = $1, 
+			reset_password_token = NULL, 
+			reset_password_expires_at = NULL,
+			auth_provider = $2
+		WHERE id = $3
+	`, string(hashedPassword), newAuthProvider, userID)
+
+	if err != nil {
+		fmt.Printf("Error updating password for user %s: %v\n", userID, err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update password"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Password successfully reset. Please login with your new password.",
 	})
 }
