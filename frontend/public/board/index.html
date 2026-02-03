@@ -116,7 +116,7 @@
 
     <script>
         const { useState, useEffect, useRef, createElement } = React;
-        const { Excalidraw } = ExcalidrawLib;
+        const { Excalidraw, MainMenu } = ExcalidrawLib;
 
         // --- Config & Utils ---
         const urlParams = new URLSearchParams(window.location.search);
@@ -375,7 +375,18 @@
                 viewModeEnabled: IS_READONLY,
                 zenModeEnabled: IS_READONLY,
                 gridModeEnabled: false,
-            });
+            },
+                createElement(MainMenu, null,
+                    createElement(MainMenu.DefaultItems.LoadScene),
+                    createElement(MainMenu.DefaultItems.SaveToActiveFile),
+                    createElement(MainMenu.DefaultItems.Export),
+                    createElement(MainMenu.DefaultItems.Help),
+                    createElement(MainMenu.DefaultItems.ClearCanvas),
+                    createElement(MainMenu.Separator),
+                    createElement(MainMenu.DefaultItems.ToggleTheme),
+                    createElement(MainMenu.DefaultItems.ChangeCanvasBackground)
+                )
+            );
         };
 
         const root = ReactDOM.createRoot(document.getElementById('app'));
