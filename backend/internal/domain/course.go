@@ -22,6 +22,7 @@ type Course struct {
 	Duration           string     `json:"duration"`
 	IsPublished        bool       `json:"is_published"`
 	IsFeatured         bool       `json:"is_featured"`
+	WhiteboardData     *string    `json:"whiteboard_data,omitempty"`
 	CreatedAt          time.Time  `json:"created_at"`
 	UpdatedAt          time.Time  `json:"updated_at"`
 

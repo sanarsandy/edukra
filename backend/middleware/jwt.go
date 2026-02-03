@@ -13,7 +13,10 @@ import (
 func JWTMiddleware() echo.MiddlewareFunc {
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
-		jwtSecret = "secret" // Default for development only
+		log.Fatal("FATAL: JWT_SECRET environment variable is required. Set a secure random string of at least 32 characters.")
+	}
+	if len(jwtSecret) < 32 {
+		log.Fatal("FATAL: JWT_SECRET must be at least 32 characters for security")
 	}
 	
 	config := echojwt.Config{
@@ -22,8 +25,8 @@ func JWTMiddleware() echo.MiddlewareFunc {
 		},
 		SigningKey: []byte(jwtSecret),
 		ErrorHandler: func(c echo.Context, err error) error {
-			authHeader := c.Request().Header.Get("Authorization")
-			log.Printf("[JWT] 401 Error on %s: %v | Auth Header: %s", c.Request().URL.Path, err, authHeader)
+			// Don't log auth headers - security risk
+			log.Printf("[JWT] 401 Error on %s: %v", c.Request().URL.Path, err)
 			return echo.NewHTTPError(401, "Unauthorized")
 		},
 		Skipper: func(c echo.Context) bool {

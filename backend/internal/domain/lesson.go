@@ -8,10 +8,11 @@ import (
 type ContentType string
 
 const (
-	ContentVideo ContentType = "video"
-	ContentPDF   ContentType = "pdf"
-	ContentQuiz  ContentType = "quiz"
-	ContentText  ContentType = "text"
+	ContentVideo      ContentType = "video"
+	ContentPDF        ContentType = "pdf"
+	ContentQuiz       ContentType = "quiz"
+	ContentText       ContentType = "text"
+	ContentExcalidraw ContentType = "excalidraw"
 )
 
 // SecurityLevel represents the content protection level

@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 
 	"github.com/labstack/echo/v4"
@@ -57,8 +58,23 @@ type AIUpdateSettingsRequest struct {
 	SystemPrompt        *string  `json:"system_prompt,omitempty"`
 }
 
-// Simple encryption key - MUST be exactly 32 bytes for AES-256
-var encryptionKey = []byte("ai-settings-key-32-bytes-long!!!")
+// getEncryptionKey returns the encryption key from environment
+// Falls back to JWT_SECRET if ENCRYPTION_KEY is not set
+func getEncryptionKey() []byte {
+	key := os.Getenv("ENCRYPTION_KEY")
+	if key == "" {
+		// Fallback to JWT_SECRET
+		key = os.Getenv("JWT_SECRET")
+	}
+	if key == "" {
+		log.Fatal("FATAL: ENCRYPTION_KEY or JWT_SECRET environment variable is required")
+	}
+	if len(key) < 32 {
+		log.Fatal("FATAL: ENCRYPTION_KEY/JWT_SECRET must be at least 32 characters")
+	}
+	// Use first 32 bytes for AES-256
+	return []byte(key[:32])
+}
 
 // GetAISettings returns AI configuration (admin only)
 func GetAISettings(c echo.Context) error {
@@ -104,14 +120,6 @@ func UpdateAISettings(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request"})
 	}
 
-	// Debug: Log what we received
-	if req.APIKeyGroq != nil {
-		log.Printf("[AI Settings] Received Groq API key: length=%d, value=%s...", len(*req.APIKeyGroq), (*req.APIKeyGroq)[:min(10, len(*req.APIKeyGroq))])
-	}
-	if req.APIKeyOpenAI != nil {
-		log.Printf("[AI Settings] Received OpenAI API key: length=%d", len(*req.APIKeyOpenAI))
-	}
-
 	// Update each setting if provided
 	if req.Enabled != nil {
 		setSettingValue("ai_enabled", boolToString(*req.Enabled))
@@ -155,21 +163,10 @@ func UpdateAISettings(c echo.Context) error {
 		}
 	}
 	if req.APIKeyGroq != nil && *req.APIKeyGroq != "" && !isPlaceholder(*req.APIKeyGroq) {
-		log.Printf("[AI Settings] Groq key passed checks, encrypting...")
 		encrypted, err := encrypt(*req.APIKeyGroq)
-		if err != nil {
-			log.Printf("[AI Settings] Encryption FAILED: %v", err)
-		} else {
-			log.Printf("[AI Settings] Encrypted key length: %d, saving to DB...", len(encrypted))
-			saveErr := setSettingValue("ai_api_key_groq", encrypted)
-			if saveErr != nil {
-				log.Printf("[AI Settings] Save FAILED: %v", saveErr)
-			} else {
-				log.Printf("[AI Settings] Save SUCCESS!")
-			}
+		if err == nil {
+			setSettingValue("ai_api_key_groq", encrypted)
 		}
-	} else if req.APIKeyGroq != nil {
-		log.Printf("[AI Settings] Groq key rejected: empty=%v, isPlaceholder=%v", *req.APIKeyGroq == "", isPlaceholder(*req.APIKeyGroq))
 	}
 	if req.APIKeyGemini != nil && *req.APIKeyGemini != "" && !isPlaceholder(*req.APIKeyGemini) {
 		encrypted, err := encrypt(*req.APIKeyGemini)
@@ -323,7 +320,7 @@ func isPlaceholder(key string) bool {
 }
 
 func encrypt(plaintext string) (string, error) {
-	block, err := aes.NewCipher(encryptionKey)
+	block, err := aes.NewCipher(getEncryptionKey())
 	if err != nil {
 		return "", err
 	}
@@ -348,7 +345,7 @@ func decrypt(encrypted string) (string, error) {
 		return "", err
 	}
 
-	block, err := aes.NewCipher(encryptionKey)
+	block, err := aes.NewCipher(getEncryptionKey())
 	if err != nil {
 		return "", err
 	}

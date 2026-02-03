@@ -2,7 +2,13 @@ export const useApi = () => {
     const config = useRuntimeConfig()
     // useCookie MUST be called at composable top level (synchronous)
     const tokenCookie = useCookie('token')
-    const apiUrl = config.public.apiBase || 'http://localhost:8080'
+
+    // Determine API URL based on environment
+    // Server: Use internal Docker network URL (apiInternal)
+    // Client: Use public URL (apiBase) or proxy
+    const apiUrl = process.server
+        ? (config.apiInternal as string || config.public.apiBase || 'http://localhost:8080')
+        : (config.public.apiBase || 'http://localhost:8080')
 
     const apiFetch = async <T>(
         endpoint: string,
@@ -37,7 +43,7 @@ export const useApi = () => {
                 const isAuthEndpoint = endpoint.includes('/auth/')
                 const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
                 const isLoginPage = currentPath.includes('/login')
-                
+
                 if (!isAuthEndpoint && !isLoginPage && process.client) {
                     tokenCookie.value = null
                     navigateTo('/login')

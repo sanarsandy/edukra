@@ -9,10 +9,12 @@ import (
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/db"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/domain"
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/repository/postgres"
+	customMiddleware "github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/middleware"
 )
 
 var courseRepo *postgres.CourseRepository
 var lessonRepo *postgres.LessonRepository
+var enrollmentRepo *postgres.EnrollmentRepository
 
 func init() {
 	// Repositories will be initialized after DB connection
@@ -22,6 +24,7 @@ func initCourseRepos() {
 	if courseRepo == nil && db.DB != nil {
 		courseRepo = postgres.NewCourseRepository(db.DB)
 		lessonRepo = postgres.NewLessonRepository(db.DB)
+		enrollmentRepo = postgres.NewEnrollmentRepository(db.DB)
 	}
 }
 
@@ -293,4 +296,101 @@ func PublishCourse(c echo.Context) error {
 	}
 	
 	return c.JSON(http.StatusOK, course)
+}
+
+// GetCourseWhiteboard returns the whiteboard data for a course (protected)
+func GetCourseWhiteboard(c echo.Context) error {
+	initCourseRepos()
+
+	userID, role, err := customMiddleware.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	isAdmin := role == "admin"
+	courseID := c.Param("id")
+
+	// 1. Check if course exists
+	course, err := courseRepo.GetByID(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch course"})
+	}
+	if course == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Course not found"})
+	}
+
+	// 2. Access Control: Instructor (Owner) OR Enrolled Student
+	isInstructor := course.InstructorID != nil && *course.InstructorID == userID
+	isEnrolled := false
+	
+	// Check enrollment
+	enrollment, err := enrollmentRepo.GetByUserAndCourse(userID, courseID)
+	if err == nil && enrollment != nil {
+		isEnrolled = true
+	}
+
+	if !isInstructor && !isEnrolled && !isAdmin {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "You must be enrolled to view this content"})
+	}
+
+	// 3. Fetch Data
+	data, err := courseRepo.GetWhiteboard(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch whiteboard data"})
+	}
+
+	content := ""
+	if data != nil {
+		content = *data
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"data": content})
+}
+
+// UpdateCourseWhiteboard updates the whiteboard data for a course (Instructor or Admin)
+func UpdateCourseWhiteboard(c echo.Context) error {
+	initCourseRepos()
+
+	userID, role, err := customMiddleware.GetUserFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "Unauthorized"})
+	}
+
+	courseID := c.Param("id")
+
+	// Verify ownership
+	course, err := courseRepo.GetByID(courseID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to fetch course"})
+	}
+	if course == nil {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "Course not found"})
+	}
+	
+	isAdmin := role == "admin"
+	isInstructor := course.InstructorID != nil && *course.InstructorID == userID
+
+	if !isInstructor && !isAdmin {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "You are not authorized to edit this course"})
+	}
+
+	var req struct {
+		Data *string `json:"data"`
+	}
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid request body"})
+	}
+	
+	val := ""
+	if req.Data != nil {
+		val = *req.Data
+	}
+
+	// Update only the whiteboard data
+	err = courseRepo.UpdateWhiteboard(courseID, val)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Failed to update whiteboard"})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Whiteboard updated successfully"})
 }

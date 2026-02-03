@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Whiteboard Editor - EDUKRA</title>
+    <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@excalidraw/excalidraw@0.17.3/dist/excalidraw.production.min.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+        }
+
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ccc;
+        }
+
+        .dot.saving {
+            background: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+
+        .dot.saved {
+            background: #10b981;
+        }
+
+        .dot.unsaved {
+            background: #f59e0b;
+        }
+
+        .dot.error {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .save-btn {
+            padding: 6px 16px;
+            background: #7c3aed;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-left: 8px;
+            transition: background 0.2s;
+        }
+
+        .save-btn:hover {
+            background: #6d28d9;
+        }
+
+        .save-btn:disabled {
+            background: #a78bfa;
+            cursor: not-allowed;
+        }
+
+        .save-btn.saving {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="save-status" class="save-indicator" style="display: none;">
+        <div id="status-dot" class="dot"></div>
+        <span id="status-text">Ready</span>
+        <button id="save-btn" class="save-btn" style="display: none;">Save (Ctrl+S)</button>
+    </div>
+    <div id="app"></div>
+
+    <script>
+        const { useState, useEffect, useRef, createElement } = React;
+        const { Excalidraw } = ExcalidrawLib;
+
+        // --- Config & Utils ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const COURSE_ID = urlParams.get('id');
+        const IS_READONLY = urlParams.get('view') === 'readonly';
+
+        // Dynamic API URL based on environment
+        const API_BASE = (() => {
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                return 'http://localhost:8080/api';
+            }
+            // Production: use same origin
+            return `${window.location.origin}/api`;
+        })();
+
+        // Token management - read from cookies/localStorage (secure for new tab)
+        // Priority: 1. Cookie 'token', 2. localStorage, 3. postMessage, 4. URL (deprecated)
+        let AUTH_TOKEN = null;
+
+        // Helper to get cookie by name
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Try to get token from cookie first (Nuxt uses 'token' cookie)
+        const cookieToken = getCookie('token');
+        if (cookieToken) {
+            AUTH_TOKEN = cookieToken;
+            console.log('[Whiteboard] Auth token loaded from cookie');
+        }
+
+        // Fallback: try localStorage (in case app stores token there)
+        if (!AUTH_TOKEN) {
+            try {
+                const storedToken = localStorage.getItem('token');
+                if (storedToken) {
+                    AUTH_TOKEN = storedToken;
+                    console.log('[Whiteboard] Auth token loaded from localStorage');
+                }
+            } catch (e) {
+                // localStorage might not be available
+            }
+        }
+
+        // Fallback: URL token (deprecated, show warning)
+        const urlToken = urlParams.get('token');
+        if (!AUTH_TOKEN && urlToken) {
+            console.warn('[Whiteboard] WARNING: Using token from URL is insecure and deprecated!');
+            AUTH_TOKEN = urlToken;
+        }
+
+        // Also listen for postMessage (for iframe embedding if used)
+        window.addEventListener('message', (event) => {
+            const allowedOrigins = [window.location.origin, 'http://localhost:3000'];
+            if (!allowedOrigins.includes(event.origin)) return;
+
+            if (event.data && event.data.type === 'AUTH_TOKEN') {
+                AUTH_TOKEN = event.data.token;
+                console.log('[Whiteboard] Received auth token via postMessage');
+                window.dispatchEvent(new CustomEvent('token-received'));
+            }
+        });
+
+        // Signal to parent that we're ready (for iframe use)
+        if (window.parent !== window) {
+            window.parent.postMessage({ type: 'WHITEBOARD_READY', courseId: COURSE_ID }, '*');
+        }
+
+        const App = () => {
+            const [initialData, setInitialData] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [saveStatus, setSaveStatus] = useState('ready');
+            const [tokenReady, setTokenReady] = useState(!!AUTH_TOKEN);
+            const excalidrawRef = useRef(null);
+
+            // Listen for token received event
+            useEffect(() => {
+                const handleTokenReceived = () => setTokenReady(true);
+                window.addEventListener('token-received', handleTokenReceived);
+                return () => window.removeEventListener('token-received', handleTokenReceived);
+            }, []);
+
+            // --- API: Fetch Whiteboard ---
+            useEffect(() => {
+                if (!tokenReady && !urlToken) {
+                    // Wait a bit for postMessage token
+                    const timeout = setTimeout(() => {
+                        if (!AUTH_TOKEN) {
+                            console.error('[Whiteboard] No auth token received');
+                            setSaveStatus('error');
+                            setLoading(false);
+                        }
+                    }, 3000);
+                    return () => clearTimeout(timeout);
+                }
+
+                const fetchWhiteboard = async () => {
+                    try {
+                        const headers = {};
+                        if (AUTH_TOKEN) headers['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+
+                        const res = await fetch(`${API_BASE}/courses/${COURSE_ID}/whiteboard`, { headers });
+                        if (!res.ok) throw new Error('Failed to load whiteboard');
+
+                        const data = await res.json();
+                        if (data.data) {
+                            try {
+                                const parsed = JSON.parse(data.data);
+                                setInitialData(parsed);
+                            } catch (e) {
+                                console.warn("[Whiteboard] Content was not JSON, starting empty");
+                            }
+                        }
+                    } catch (err) {
+                        console.error('[Whiteboard] Fetch error:', err);
+                        setSaveStatus('error');
+                        document.getElementById('status-text').innerText = "Error loading data";
+                        document.getElementById('status-dot').className = "dot error";
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+
+                if (COURSE_ID && (AUTH_TOKEN || tokenReady)) fetchWhiteboard();
+            }, [tokenReady]);
+
+            // --- Manual Save System ---
+            const pendingContentRef = useRef(null);
+            const lastSavedContentRef = useRef(null);
+            const isSavingRef = useRef(false);
+
+            // Save function
+            const doSave = async () => {
+                if (isSavingRef.current || !pendingContentRef.current) return;
+                if (pendingContentRef.current === lastSavedContentRef.current) return;
+
+                isSavingRef.current = true;
+                setSaveStatus('saving');
+
+                try {
+                    const headers = { 'Content-Type': 'application/json' };
+                    if (AUTH_TOKEN) headers['Authorization'] = `Bearer ${AUTH_TOKEN}`;
+
+                    const res = await fetch(`${API_BASE}/courses/${COURSE_ID}/whiteboard`, {
+                        method: 'PUT',
+                        headers,
+                        body: JSON.stringify({ data: pendingContentRef.current })
+                    });
+
+                    if (!res.ok) throw new Error('Save failed');
+
+                    lastSavedContentRef.current = pendingContentRef.current;
+                    setSaveStatus('saved');
+                } catch (err) {
+                    console.error('[Whiteboard] Save error:', err);
+                    setSaveStatus('error');
+                } finally {
+                    isSavingRef.current = false;
+                }
+            };
+
+            // Track changes (no auto-save, just mark as unsaved)
+            const handleChange = (elements, appState, files) => {
+                if (IS_READONLY || loading) return;
+
+                const contentToSave = JSON.stringify({
+                    elements,
+                    appState: { ...appState, collaborators: [] },
+                    files
+                });
+
+                pendingContentRef.current = contentToSave;
+
+                // Check if there are unsaved changes
+                if (contentToSave !== lastSavedContentRef.current) {
+                    setSaveStatus('unsaved');
+                }
+            };
+
+            // Setup keyboard shortcut and save button
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        doSave();
+                    }
+                };
+
+                const saveBtn = document.getElementById('save-btn');
+                if (saveBtn && !IS_READONLY) {
+                    saveBtn.style.display = 'block';
+                    saveBtn.onclick = doSave;
+                }
+
+                document.addEventListener('keydown', handleKeyDown);
+
+                // Warn user about unsaved changes when closing
+                const handleBeforeUnload = (e) => {
+                    if (pendingContentRef.current && pendingContentRef.current !== lastSavedContentRef.current) {
+                        e.preventDefault();
+                        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                        return e.returnValue;
+                    }
+                };
+                window.addEventListener('beforeunload', handleBeforeUnload);
+
+                return () => {
+                    document.removeEventListener('keydown', handleKeyDown);
+                    window.removeEventListener('beforeunload', handleBeforeUnload);
+                };
+            }, []);
+
+            // --- UI Helper for Status ---
+            useEffect(() => {
+                const el = document.getElementById('save-status');
+                const dot = document.getElementById('status-dot');
+                const text = document.getElementById('status-text');
+                const btn = document.getElementById('save-btn');
+
+                if (IS_READONLY) return;
+
+                el.style.display = 'flex';
+                if (saveStatus === 'saving') {
+                    dot.className = 'dot saving';
+                    text.innerText = 'Saving...';
+                    if (btn) { btn.disabled = true; btn.className = 'save-btn saving'; }
+                } else if (saveStatus === 'saved') {
+                    dot.className = 'dot saved';
+                    text.innerText = 'All changes saved';
+                    if (btn) { btn.disabled = true; btn.className = 'save-btn'; }
+                } else if (saveStatus === 'unsaved') {
+                    dot.className = 'dot unsaved';
+                    text.innerText = 'Unsaved changes';
+                    if (btn) { btn.disabled = false; btn.className = 'save-btn'; }
+                } else if (saveStatus === 'error') {
+                    dot.className = 'dot error';
+                    text.innerText = 'Error saving';
+                    if (btn) { btn.disabled = false; btn.className = 'save-btn'; }
+                } else {
+                    dot.className = 'dot';
+                    text.innerText = 'Ready';
+                    if (btn) { btn.disabled = true; btn.className = 'save-btn'; }
+                }
+            }, [saveStatus]);
+
+            if (loading) return createElement('div', { style: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' } }, 'Loading whiteboard...');
+
+            return createElement(Excalidraw, {
+                ref: excalidrawRef,
+                initialData: initialData,
+                onChange: handleChange,
+                viewModeEnabled: IS_READONLY,
+                zenModeEnabled: IS_READONLY,
+                gridModeEnabled: false,
+            });
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('app'));
+        root.render(createElement(App));
+    </script>
+</body>
+
+</html>

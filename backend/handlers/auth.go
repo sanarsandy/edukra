@@ -26,6 +26,16 @@ func isValidEmail(email string) bool {
 	return re.MatchString(email)
 }
 
+// getJWTSecretBytes returns the JWT signing key from environment
+// Panics if not configured - this is intentional for security
+func getJWTSecretBytes() []byte {
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		panic("FATAL: JWT_SECRET environment variable is required")
+	}
+	return []byte(jwtSecret)
+}
+
 // isValidPassword checks password strength
 // Requirements: min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char
 func isValidPassword(password string) (bool, string) {
@@ -300,11 +310,6 @@ func InstructorLogin(c echo.Context) error {
 
 // generateInstructorToken creates a JWT token for instructor users
 func generateInstructorToken(userID, email, role string) (string, error) {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "secret"
-	}
-
 	claims := jwt.MapClaims{
 		"user_id":       userID,
 		"email":         email,
@@ -316,16 +321,11 @@ func generateInstructorToken(userID, email, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(jwtSecret))
+	return token.SignedString(getJWTSecretBytes())
 }
 
 // generateToken creates a JWT token for regular users
 func generateToken(userID, email, role string) (string, error) {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "secret" // Default for development only
-	}
-
 	claims := jwt.MapClaims{
 		"user_id":     userID,
 		"email":       email,
@@ -336,16 +336,11 @@ func generateToken(userID, email, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(jwtSecret))
+	return token.SignedString(getJWTSecretBytes())
 }
 
 // generateAdminToken creates a JWT token for admin users with longer expiry
 func generateAdminToken(userID, email, role string) (string, error) {
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "secret" // Default for development only
-	}
-
 	claims := jwt.MapClaims{
 		"user_id":     userID,
 		"email":       email,
@@ -357,7 +352,7 @@ func generateAdminToken(userID, email, role string) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(jwtSecret))
+	return token.SignedString(getJWTSecretBytes())
 }
 
 // RefreshToken refreshes an existing token

@@ -32,6 +32,16 @@
           </svg>
           Tambah Materi
         </button>
+        <a 
+          :href="`/board/?id=${courseId}`" 
+          target="_blank"
+          class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          Whiteboard
+        </a>
       </div>
     </div>
 
@@ -658,6 +668,7 @@ definePageMeta({
 
 const route = useRoute()
 const courseId = computed(() => route.params.id as string)
+const token = useCookie('token')
 
 useHead({
   title: 'Materi Kursus - Admin'
@@ -685,6 +696,8 @@ const showDeleteModal = ref(false)
 const showViewModal = ref(false)
 const showQuizModal = ref(false)
 const showQuestionModal = ref(false)
+const showWhiteboardModal = ref(false)
+const whiteboardIframeRef = ref<HTMLIFrameElement | null>(null)
 const isFullscreen = ref(false)
 const isEditing = ref(false)
 const selectedLesson = ref<any>(null)
@@ -693,6 +706,22 @@ const editingQuestion = ref<any>(null)
 const selectedLessonForQuiz = ref<any>(null)
 const saving = ref(false)
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
+
+// Whiteboard functions
+const openWhiteboard = () => {
+  showWhiteboardModal.value = true
+}
+
+const onWhiteboardIframeLoad = () => {
+  // Send token securely via postMessage
+  if (whiteboardIframeRef.value && token.value) {
+    whiteboardIframeRef.value.contentWindow?.postMessage(
+      { type: 'AUTH_TOKEN', token: token.value },
+      window.location.origin
+    )
+  }
+}
+
 
 // Secure Content for MinIO
 const { 

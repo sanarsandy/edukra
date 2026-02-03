@@ -11,7 +11,6 @@ import (
 	"github.com/lman-kadiv-doti/secure-whitelabel-lms/backend/internal/repository/postgres"
 )
 
-var enrollmentRepo *postgres.EnrollmentRepository
 
 func initEnrollmentRepos() {
 	if enrollmentRepo == nil && db.DB != nil {

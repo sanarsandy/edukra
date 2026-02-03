@@ -26,7 +26,10 @@ export default defineNuxtConfig({
     }
   },
   nitro: {
-    preset: 'node-server'
+    preset: 'node-server',
+    routeRules: {
+      '/api/**': { proxy: `${process.env.NUXT_API_INTERNAL || 'http://localhost:8080'}/api/**` }
+    }
   },
   vite: {
     server: {

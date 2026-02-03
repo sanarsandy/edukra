@@ -141,6 +141,8 @@ func EchoServer() *echo.Echo {
 	api.GET("/enrollments/:id", handlers.GetEnrollment)
 	api.PUT("/enrollments/:id/progress", handlers.UpdateEnrollmentProgress)
 	api.GET("/courses/:courseId/enrollment", handlers.CheckEnrollment)
+	api.GET("/courses/:id/whiteboard", handlers.GetCourseWhiteboard)
+	api.PUT("/courses/:id/whiteboard", handlers.UpdateCourseWhiteboard)
 	
 	// Lessons (protected for enrolled users)
 	api.GET("/lessons/:id", handlers.GetLesson)

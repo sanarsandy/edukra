@@ -32,6 +32,16 @@
           </svg>
           Tambah Materi
         </button>
+        <a 
+          :href="`/board/?id=${courseId}`" 
+          target="_blank"
+          class="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          Whiteboard
+        </a>
       </div>
     </div>
 
@@ -225,6 +235,8 @@
                 </div>
               </div>
             </div>
+
+
 
             <!-- Rich Text Editor for Text Content -->
             <div v-if="!form.is_container && form.content_type === 'text'">
@@ -681,6 +693,8 @@ const showDeleteModal = ref(false)
 const showViewModal = ref(false)
 const showQuizModal = ref(false)
 const showQuestionModal = ref(false)
+const showWhiteboardModal = ref(false)
+const whiteboardIframeRef = ref<HTMLIFrameElement | null>(null)
 const isFullscreen = ref(false)
 const isEditing = ref(false)
 const selectedLesson = ref<any>(null)
@@ -689,6 +703,21 @@ const editingQuestion = ref<any>(null)
 const selectedLessonForQuiz = ref<any>(null)
 const saving = ref(false)
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
+
+// Whiteboard functions
+const openWhiteboard = () => {
+  showWhiteboardModal.value = true
+}
+
+const onWhiteboardIframeLoad = () => {
+  // Send token securely via postMessage
+  if (whiteboardIframeRef.value && instructorPanel.token.value) {
+    whiteboardIframeRef.value.contentWindow?.postMessage(
+      { type: 'AUTH_TOKEN', token: instructorPanel.token.value },
+      window.location.origin
+    )
+  }
+}
 
 // Secure Content for MinIO
 const { 
@@ -733,7 +762,8 @@ const fileInputRef = ref<HTMLInputElement | null>(null)
 const contentTypes = [
   { value: 'video', label: 'Video', icon: 'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664zM21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
   { value: 'pdf', label: 'PDF', icon: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' },
-  { value: 'text', label: 'Teks', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
+  { value: 'text', label: 'Teks', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
+
 ]
 
 const form = ref({

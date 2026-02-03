@@ -20,6 +20,21 @@
         </div>
       </div>
       
+      <!-- Whiteboard Button -->
+      <div class="flex items-center mr-auto ml-4">
+        <a 
+          :href="`/board/?id=${courseId}&view=readonly`" 
+          target="_blank"
+          class="flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors"
+          title="Lihat Whiteboard"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+          </svg>
+          <span class="text-sm font-medium hidden sm:inline">Whiteboard</span>
+        </a>
+      </div>
+      
       <div class="flex items-center gap-3">
         <!-- Progress Badge -->
         <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-neutral-100 rounded-full">
@@ -300,6 +315,18 @@
               </a>
             </div>
           </div>
+
+          <!-- Excalidraw Content -->
+          <div 
+            v-else-if="currentLesson.type === 'excalidraw'" 
+            class="flex-1 flex flex-col bg-neutral-100 overflow-hidden"
+          >
+            <iframe 
+              :src="`/board/?id=${currentLesson.id}&view=readonly`" 
+              class="flex-1 w-full h-full border-0"
+              title="Whiteboard Content"
+            ></iframe>
+          </div>
           
           <!-- Unknown Content Type -->
           <div v-else class="flex-1 flex items-center justify-center">
@@ -315,7 +342,7 @@
         </div>
       </main>
     </div>
-    
+
     <!-- Toast -->
     <Transition name="slide-up">
       <div v-if="toast.show" class="fixed bottom-6 right-6 z-50">
@@ -341,6 +368,7 @@ const router = useRouter()
 const config = useRuntimeConfig()
 const courseId = computed(() => route.params.id as string)
 const apiBase = config.public.apiBase || 'http://localhost:8080'
+const token = useCookie('token')
 
 // Composables
 const { course, fetchCourse, loading: loadingCourse } = useCourses()

@@ -106,12 +106,7 @@ func GoogleAuthCallback(c echo.Context) error {
 	claims["role"] = user.Role
 	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
 
-	jwtSecret := os.Getenv("JWT_SECRET")
-	if jwtSecret == "" {
-		jwtSecret = "secret"
-	}
-
-	t, err := jwtToken.SignedString([]byte(jwtSecret))
+	t, err := jwtToken.SignedString(getJWTSecretBytes())
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to generate token",

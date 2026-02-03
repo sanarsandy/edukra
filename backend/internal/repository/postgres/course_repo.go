@@ -376,6 +376,32 @@ func (r *CourseRepository) scanCoursesWithDetails(query string, args ...interfac
 	return courses, nil
 }
 
+// GetWhiteboard retrieves the whiteboard data for a course
+func (r *CourseRepository) GetWhiteboard(id string) (*string, error) {
+	query := `SELECT whiteboard_data FROM courses WHERE id = $1`
+	var data sql.NullString
+	err := r.db.QueryRow(query, id).Scan(&data)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	
+	if data.Valid {
+		str := data.String
+		return &str, nil
+	}
+	return nil, nil
+}
+
+// UpdateWhiteboard updates the whiteboard data for a course
+func (r *CourseRepository) UpdateWhiteboard(id string, data string) error {
+	query := `UPDATE courses SET whiteboard_data = $2, updated_at = $3 WHERE id = $1`
+	_, err := r.db.Exec(query, id, data, time.Now())
+	return err
+}
+
 // generateSlug creates URL-friendly slug from title
 func generateSlug(title string) string {
 	slug := strings.ToLower(title)
