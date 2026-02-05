@@ -7,10 +7,10 @@
           <svg class="w-4 h-4 text-primary-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2"/>
           </svg>
-          <span class="text-sm font-medium text-primary-700">Blog & Artikel</span>
+          <span class="text-sm font-medium text-primary-700">News & Artikel</span>
         </div>
         <h2 class="text-3xl md:text-4xl font-bold text-neutral-900 font-display mb-4">
-          Artikel Terbaru
+          Berita Terbaru
         </h2>
         <p class="text-neutral-600 max-w-2xl mx-auto">
           Baca artikel menarik seputar pembelajaran dan pengembangan diri
@@ -35,7 +35,7 @@
               :key="post.id"
               class="w-full flex-shrink-0 px-2"
             >
-              <NuxtLink :to="`/blog/${post.slug}`" class="block">
+              <NuxtLink :to="`/news/${post.slug}`" class="block">
                 <div class="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-soft-lg transition-all duration-300 group">
                   <div class="grid md:grid-cols-2 gap-0">
                     <!-- Image -->
@@ -117,7 +117,7 @@
       <!-- View All Button -->
       <div v-if="posts.length" class="text-center mt-10">
         <NuxtLink 
-          to="/blog" 
+          to="/news" 
           class="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition-colors"
         >
           Lihat Semua Artikel
@@ -137,7 +137,7 @@ const apiBase = config.public.apiBase
 const currentSlide = ref(0)
 let autoSlideInterval = null
 
-const { data, pending } = await useFetch('/api/blog', {
+const { data, pending } = await useFetch('/api/news', {
   baseURL: apiBase,
   query: { page: 1, per_page: 5 },
   server: false

@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between mb-8">
       <div class="flex items-center gap-4">
         <NuxtLink 
-          to="/admin/blog"
+          to="/admin/news"
           class="p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -13,7 +13,7 @@
         </NuxtLink>
         <div>
           <h1 class="text-2xl font-bold text-neutral-900">Tulis Artikel Baru</h1>
-          <p class="text-neutral-500 mt-1">Buat artikel blog untuk meningkatkan SEO.</p>
+          <p class="text-neutral-500 mt-1">Buat artikel news untuk meningkatkan SEO.</p>
         </div>
       </div>
     </div>
@@ -38,7 +38,7 @@
         <div class="bg-white rounded-xl border border-neutral-200 p-6">
           <label class="block text-sm font-medium text-neutral-700 mb-2">Slug URL *</label>
           <div class="flex items-center gap-2">
-            <span class="text-neutral-500">/blog/</span>
+            <span class="text-neutral-500">/news/</span>
             <input 
               v-model="form.slug"
               type="text" 
@@ -260,13 +260,13 @@ const submitForm = async () => {
       meta_description: form.value.meta_description || null
     }
     
-    await $fetch(`${apiBase}/api/admin/blog`, {
+    await $fetch(`${apiBase}/api/admin/news`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token.value}` },
       body: payload
     })
     
-    router.push('/admin/blog')
+    router.push('/admin/news')
   } catch (error) {
     console.error('Failed to create post:', error)
     alert(error.data?.error || 'Gagal membuat artikel')

@@ -113,9 +113,9 @@ func EchoServer() *echo.Echo {
 	e.GET("/api/public/payment-methods", handlers.GetPaymentMethods) // Public for campaign checkout
 	e.GET("/api/settings", handlers.GetSettings) // Public settings (banner, site info)
 
-	// Public Blog Routes
-	e.GET("/api/blog", handlers.ListBlogPostsPublic)
-	e.GET("/api/blog/:slug", handlers.GetBlogPostBySlug)
+	// Public News Routes
+	e.GET("/api/news", handlers.ListBlogPostsPublic)
+	e.GET("/api/news/:slug", handlers.GetBlogPostBySlug)
 
 	// Public Webinar Routes
 	e.GET("/api/webinars/:id", handlers.GetPublicWebinar)
@@ -314,15 +314,15 @@ func EchoServer() *echo.Echo {
 	admin.DELETE("/campaigns/:id", handlers.DeleteCampaign)
 	admin.GET("/campaigns/:id/analytics", handlers.GetCampaignAnalytics)
 
-	// Admin Blog Management
-	admin.GET("/blog", handlers.ListBlogPostsAdmin)
-	admin.POST("/blog", handlers.CreateBlogPost)
-	admin.GET("/blog/:id", handlers.GetBlogPostAdmin)
-	admin.PUT("/blog/:id", handlers.UpdateBlogPost)
-	admin.DELETE("/blog/:id", handlers.DeleteBlogPost)
-	admin.GET("/blog-categories", handlers.ListBlogCategories)
-	admin.POST("/blog-categories", handlers.CreateBlogCategory)
-	admin.DELETE("/blog-categories/:id", handlers.DeleteBlogCategory)
+	// Admin News Management
+	admin.GET("/news", handlers.ListBlogPostsAdmin)
+	admin.POST("/news", handlers.CreateBlogPost)
+	admin.GET("/news/:id", handlers.GetBlogPostAdmin)
+	admin.PUT("/news/:id", handlers.UpdateBlogPost)
+	admin.DELETE("/news/:id", handlers.DeleteBlogPost)
+	admin.GET("/news-categories", handlers.ListBlogCategories)
+	admin.POST("/news-categories", handlers.CreateBlogCategory)
+	admin.DELETE("/news-categories/:id", handlers.DeleteBlogCategory)
 
 	// Admin Quiz Management
 	admin.POST("/lessons/:lessonId/quiz", handlers.CreateQuiz)

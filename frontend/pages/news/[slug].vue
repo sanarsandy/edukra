@@ -9,8 +9,8 @@
             <span class="font-display font-bold text-xl text-neutral-900">EDUKRA</span>
           </NuxtLink>
           <div class="flex items-center gap-4">
-            <NuxtLink to="/blog" class="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
-              Blog
+            <NuxtLink to="/news" class="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
+              News
             </NuxtLink>
             <NuxtLink to="/dashboard/explore" class="text-neutral-600 hover:text-primary-600 transition-colors font-medium">
               Kursus
@@ -31,8 +31,8 @@
     <!-- Not Found -->
     <div v-else-if="!post" class="text-center py-32">
       <h1 class="text-2xl font-bold text-neutral-900 mb-4">Artikel Tidak Ditemukan</h1>
-      <NuxtLink to="/blog" class="text-primary-600 hover:underline">
-        ← Kembali ke Blog
+      <NuxtLink to="/news" class="text-primary-600 hover:underline">
+        ← Kembali ke News
       </NuxtLink>
     </div>
 
@@ -41,11 +41,11 @@
       <!-- Hero -->
       <header class="bg-neutral-50 border-b border-neutral-200">
         <div class="container-custom max-w-4xl py-12">
-          <NuxtLink to="/blog" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 mb-6">
+          <NuxtLink to="/news" class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 mb-6">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
             </svg>
-            Kembali ke Blog
+            Kembali ke News
           </NuxtLink>
           
           <h1 class="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-neutral-900 mb-6 leading-tight">
@@ -117,14 +117,14 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
-const { data: post, pending, error } = await useFetch(`/api/blog/${route.params.slug}`, {
+const { data: post, pending, error } = await useFetch(`/api/news/${route.params.slug}`, {
   baseURL: apiBase,
   server: false
 })
 
 // SEO
 useHead(() => ({
-  title: post.value?.meta_title || post.value?.title ? `${post.value.meta_title || post.value.title} - EDUKRA Blog` : 'Blog - EDUKRA',
+  title: post.value?.meta_title || post.value?.title ? `${post.value.meta_title || post.value.title} - EDUKRA News` : 'News - EDUKRA',
   meta: [
     { name: 'description', content: post.value?.meta_description || post.value?.excerpt || '' },
     { property: 'og:title', content: post.value?.meta_title || post.value?.title || '' },

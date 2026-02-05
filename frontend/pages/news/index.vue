@@ -27,7 +27,7 @@
     <section class="bg-white border-b border-neutral-200">
       <div class="container-custom py-16 text-center">
         <h1 class="text-4xl md:text-5xl font-display font-bold text-neutral-900 mb-4">
-          Blog & Artikel
+          News & Artikel
         </h1>
         <p class="text-lg text-neutral-600 max-w-2xl mx-auto">
           Tips, panduan, dan insight terbaru seputar pembelajaran dan pengembangan karir.
@@ -50,7 +50,7 @@
             :key="post.id"
             class="bg-white rounded-2xl border border-neutral-200 overflow-hidden hover:shadow-lg transition-all duration-300 group"
           >
-            <NuxtLink :to="`/blog/${post.slug}`">
+            <NuxtLink :to="`/news/${post.slug}`">
               <div class="h-48 bg-neutral-100 overflow-hidden">
                 <img 
                   v-if="post.thumbnail_url"
@@ -131,7 +131,7 @@
 
 <script setup>
 useHead({
-  title: 'Blog - EDUKRA',
+  title: 'News - EDUKRA',
   meta: [
     { name: 'description', content: 'Baca artikel, tips, dan panduan terbaru seputar pembelajaran dan pengembangan karir di EDUKRA.' }
   ]
@@ -143,7 +143,7 @@ const apiBase = config.public.apiBase
 const page = ref(1)
 const perPage = 9
 
-const { data, pending, error } = await useFetch(`/api/blog`, {
+const { data, pending, error } = await useFetch(`/api/news`, {
   baseURL: apiBase,
   query: { page, per_page: perPage },
   watch: [page],

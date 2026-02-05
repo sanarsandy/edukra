@@ -8,8 +8,8 @@
     <!-- Not Found -->
     <div v-else-if="!post" class="text-center py-24">
       <p class="text-neutral-500">Artikel tidak ditemukan.</p>
-      <NuxtLink to="/admin/blog" class="text-admin-600 hover:underline mt-2 inline-block">
-        Kembali ke daftar blog
+      <NuxtLink to="/admin/news" class="text-admin-600 hover:underline mt-2 inline-block">
+        Kembali ke daftar news
       </NuxtLink>
     </div>
 
@@ -19,7 +19,7 @@
       <div class="flex items-center justify-between mb-8">
         <div class="flex items-center gap-4">
           <NuxtLink 
-            to="/admin/blog"
+            to="/admin/news"
             class="p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-100 rounded-lg transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,7 +33,7 @@
         </div>
         <a 
           v-if="form.status === 'published'"
-          :href="`/blog/${form.slug}`"
+          :href="`/news/${form.slug}`"
           target="_blank"
           class="inline-flex items-center text-sm text-primary-600 hover:text-primary-700"
         >
@@ -63,7 +63,7 @@
           <div class="bg-white rounded-xl border border-neutral-200 p-6">
             <label class="block text-sm font-medium text-neutral-700 mb-2">Slug URL *</label>
             <div class="flex items-center gap-2">
-              <span class="text-neutral-500">/blog/</span>
+              <span class="text-neutral-500">/news/</span>
               <input 
                 v-model="form.slug"
                 type="text" 
@@ -272,7 +272,7 @@ const loadPost = async () => {
   loading.value = true
   try {
     const token = useCookie('token')
-    const response = await $fetch(`${apiBase}/api/admin/blog/${route.params.id}`, {
+    const response = await $fetch(`${apiBase}/api/admin/news/${route.params.id}`, {
       headers: { Authorization: `Bearer ${token.value}` }
     })
     post.value = response
@@ -308,13 +308,13 @@ const submitForm = async () => {
       meta_description: form.value.meta_description || null
     }
     
-    await $fetch(`${apiBase}/api/admin/blog/${route.params.id}`, {
+    await $fetch(`${apiBase}/api/admin/news/${route.params.id}`, {
       method: 'PUT',
       headers: { Authorization: `Bearer ${token.value}` },
       body: payload
     })
     
-    router.push('/admin/blog')
+    router.push('/admin/news')
   } catch (error) {
     console.error('Failed to update post:', error)
     alert(error.data?.error || 'Gagal menyimpan artikel')

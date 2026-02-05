@@ -3,11 +3,11 @@
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
       <div>
-        <h1 class="text-2xl font-bold text-neutral-900">Kelola Blog</h1>
-        <p class="text-neutral-500 mt-1">Buat dan kelola artikel blog untuk SEO.</p>
+        <h1 class="text-2xl font-bold text-neutral-900">Kelola News</h1>
+        <p class="text-neutral-500 mt-1">Buat dan kelola artikel news untuk SEO.</p>
       </div>
       <NuxtLink 
-        to="/admin/blog/create"
+        to="/admin/news/create"
         class="inline-flex items-center px-4 py-2.5 bg-admin-600 hover:bg-admin-700 text-white font-medium rounded-lg transition-colors"
       >
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,7 +134,7 @@
                   </div>
                   <div class="min-w-0">
                     <h3 class="font-semibold text-neutral-900 truncate max-w-xs">{{ post.title }}</h3>
-                    <p class="text-sm text-neutral-500 truncate max-w-xs">/blog/{{ post.slug }}</p>
+                    <p class="text-sm text-neutral-500 truncate max-w-xs">/news/{{ post.slug }}</p>
                   </div>
                 </div>
               </td>
@@ -166,7 +166,7 @@
                 <div class="flex items-center justify-end gap-2">
                   <a 
                     v-if="post.status === 'published'"
-                    :href="`/blog/${post.slug}`"
+                    :href="`/news/${post.slug}`"
                     target="_blank"
                     class="p-2 text-neutral-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
                     title="Lihat"
@@ -176,7 +176,7 @@
                     </svg>
                   </a>
                   <NuxtLink 
-                    :to="`/admin/blog/${post.id}`"
+                    :to="`/admin/news/${post.id}`"
                     class="p-2 text-neutral-500 hover:text-admin-600 hover:bg-admin-50 rounded-lg transition-colors"
                     title="Edit"
                   >
@@ -309,7 +309,7 @@ const loadPosts = async () => {
   loading.value = true
   try {
     const token = useCookie('token')
-    const response = await $fetch(`${apiBase}/api/admin/blog`, {
+    const response = await $fetch(`${apiBase}/api/admin/news`, {
       headers: { Authorization: `Bearer ${token.value}` }
     })
     posts.value = response.posts || []
@@ -329,7 +329,7 @@ const deletePost = async () => {
   deleting.value = true
   try {
     const token = useCookie('token')
-    await $fetch(`${apiBase}/api/admin/blog/${postToDelete.value.id}`, {
+    await $fetch(`${apiBase}/api/admin/news/${postToDelete.value.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token.value}` }
     })
