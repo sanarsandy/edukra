@@ -76,6 +76,8 @@ services:
       NODE_ENV: production
       NUXT_PUBLIC_API_BASE: ${NUXT_PUBLIC_API_BASE:-http://localhost:8080}
       NITRO_PRESET: node-server
+      NUXT_PUBLIC_GHOST_URL: ${NUXT_PUBLIC_GHOST_URL:-https://edukra.id/blog}
+      NUXT_PUBLIC_GHOST_KEY: ${NUXT_PUBLIC_GHOST_KEY:-}
     depends_on:
       - api
     networks:
