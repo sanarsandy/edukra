@@ -55,10 +55,10 @@
           <div class="flex items-center gap-4 text-sm text-neutral-500">
             <div class="flex items-center gap-2">
               <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold">
-                {{ getInitials(post.author?.full_name || 'Admin') }}
+                {{ getInitials(post.primary_author?.name || 'Admin') }}
               </div>
               <div>
-                <p class="font-medium text-neutral-900">{{ post.author?.full_name || 'Admin' }}</p>
+                <p class="font-medium text-neutral-900">{{ post.primary_author?.name || 'Admin' }}</p>
                 <p>{{ formatDate(post.published_at || post.created_at) }}</p>
               </div>
             </div>
@@ -69,9 +69,9 @@
       </header>
 
       <!-- Featured Image -->
-      <div v-if="post.thumbnail_url" class="container-custom max-w-4xl py-8">
+      <div v-if="post.feature_image" class="container-custom max-w-4xl py-8">
         <img 
-          :src="getThumbnailUrl(post.thumbnail_url)"
+          :src="getThumbnailUrl(post.feature_image)"
           :alt="post.title"
           class="w-full h-auto rounded-2xl shadow-lg"
         />
@@ -81,7 +81,7 @@
       <div class="container-custom max-w-4xl py-8">
         <div 
           class="prose prose-lg max-w-none prose-headings:font-display prose-headings:text-neutral-900 prose-p:text-neutral-700 prose-a:text-primary-600 prose-strong:text-neutral-900"
-          v-html="post.content"
+          v-html="post.html"
         ></div>
       </div>
 
@@ -117,28 +117,38 @@ const route = useRoute()
 const config = useRuntimeConfig()
 const apiBase = config.public.apiBase
 
-const { data: post, pending, error } = await useFetch(`/api/news/${route.params.slug}`, {
-  baseURL: apiBase,
-  server: false
-})
+const { fetchPostBySlug } = useGhost()
+const { data: post, pending, error } = await fetchPostBySlug(route.params.slug)
 
 // SEO
-useHead(() => ({
-  title: post.value?.meta_title || post.value?.title ? `${post.value.meta_title || post.value.title} - EDUKRA News` : 'News - EDUKRA',
-  meta: [
-    { name: 'description', content: post.value?.meta_description || post.value?.excerpt || '' },
-    { property: 'og:title', content: post.value?.meta_title || post.value?.title || '' },
-    { property: 'og:description', content: post.value?.meta_description || post.value?.excerpt || '' },
-    { property: 'og:image', content: post.value?.thumbnail_url || '' },
-    { property: 'og:type', content: 'article' }
-  ]
-}))
+useHead(() => {
+  const p = post.value
+  if (!p) return { title: 'News - EDUKRA' }
+  
+  return {
+    title: p.meta_title || p.title ? `${p.meta_title || p.title} - EDUKRA News` : 'News - EDUKRA',
+    meta: [
+      { name: 'description', content: p.meta_description || p.custom_excerpt || p.excerpt || '' },
+      { property: 'og:title', content: p.og_title || p.meta_title || p.title || '' },
+      { property: 'og:description', content: p.og_description || p.meta_description || p.custom_excerpt || p.excerpt || '' },
+      { property: 'og:image', content: p.og_image || p.feature_image || '' },
+      { property: 'og:type', content: 'article' },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: p.twitter_title || p.meta_title || p.title || '' },
+      { name: 'twitter:description', content: p.twitter_description || p.meta_description || p.custom_excerpt || p.excerpt || '' },
+      { name: 'twitter:image', content: p.twitter_image || p.feature_image || '' }
+    ]
+  }
+})
 
 const getThumbnailUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/content/images')) {
+     const ghostUrl = config.public.ghostUrl.replace(/\/$/, '')
+     return `${ghostUrl}${url}`
+  }
   if (url.startsWith('/uploads')) return `${apiBase}${url}`
-  // MinIO object key - use public images endpoint
   return `${apiBase}/api/images/${encodeURIComponent(url)}`
 }
 

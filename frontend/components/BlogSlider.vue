@@ -35,14 +35,14 @@
               :key="post.id"
               class="w-full flex-shrink-0 px-2"
             >
-              <NuxtLink :to="`/news/${post.slug}`" class="block">
+              <a :href="post.url" target="_blank" rel="noopener noreferrer" class="block">
                 <div class="bg-white rounded-2xl overflow-hidden shadow-soft hover:shadow-soft-lg transition-all duration-300 group">
                   <div class="grid md:grid-cols-2 gap-0">
                     <!-- Image -->
                     <div class="relative h-64 md:h-80 overflow-hidden">
                       <img 
-                        v-if="post.thumbnail_url"
-                        :src="getThumbnailUrl(post.thumbnail_url)" 
+                        v-if="post.feature_image"
+                        :src="getThumbnailUrl(post.feature_image)" 
                         :alt="post.title"
                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -61,7 +61,7 @@
                         {{ post.title }}
                       </h3>
                       <p class="text-neutral-600 mb-6 line-clamp-3">
-                        {{ post.excerpt || stripHtml(post.content) }}
+                        {{ post.custom_excerpt || post.excerpt || stripHtml(post.html) }}
                       </p>
                       <div class="flex items-center text-primary-600 font-medium">
                         <span>Baca Selengkapnya</span>
@@ -72,7 +72,7 @@
                     </div>
                   </div>
                 </div>
-              </NuxtLink>
+              </a>
             </div>
           </div>
         </div>
@@ -116,15 +116,17 @@
 
       <!-- View All Button -->
       <div v-if="posts.length" class="text-center mt-10">
-        <NuxtLink 
-          to="/news" 
+        <a 
+          :href="ghostBlogUrl" 
+          target="_blank"
+          rel="noopener noreferrer"
           class="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition-colors"
         >
           Lihat Semua Artikel
           <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
           </svg>
-        </NuxtLink>
+        </a>
       </div>
     </div>
   </section>
@@ -137,19 +139,21 @@ const apiBase = config.public.apiBase
 const currentSlide = ref(0)
 let autoSlideInterval = null
 
-const { data, pending } = await useFetch('/api/news', {
-  baseURL: apiBase,
-  query: { page: 1, per_page: 5 },
-  server: false
-})
-
-const posts = computed(() => data.value?.posts || [])
+const { fetchPosts } = useGhost()
+const { data: ghostData, pending } = await fetchPosts(6)
+const posts = computed(() => ghostData.value?.posts || [])
+const ghostBlogUrl = computed(() => config.public.ghostUrl || 'https://edukra.id/blog')
 
 const getThumbnailUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Ghost sometimes returns relative paths
+  if (url.startsWith('/content/images')) {
+     const config = useRuntimeConfig()
+     const ghostUrl = config.public.ghostUrl.replace(/\/$/, '')
+     return `${ghostUrl}${url}`
+  }
   if (url.startsWith('/uploads')) return `${apiBase}${url}`
-  // MinIO object key - use public images endpoint
   return `${apiBase}/api/images/${encodeURIComponent(url)}`
 }
 

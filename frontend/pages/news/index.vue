@@ -143,21 +143,34 @@ const apiBase = config.public.apiBase
 const page = ref(1)
 const perPage = 9
 
-const { data, pending, error } = await useFetch(`/api/news`, {
-  baseURL: apiBase,
-  query: { page, per_page: perPage },
-  watch: [page],
-  server: false
+const { fetchPosts } = useGhost()
+const { data: ghostData, pending, error } = await fetchPosts(perPage, page.value)
+
+// Refresh when page changes - useFetch with reactive URL/key usually handles this, 
+// but since we made a new call, we might need to watch page.
+// Actually useFetch is inside fetchPosts, but fetchPosts called once. 
+// We need to make it reactive.
+// Better way: useAsyncData wrapping fetchPosts or just watch page and refresh.
+// However Simplest Refactor:
+// Pass Ref to fetchPosts? No, fetchPosts takes values.
+// We can use a watcher to refresh.
+watch(page, async (newPage) => {
+  const { data } = await fetchPosts(perPage, newPage)
+  ghostData.value = data.value
 })
 
-const posts = computed(() => data.value?.posts || [])
-const totalPages = computed(() => data.value?.total_pages || 1)
+const posts = computed(() => ghostData.value?.posts || [])
+const totalPages = computed(() => ghostData.value?.meta?.pagination?.pages || 1)
 
 const getThumbnailUrl = (url) => {
   if (!url) return ''
   if (url.startsWith('http://') || url.startsWith('https://')) return url
+  if (url.startsWith('/content/images')) {
+     const config = useRuntimeConfig()
+     const ghostUrl = config.public.ghostUrl.replace(/\/$/, '')
+     return `${ghostUrl}${url}`
+  }
   if (url.startsWith('/uploads')) return `${apiBase}${url}`
-  // MinIO object key - use public images endpoint
   return `${apiBase}/api/images/${encodeURIComponent(url)}`
 }
 

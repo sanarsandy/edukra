@@ -62,6 +62,8 @@ services:
       NUXT_PUBLIC_API_BASE: http://localhost:8080
       NUXT_API_INTERNAL: http://api:8080
       NODE_ENV: development
+      NUXT_PUBLIC_GHOST_URL: ${NUXT_PUBLIC_GHOST_URL:-https://edukra.id/blog}
+      NUXT_PUBLIC_GHOST_KEY: ${NUXT_PUBLIC_GHOST_KEY:-}
     networks:
       - lms-network
     volumes:

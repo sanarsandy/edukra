@@ -22,7 +22,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     apiInternal: process.env.NUXT_API_INTERNAL || 'http://localhost:8080',
     public: {
-      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080'
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8080',
+      ghostUrl: process.env.NUXT_PUBLIC_GHOST_URL || '',
+      ghostKey: process.env.NUXT_PUBLIC_GHOST_KEY || ''
     }
   },
   nitro: {
