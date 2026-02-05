@@ -131,22 +131,22 @@
                 </div>
               </NuxtLink>
 
-              <NuxtLink 
-                to="/admin/news" 
-                class="flex items-center text-sm font-medium rounded-lg transition-all group relative"
-                :class="[
-                  isActive('/admin/news') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white',
-                  sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'
-                ]"
+              <a 
+                href="https://edukra.id/blog/ghost" 
+                target="_blank"
+                rel="noopener noreferrer"
+                class="flex items-center text-sm font-medium rounded-lg transition-all group relative text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                :class="sidebarCollapsed ? 'justify-center p-3' : 'px-3 py-2.5'"
               >
                 <svg class="w-5 h-5 flex-shrink-0" :class="sidebarCollapsed ? '' : 'mr-3'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
                 </svg>
-                <span v-if="!sidebarCollapsed">News</span>
+                <span v-if="!sidebarCollapsed">Blog</span>
+                <svg v-if="!sidebarCollapsed" class="w-3 h-3 ml-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
                 <div v-if="sidebarCollapsed" class="absolute left-full ml-2 px-2 py-1 bg-white text-neutral-900 text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap transition-opacity z-50">
-                  News
+                  Blog (Ghost)
                 </div>
-              </NuxtLink>
+              </a>
 
               <NuxtLink 
                 to="/admin/webinars" 
@@ -416,12 +416,13 @@
                   </svg>
                   Campaigns
                 </NuxtLink>
-                <NuxtLink to="/admin/news" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/news') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
+                <a href="https://edukra.id/blog/ghost" target="_blank" rel="noopener noreferrer" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg text-neutral-400 hover:bg-neutral-800 hover:text-white">
                   <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
                   </svg>
-                  News
-                </NuxtLink>
+                  Blog
+                  <svg class="w-3 h-3 ml-auto opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
                 <NuxtLink to="/admin/instructors" @click="mobileMenuOpen = false" class="flex items-center px-3 py-3 text-sm font-medium rounded-lg" :class="isActive('/admin/instructors') ? 'bg-admin-600 text-white' : 'text-neutral-400 hover:bg-neutral-800 hover:text-white'">
                   <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
